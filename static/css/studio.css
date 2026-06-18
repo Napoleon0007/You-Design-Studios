@@ -4,7 +4,7 @@
 .studio-nav {
   position: sticky; top: 0; z-index: 100;
   display: flex; align-items: center; justify-content: space-between;
-  padding: 14px var(--gut); background: rgba(247,245,240,.85);
+  padding: 14px var(--gut); background: rgba(10,10,11,.82);
   backdrop-filter: blur(14px); border-bottom: 1px solid var(--line);
 }
 .studio-nav .left { display: flex; align-items: center; gap: 20px; }
@@ -19,7 +19,7 @@
 }
 .stage {
   position: sticky; top: 57px; align-self: start; height: calc(100vh - 57px);
-  background: radial-gradient(120% 110% at 50% 32%, #ffffff, var(--ink) 72%);
+  background: radial-gradient(120% 110% at 50% 35%, #1b1b1f, var(--ink) 70%);
   display: grid; place-items: center; overflow: hidden; border-right: 1px solid var(--line);
 }
 #garment3d { position: absolute; inset: 0; }
@@ -31,9 +31,9 @@
 .stage__note {
   position: absolute; left: 50%; bottom: 22px; transform: translateX(-50%);
   display: inline-flex; align-items: center; gap: 8px; z-index: 3;
-  background: rgba(247,245,240,.78); backdrop-filter: blur(8px); border: 1px solid var(--line);
+  background: rgba(10,10,11,.6); backdrop-filter: blur(8px); border: 1px solid var(--line);
   border-radius: 100px; padding: 8px 14px; font-size: 11px; letter-spacing: .16em;
-  text-transform: uppercase; color: var(--paper-dim); white-space: nowrap;
+  text-transform: uppercase; color: var(--on-dark); white-space: nowrap;
 }
 .stage__overlay-art {
   position: absolute; z-index: 2; top: 43%; left: 50%;
@@ -43,7 +43,7 @@
 }
 .side-toggle {
   position: absolute; top: 18px; left: 50%; transform: translateX(-50%); z-index: 4;
-  display: inline-flex; background: rgba(247,245,240,.78); backdrop-filter: blur(8px);
+  display: inline-flex; background: rgba(10,10,11,.6); backdrop-filter: blur(8px);
   border: 1px solid var(--line); border-radius: 100px; padding: 4px;
 }
 .side-toggle button { background: transparent; border: 0; color: var(--paper-dim);
