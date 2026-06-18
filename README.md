@@ -1,10 +1,13 @@
-# INKHAUS — Custom Print Studio (South Africa)
+# You Design Studios — Custom Print-on-Demand (South Africa)
 
 Cinematic print-on-demand storefront. Flask + vanilla JS + Three.js/GSAP.
-Allbirds-calm layout, dark streetwear skin. Real-time 3D design studio,
+Allbirds-calm layout, dark streetwear skin. Design studio with live preview,
 Gelato fulfilment + Paystack + email as swap-in integration points.
 
-> Brand name "INKHAUS" is a placeholder — change `BRAND` in `app.py`.
+**Live:** https://you-design-studios-production.up.railway.app
+**Repo:** https://github.com/Napoleon0007/You-Design-Studios
+
+> Brand name lives in `BRAND` in `app.py` — change it in one place.
 
 ## Run locally
 ```bash
