@@ -43,9 +43,28 @@ transactional email (services/ layer) → admin dashboard → Gelato tracking pr
 Raw AI mockup MP4s live in this folder (git-ignored). Processed web copies are
 in `static/media/` (hero_seq/ frames + spin_swae / look_astro / look_throne).
 
-## DB (planned)
-`products`, `variants(color,size,gelato_uid)`, `designs(art,placement)`,
-`saved_designs`, `orders`, `order_items`, `templates`, `users`. SQLite → Postgres.
+## Backend — print pipeline + DB (BUILT)
+The keystone of POD fulfilment is done and tested:
+- **`printfile.py`** — renders a **print-ready PNG at the exact Gelato print size**
+  (3543×4724px @ 300 DPI for 30×40cm), transparent bg, art composited from a
+  normalised placement (scale/cx/cy/rotation), front & back.
+- **`storage.py`** — file store abstraction (local `data/files/`, served at
+  `/files/<key>`); swap `put()` to Cloudflare R2 / S3 for prod. Gelato fetches
+  print files from these URLs (set `PUBLIC_BASE_URL` so they're absolute).
+- **`db.py`** — SQLite (no ORM, Postgres-ready): `users`, `designs`,
+  `saved_designs`, `orders`, `order_items` + an order state machine
+  (`created→paid→submitted→in_production→shipped→delivered`, `rejected/failed`).
+- **Endpoints:** `/api/validate-image` (now returns `art_key`),
+  `/api/render-printfile`, `/api/save-design` (renders + persists),
+  `/api/orders` (persists order + items), `/api/track/<ref>`, `/files/<key>`.
+
+> Prod note: container disk is ephemeral on Railway — mount a Volume at
+> `DATA_DIR` (or move storage to R2) and switch to Postgres before real orders.
+
+## Next backend (needs keys, do last)
+Paystack checkout → on success submit to **Gelato Order API** (print-file URLs +
+variant UID + address) → store `gelato_order_id` → **webhooks** for status /
+rejection → confirmation + rejection **emails** → tracking proxy.
 
 ## Deploy (Railway)
 `Procfile` + `requirements.txt` are ready (gunicorn). Push to GitHub →

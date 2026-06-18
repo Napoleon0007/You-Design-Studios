@@ -11,7 +11,10 @@
 
   const state = { product: null, color: null, colorCode: null, size: null,
                   sizeCode: null, side: "front", qty: 1, design: null,
-                  verdict: null, uid: null };
+                  verdict: null, uid: null, artKey: null, designToken: null };
+
+  // default placement of the art within the print area (centred on the chest)
+  const PLACEMENT = { scale: 0.62, cx: 0.5, cy: 0.46, rotation: 0 };
 
   const $ = (s, r = document) => r.querySelector(s);
   const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
@@ -124,6 +127,7 @@
       .then((d) => {
         if (!d.ok) { showValidation("fail", d.error || "Could not read image", null); return; }
         state.verdict = d.verdict;
+        state.artKey = d.art_key;        // server-side key for print-file generation
         showValidation(d.verdict, d.message, d);
       })
       .catch(() => showValidation("fail", "Validation failed — please try again.", null));
@@ -159,11 +163,20 @@
     toast(`Added: ${state.product.name} · ${state.color} · ${state.size} ×${state.qty}`);
   });
   els.saveBtn.addEventListener("click", () => {
+    toast("Saving design…");
     fetch("/api/save-design", {
       method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ slug: state.product?.slug, gelato_uid: state.uid,
-        color: state.color, size: state.size, side: state.side }),
-    }).then(() => toast("Design saved to your account.")).catch(() => toast("Design saved."));
+      body: JSON.stringify({
+        slug: state.product?.slug, color: state.color, color_code: state.colorCode,
+        size: state.size, size_code: state.sizeCode, side: state.side,
+        art_key: state.artKey, placement: PLACEMENT,
+      }),
+    }).then((r) => r.json()).then((d) => {
+      if (d.ok) {
+        state.designToken = d.design_token;
+        toast(d.printfile_front_url ? "Design saved — print file ready." : "Design saved.");
+      } else { toast(d.error || "Save failed."); }
+    }).catch(() => toast("Save failed — please try again."));
   });
 
   // ---- boot ------------------------------------------------------------- //

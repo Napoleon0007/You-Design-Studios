@@ -16,11 +16,16 @@ from pathlib import Path
 from flask import Flask, jsonify, render_template, request, send_from_directory, url_for
 
 import catalog
+import db
+import printfile
+import storage
 
 try:
     from PIL import Image
 except Exception:  # Pillow should be present; fail loud if not
     Image = None
+
+db.init_db()
 
 BASE_DIR = Path(__file__).resolve().parent
 
@@ -49,6 +54,14 @@ PRINT_AREA_CM = {
     "width": catalog.PRINT_AREA["front"]["w_cm"],
     "height": catalog.PRINT_AREA["front"]["h_cm"],
 }
+
+
+def _product(slug):
+    return next((p for p in catalog.PRODUCTS if p["slug"] == slug), None)
+
+
+def _area(side):
+    return catalog.PRINT_AREA.get(side if side in catalog.PRINT_AREA else "front")
 
 
 # --------------------------------------------------------------------------- #
@@ -137,6 +150,11 @@ def validate_image():
                             "Too low-resolution to print sharply at this size. "
                             "Please upload a larger image.")
 
+    # keep the raw art so a print file can be generated later (returns its key)
+    ext = "jpg" if fmt == "JPEG" else fmt.lower()
+    art_key = storage.new_key("art", ext)
+    storage.put(raw, art_key)
+
     return jsonify(
         ok=True,
         verdict=verdict,
@@ -148,6 +166,7 @@ def validate_image():
         effective_dpi=effective_dpi,
         recommended_max_cm={"width": max_w_cm, "height": max_h_cm},
         thresholds={"warn": MIN_DPI_WARN, "fail": MIN_DPI_FAIL},
+        art_key=art_key,
     )
 
 
@@ -156,25 +175,112 @@ def validate_image():
 # These return realistic shapes so the front-end is built against the final
 # contract; flip them to live calls when keys are in place.
 # --------------------------------------------------------------------------- #
+@app.route("/api/render-printfile", methods=["POST"])
+def render_printfile():
+    """Generate a print-ready file from stored art + placement (preview/checkout)."""
+    if Image is None:
+        return jsonify(ok=False, error="Image processing unavailable"), 500
+    d = request.get_json(silent=True) or {}
+    side = d.get("side", "front")
+    art = storage.open_bytes(d["art_key"]) if d.get("art_key") else None
+    if not art:
+        return jsonify(ok=False, error="Artwork not found — please upload again"), 400
+    area = _area(side)
+    try:
+        png = printfile.render_print_file(art, area, d.get("placement") or {})
+    except Exception as exc:
+        return jsonify(ok=False, error=f"Could not render print file: {exc}"), 400
+    url = storage.put(png, storage.new_key("print", "png"))
+    return jsonify(ok=True, url=url, side=side,
+                   width=area["w_px"], height=area["h_px"], dpi=area["dpi"])
+
+
 @app.route("/api/save-design", methods=["POST"])
 def save_design():
-    # TODO(phase): persist design (art + placement + variant) to DB.
-    payload = request.get_json(silent=True) or {}
-    return jsonify(ok=True, design_id="demo-design", echo=payload)
+    """Render the print file(s), persist the design, return its token."""
+    if Image is None:
+        return jsonify(ok=False, error="Image processing unavailable"), 500
+    d = request.get_json(silent=True) or {}
+    product = _product(d.get("slug"))
+    if not product:
+        return jsonify(ok=False, error="Unknown product"), 400
+
+    user_id = db.upsert_user(d.get("user_email"), d.get("user_name"))
+    front_url = back_url = preview_url = None
+
+    art_front = storage.open_bytes(d["art_key"]) if d.get("art_key") else None
+    if art_front:
+        png = printfile.render_print_file(art_front, _area("front"), d.get("placement") or {})
+        front_url = storage.put(png, storage.new_key("print", "png"))
+        preview_url = storage.put(printfile.preview_thumb(png), storage.new_key("preview", "png"))
+
+    art_back = storage.open_bytes(d["art_key_back"]) if d.get("art_key_back") else None
+    if art_back:
+        pngb = printfile.render_print_file(art_back, _area("back"), d.get("placement_back") or {})
+        back_url = storage.put(pngb, storage.new_key("print", "png"))
+
+    gelato_uid = catalog.build_uid(d["slug"], d.get("color_code"), d.get("size_code"))
+    design = db.create_design(
+        user_id=user_id, product_slug=d["slug"], gelato_uid=gelato_uid,
+        color=d.get("color"), color_code=d.get("color_code"),
+        size=d.get("size"), size_code=d.get("size_code"), art_key=d.get("art_key"),
+        placement={"front": d.get("placement"), "back": d.get("placement_back")},
+        printfile_front_url=front_url, printfile_back_url=back_url, preview_url=preview_url)
+
+    if user_id:
+        db.save_design_for_user(user_id, design["id"], d.get("name"))
+
+    return jsonify(ok=True, design_token=design["token"], gelato_uid=gelato_uid,
+                   printfile_front_url=front_url, printfile_back_url=back_url,
+                   preview_url=preview_url)
 
 
 @app.route("/api/orders", methods=["POST"])
 def create_order():
-    # TODO(phase): create local order -> Paystack init -> on success, Gelato order.
-    return jsonify(ok=True, order_id="demo-order",
-                   note="Stub. Wire Paystack init + Gelato fulfillment here.")
+    """Persist an order + line items from saved designs.
+
+    NEXT (needs keys): Paystack init -> on payment success set status 'paid'
+    -> submit to Gelato Order API with the print-file URLs -> store gelato id.
+    """
+    d = request.get_json(silent=True) or {}
+    user_id = db.upsert_user(d.get("user_email"), d.get("user_name"))
+    items = []
+    for it in (d.get("items") or []):
+        design = db.get_design(it.get("design_token", ""))
+        if not design:
+            return jsonify(ok=False, error=f"Design not found: {it.get('design_token')}"), 400
+        product = _product(design["product_slug"])
+        unit = int(round(product["price"] * 100)) if product else 0
+        items.append({
+            "design_id": design["id"], "gelato_uid": design["gelato_uid"],
+            "quantity": int(it.get("quantity", 1)), "unit_price": unit,
+            "printfile_front_url": design["printfile_front_url"],
+            "printfile_back_url": design["printfile_back_url"]})
+    if not items:
+        return jsonify(ok=False, error="No items to order"), 400
+
+    order = db.create_order(user_id, items, currency="ZAR", shipping_json=d.get("shipping"))
+    return jsonify(ok=True, reference=order["reference"], total=order["total"],
+                   currency=order["currency"], status=order["status"],
+                   note="Order persisted. Wire Paystack + Gelato submission next.")
 
 
-@app.route("/api/track/<order_id>")
-def track(order_id: str):
-    # TODO(phase): proxy Gelato fulfillment/tracking status.
-    return jsonify(ok=True, order_id=order_id, status="demo",
-                   note="Stub. Proxy Gelato tracking here.")
+@app.route("/api/track/<reference>")
+def track(reference: str):
+    order = db.get_order(reference)
+    if not order:
+        return jsonify(ok=False, error="Order not found"), 404
+    return jsonify(ok=True, reference=reference, status=order["status"],
+                   tracking_url=order["tracking_url"],
+                   gelato_order_id=order["gelato_order_id"])
+
+
+@app.route("/files/<path:key>")
+def files(key: str):
+    """Serve stored art / print files (Gelato fetches print files from here)."""
+    if not storage.path_for(key).exists():
+        return ("", 404)
+    return send_from_directory(storage.FILES_DIR, key)
 
 
 # Serve raw originals folder is intentionally NOT exposed; only /static is.
