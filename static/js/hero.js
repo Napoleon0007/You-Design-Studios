@@ -79,7 +79,7 @@
     let dw, dh, dx, dy;
     if (cr > ir) { dw = cw; dh = cw / ir; dx = 0; dy = (ch - dh) / 2; }
     else { dh = ch; dw = ch * ir; dy = 0; dx = (cw - dw) / 2; }
-    ctx.fillStyle = "#0a0a0b";
+    ctx.fillStyle = "#f7f5f0";
     ctx.fillRect(0, 0, cw, ch);
     ctx.drawImage(img, dx, dy, dw, dh);
   }
