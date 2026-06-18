@@ -38,11 +38,22 @@ PRODUCTS = [
         "blurb": "450gsm brushed-back fleece. Oversized streetwear cut.",
         "price": 749,
         "ref_image": "media/ref_hoodie.jpg",   # mock Gelato photo (swap via Grok)
+        # Curated from Gildan 18500 (Gelato's classic hoodie). Differs from the
+        # tee on purpose — not every colour exists on every garment. Exact
+        # availability + Gelato gco_ codes get synced from the Catalog API later.
         "colors": [
-            {"name": "Olive",    "hex": "#5b6043", "gelato_code": "military_green"},
-            {"name": "Black",    "hex": "#16161a", "gelato_code": "black"},
-            {"name": "Bone",     "hex": "#e7e1d3", "gelato_code": "natural"},
-            {"name": "Charcoal", "hex": "#3a3a3e", "gelato_code": "dark_heather"},
+            {"name": "White",          "hex": "#f4f3ee", "gelato_code": "white"},
+            {"name": "Black",          "hex": "#1b1b1b", "gelato_code": "black"},
+            {"name": "Navy",           "hex": "#2a3145", "gelato_code": "navy"},
+            {"name": "Sport Grey",     "hex": "#b6b6b1", "gelato_code": "sport_grey"},
+            {"name": "Dark Heather",   "hex": "#46474c", "gelato_code": "dark_heather"},
+            {"name": "Charcoal",       "hex": "#4a4a4d", "gelato_code": "charcoal"},
+            {"name": "Military Green", "hex": "#4f5340", "gelato_code": "military_green"},
+            {"name": "Maroon",         "hex": "#5a2230", "gelato_code": "maroon"},
+            {"name": "Red",            "hex": "#b22232", "gelato_code": "red"},
+            {"name": "Royal",          "hex": "#25408f", "gelato_code": "royal"},
+            {"name": "Sand",           "hex": "#d8c7a4", "gelato_code": "sand"},
+            {"name": "Light Pink",     "hex": "#e7bcc8", "gelato_code": "light_pink"},
         ],
         "sizes": [
             {"label": "S", "gelato_code": "s"}, {"label": "M", "gelato_code": "m"},
@@ -56,11 +67,23 @@ PRODUCTS = [
         "blurb": "240gsm combed cotton. Drop shoulder, heavy drape.",
         "price": 349,
         "ref_image": "media/ref_tee.jpg",
+        # Curated from Gildan 64000 Softstyle (Gelato's classic tee). Wider
+        # range than the hoodie (e.g. Forest Green / Light Blue / Natural).
         "colors": [
-            {"name": "Black",       "hex": "#16161a", "gelato_code": "black"},
-            {"name": "Bone",        "hex": "#e7e1d3", "gelato_code": "natural"},
-            {"name": "Olive",       "hex": "#5b6043", "gelato_code": "military_green"},
-            {"name": "Washed Grey", "hex": "#8a8a86", "gelato_code": "sport_grey"},
+            {"name": "White",          "hex": "#f4f3ee", "gelato_code": "white"},
+            {"name": "Black",          "hex": "#1b1b1b", "gelato_code": "black"},
+            {"name": "Navy",           "hex": "#2a3145", "gelato_code": "navy"},
+            {"name": "Sport Grey",     "hex": "#b6b6b1", "gelato_code": "sport_grey"},
+            {"name": "Dark Heather",   "hex": "#46474c", "gelato_code": "dark_heather"},
+            {"name": "Charcoal",       "hex": "#4a4a4d", "gelato_code": "charcoal"},
+            {"name": "Military Green", "hex": "#4f5340", "gelato_code": "military_green"},
+            {"name": "Forest Green",   "hex": "#223b2a", "gelato_code": "forest_green"},
+            {"name": "Maroon",         "hex": "#5a2230", "gelato_code": "maroon"},
+            {"name": "Red",            "hex": "#b22232", "gelato_code": "red"},
+            {"name": "Royal Blue",     "hex": "#25408f", "gelato_code": "royal"},
+            {"name": "Light Blue",     "hex": "#92b6d5", "gelato_code": "light_blue"},
+            {"name": "Sand",           "hex": "#d8c7a4", "gelato_code": "sand"},
+            {"name": "Natural",        "hex": "#e6ddc9", "gelato_code": "natural"},
         ],
         "sizes": [
             {"label": "S", "gelato_code": "s"}, {"label": "M", "gelato_code": "m"},

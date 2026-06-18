@@ -124,6 +124,28 @@
   .studio { grid-template-columns: 1fr; }
   .stage { position: relative; top: 0; height: 56svh; border-right: 0; border-bottom: 1px solid var(--line); }
 }
+/* ===================== LIGHT STUDIO (this page only) ===================== *
+ * Landing stays dark; the design workspace is white. Scoped to .theme-light
+ * so it never touches the landing page. Most components flip automatically
+ * because they read the CSS variables; the few hard-coded glass surfaces are
+ * overridden below.                                                          */
+body.theme-light {
+  --ink:       #f6f4ef;   /* page background (warm white) */
+  --ink-2:     #ffffff;   /* raised surface / panels      */
+  --ink-3:     #eeeae1;   /* cards / insets               */
+  --paper:     #18160f;   /* primary text                 */
+  --paper-dim: #6b685e;   /* muted text                   */
+  --line:      rgba(24,22,15,.14);
+  --olive:     #51592c;   /* readable accent on white     */
+}
+body.theme-light .grain { opacity: .035; }
+body.theme-light .studio-nav { background: rgba(246,244,239,.85); }
+body.theme-light .stage {
+  background: radial-gradient(120% 110% at 50% 30%, #ffffff, var(--ink) 74%);
+}
+body.theme-light .stage__note { background: rgba(246,244,239,.82); color: var(--paper-dim); }
+body.theme-light .side-toggle { background: rgba(246,244,239,.82); }
+
 /* mobile touch targets + safe areas */
 @media (max-width: 760px){
   .studio-nav { padding-top: max(12px, env(safe-area-inset-top)); }

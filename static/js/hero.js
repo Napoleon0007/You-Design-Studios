@@ -89,11 +89,17 @@
     const img = images[idx];
 
     const cw = canvas.width, ch = canvas.height;
-    const ir = img.naturalWidth / img.naturalHeight;
-    const cr = cw / ch;
-    let dw, dh, dx, dy;
-    if (cr > ir) { dw = cw; dh = cw / ir; dx = 0; dy = (ch - dh) / 2; }
-    else { dh = ch; dw = ch * ir; dy = 0; dx = (cw - dw) / 2; }
+    const iw = img.naturalWidth, ih = img.naturalHeight;
+    const ir = iw / ih, cr = cw / ch;
+    // Framing: portrait viewports (phones) COVER and fill the tall screen.
+    // Wide viewports push BACK to a sharper, less-zoomed portrait crop
+    // (face → waist), pillarboxed on black — avoids the 2x upscale blur.
+    const LAND_ZOOM = 1.3;   // 2.0 = old full-bleed cover; lower = pushed back / sharper
+    const FOCUS_Y = 0.22;    // vertical bias: 0 = top (head) … 1 = bottom
+    const scale = (cr > ir) ? (ch / ih) * LAND_ZOOM : Math.max(cw / iw, ch / ih);
+    const dw = iw * scale, dh = ih * scale;
+    const dx = (cw - dw) / 2;
+    const dy = (ch - dh) * FOCUS_Y;
     ctx.fillStyle = "#0a0a0b";
     ctx.fillRect(0, 0, cw, ch);
     ctx.drawImage(img, dx, dy, dw, dh);
