@@ -1,0 +1,11 @@
+__pycache__/
+*.pyc
+.DS_Store
+data/*.db
+.env
+venv/
+.venv/
+# Raw source mockup videos (large; processed web copies live in static/media/).
+# Anchored to repo root so it does NOT match the processed clips in static/media/.
+/_users_*.MP4
+/*.MP4

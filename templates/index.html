@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>{{ brand.name }} — {{ brand.tagline }}, {{ brand.country }}</title>
+  <meta name="description" content="Upload any design, preview it live in 3D on premium streetwear, and we print &amp; ship it across {{ brand.country }}. No minimums." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Anton&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+</head>
+<body>
+  <div class="grain"></div>
+  <div class="scan"></div>
+
+  <!-- ───────────────────────── nav ───────────────────────── -->
+  <nav class="nav">
+    <a class="brand" href="/">{{ brand.name }}<span class="dot">.</span></a>
+    <div class="nav-links">
+      <a href="#how">How it works</a>
+      <a href="#templates">Templates</a>
+      <a href="#showcase">3D Studio</a>
+      <a class="btn pop nav-cta" href="/studio">Start designing</a>
+    </div>
+  </nav>
+
+  <!-- ───────────────────────── hero ──────────────────────── -->
+  <header class="hero">
+    <div class="hero-stage">
+      <canvas id="heroCanvas"></canvas>
+      <div class="hero-loader" id="heroLoader">Loading studio 0%</div>
+
+      <!-- opening headline -->
+      <div class="hero-copy hero-top wrap">
+        <span class="hero-kicker">Print-on-demand · {{ brand.country }}</span>
+        <h1 class="hero-title">You design it.<br><span class="out">We make it real.</span></h1>
+        <p class="hero-sub">Upload your own artwork or remix a template, preview it live on
+          premium streetwear, and we print &amp; ship it across {{ brand.country }}. No minimums.</p>
+      </div>
+
+      <!-- captions that swap as he turns -->
+      <div class="hero-copy hero-cap">
+        <h3>Upload anything</h3>
+        <p>PNG, JPG or WEBP — we check the quality before you buy.</p>
+      </div>
+      <div class="hero-copy hero-cap">
+        <h3>See it in 3D</h3>
+        <p>Spin the garment, place your art front &amp; back, zoom right in.</p>
+      </div>
+      <div class="hero-copy hero-cap">
+        <h3>Printed locally</h3>
+        <p>Fulfilled at the closest printer in {{ brand.country }}, shipped to your door.</p>
+      </div>
+
+      <!-- end CTA -->
+      <div class="hero-end">
+        <h2>Bring your idea.</h2>
+        <div style="display:flex;gap:14px;flex-wrap:wrap;justify-content:center">
+          <a class="btn pop" href="/studio">Start designing <span class="arr">→</span></a>
+          <a class="btn ghost" href="#templates">Browse templates</a>
+        </div>
+      </div>
+
+      <div class="scroll-hint"><span>Scroll</span><span class="line"></span></div>
+    </div>
+  </header>
+
+  <!-- ──────────────────────── marquee ────────────────────── -->
+  <div class="marquee" aria-hidden="true">
+    <div class="marquee__track">
+      <span>Custom print</span><span class="star">✦</span>
+      <span>Made in <em>South Africa</em></span><span class="star">✦</span>
+      <span>No minimums</span><span class="star">✦</span>
+      <span>Front &amp; back</span><span class="star">✦</span>
+      <span>Ship nationwide</span><span class="star">✦</span>
+      <span>Custom print</span><span class="star">✦</span>
+      <span>Made in <em>South Africa</em></span><span class="star">✦</span>
+      <span>No minimums</span><span class="star">✦</span>
+      <span>Front &amp; back</span><span class="star">✦</span>
+      <span>Ship nationwide</span><span class="star">✦</span>
+    </div>
+  </div>
+
+  <!-- ─────────────────────── how it works ────────────────── -->
+  <section class="section wrap" id="how">
+    <div class="reveal">
+      <p class="eyebrow">How it works</p>
+      <h2 class="h2">Three steps to<br>your own drop.</h2>
+    </div>
+    <div class="steps">
+      <div class="step reveal">
+        <div class="num">01</div>
+        <h3>Upload</h3>
+        <p>Drop in your artwork or pick a template. We instantly check the resolution
+          so it prints sharp — no surprises.</p>
+      </div>
+      <div class="step reveal">
+        <div class="num">02</div>
+        <h3>Preview in 3D</h3>
+        <p>Choose colour and size, then watch your design wrap onto the garment.
+          Spin it 360°, nudge it into place, print front &amp; back.</p>
+      </div>
+      <div class="step reveal">
+        <div class="num">03</div>
+        <h3>We print &amp; ship</h3>
+        <p>Your order goes to the nearest printer in {{ brand.country }}. Tracked to
+          your door, with confirmation and receipt by email.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─────────────────── 360 / real-time showcase ────────── -->
+  <section class="section wrap" id="showcase">
+    <div class="showcase">
+      <div class="showcase__media reveal">
+        <span class="spin-badge"><span class="ring"></span>360° · real-time preview</span>
+        <video src="{{ url_for('static', filename='media/spin_swae.mp4') }}"
+               autoplay muted loop playsinline></video>
+      </div>
+      <div class="reveal">
+        <p class="eyebrow">Real-time preview</p>
+        <h2 class="h2">Inspect every<br>angle.</h2>
+        <p class="lead">Your artwork maps onto the garment as you design. Turn it all the
+          way around before you ever pay.</p>
+        <ul class="feature-list">
+          <li><span class="tick">✦</span><span>Live 3D garment — <span class="d">your art mapped on in real time</span></span></li>
+          <li><span class="tick">✦</span><span>Front &amp; back printing — <span class="d">design both sides</span></span></li>
+          <li><span class="tick">✦</span><span>Drag, scale &amp; rotate — <span class="d">place it exactly where you want</span></span></li>
+          <li><span class="tick">✦</span><span>Quality guard — <span class="d">low-res files are flagged before checkout</span></span></li>
+        </ul>
+        <div style="margin-top:32px">
+          <a class="btn pop" href="/studio">Open the studio <span class="arr">→</span></a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─────────────────────── templates ───────────────────── -->
+  <section class="section wrap" id="templates">
+    <div class="reveal">
+      <p class="eyebrow">Template library</p>
+      <h2 class="h2">Start from a<br>popular design.</h2>
+      <p class="lead">A growing library of print-ready templates — remix one, or bring
+        your own artwork. New drops added all the time.</p>
+    </div>
+    <div class="gallery">
+      <a class="card reveal" href="/studio">
+        <span class="card__use">Use this →</span>
+        <video src="{{ url_for('static', filename='media/spin_swae.mp4') }}" autoplay muted loop playsinline></video>
+        <div class="card__meta"><h4>Swae — Hustle</h4><p>Graffiti streetwear</p></div>
+      </a>
+      <a class="card reveal" href="/studio">
+        <span class="card__use">Use this →</span>
+        <video src="{{ url_for('static', filename='media/look_astro.mp4') }}" autoplay muted loop playsinline></video>
+        <div class="card__meta"><h4>Astrospacage</h4><p>Map / explorer graphic</p></div>
+      </a>
+      <a class="card reveal" href="/studio">
+        <span class="card__use">Use this →</span>
+        <video src="{{ url_for('static', filename='media/look_throne.mp4') }}" autoplay muted loop playsinline></video>
+        <div class="card__meta"><h4>Throne</h4><p>Dark graphic hoodie</p></div>
+      </a>
+    </div>
+  </section>
+
+  <!-- ───────────────────────── values ────────────────────── -->
+  <section class="wrap">
+    <div class="values">
+      <div class="value reveal"><h4><b>Free</b> 3D design tool</h4><p>Design in your browser — no software, no fee.</p></div>
+      <div class="value reveal"><h4><b>No</b> minimums</h4><p>Order a single piece or a hundred.</p></div>
+      <div class="value reveal"><h4><b>Local</b> SA printing</h4><p>Fulfilled at the closest printer for faster delivery.</p></div>
+      <div class="value reveal"><h4><b>Premium</b> blanks</h4><p>Heavyweight hoodies &amp; oversized boxy tees.</p></div>
+    </div>
+  </section>
+
+  <!-- ─────────────────────── CTA band ─────────────────────── -->
+  <section class="section cta-band wrap">
+    <div class="splat" aria-hidden="true">
+      <svg viewBox="0 0 600 400">
+        <path style="fill:var(--pop);opacity:.16" d="M300,80 C362,58 430,104 438,168 C486,176 516,232 480,276 C512,310 478,366 424,342 C404,392 330,392 322,338 C268,372 204,348 216,294 C162,306 132,250 172,212 C134,176 168,112 226,134 C238,86 272,70 300,80 Z"/>
+        <circle style="fill:var(--pop);opacity:.16" cx="500" cy="120" r="14"/>
+        <circle style="fill:var(--pop);opacity:.16" cx="120" cy="320" r="10"/>
+        <circle style="fill:var(--pop);opacity:.16" cx="470" cy="330" r="7"/>
+      </svg>
+    </div>
+    <div class="inner reveal">
+      <h2>Let's make<br>something <span class="em">loud.</span></h2>
+      <p>Your idea on a heavyweight hoodie or oversized tee — printed and shipped
+        across {{ brand.country }}.</p>
+      <a class="btn pop" href="/studio">Start designing <span class="arr">→</span></a>
+    </div>
+  </section>
+
+  <!-- ───────────────────────── footer ────────────────────── -->
+  <footer class="wrap">
+    <div class="foot-grid">
+      <div>
+        <div class="brand">{{ brand.name }}<span class="dot">.</span></div>
+        <p style="max-width:34ch;font-size:14px">{{ brand.tagline }} based in {{ brand.country }}.
+          Upload, preview in 3D, and we print &amp; ship to your door.</p>
+      </div>
+      <div class="foot-col">
+        <h5>Shop</h5>
+        <a href="/studio">Hoodies</a><a href="/studio">Tees</a>
+        <a href="#templates">Templates</a><a href="/studio">3D Studio</a>
+      </div>
+      <div class="foot-col">
+        <h5>Help</h5>
+        <a href="#how">How it works</a><a href="/studio">Track an order</a>
+        <a href="mailto:{{ brand.email }}">Contact</a><a href="#">Shipping &amp; returns</a>
+      </div>
+    </div>
+    <div class="foot-bottom">
+      <span>© 2026 {{ brand.name }} — {{ brand.tagline }}. Made in {{ brand.country }}.</span>
+      <span>Fulfilled via the Gelato print network</span>
+    </div>
+  </footer>
+
+  <!-- ───────────────────────── scripts ───────────────────── -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+  <script>
+    window.HERO = { frames: 121, pad: 3, base: "/static/media/hero_seq/", prefix: "f_", ext: ".jpg" };
+  </script>
+  <script src="{{ url_for('static', filename='js/hero.js') }}"></script>
+</body>
+</html>

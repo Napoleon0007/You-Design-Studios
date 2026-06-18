@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Design Studio — {{ brand.name }}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Anton&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/studio.css') }}" />
+</head>
+<body>
+  <div class="grain"></div>
+
+  <nav class="studio-nav">
+    <div class="left">
+      <a class="back" href="/">← Back</a>
+      <a class="brand" href="/" style="font-size:clamp(13px,3vw,18px)">{{ brand.name }}<span class="dot">.</span></a>
+    </div>
+    <div class="right">
+      <button class="btn ghost" id="saveBtn" style="padding:10px 18px;font-size:13px">♡ Save design</button>
+      <a class="btn" href="#" style="padding:10px 18px;font-size:13px">Cart · 0</a>
+    </div>
+  </nav>
+
+  <main class="studio">
+    <!-- 3D stage (Three.js mounts in #garment3d — Phase 2). -->
+    <section class="stage" id="stage">
+      <div class="side-toggle">
+        <button class="on" data-side="front">Front</button>
+        <button data-side="back">Back</button>
+      </div>
+      <canvas id="garment3d"></canvas>
+      <div class="stage__placeholder">
+        <img id="refPhoto" src="{{ products[0].ref_image }}" alt="Product preview" />
+        <img id="overlayArt" class="stage__overlay-art" alt="" style="display:none" />
+      </div>
+      <span class="stage__note" id="stageNote">Front print · live preview</span>
+    </section>
+
+    <!-- controls -->
+    <section class="panel">
+      <div class="field" style="margin-top:0">
+        <div class="product-tabs" id="productTabs">
+          {% for p in products %}
+          <button data-slug="{{ p.slug }}" class="{{ 'on' if loop.first }}">{{ p.name }}</button>
+          {% endfor %}
+        </div>
+      </div>
+
+      <div style="margin-top:26px">
+        <h1 id="pName">{{ products[0].name }}</h1>
+        <div class="price" id="pPrice">R{{ products[0].price }}</div>
+        <div class="blurb" id="pBlurb">{{ products[0].blurb }}</div>
+        <div class="sku" id="skuLine" title="Gelato product UID (mock catalogue)"></div>
+      </div>
+
+      <div class="field">
+        <label>Colour <span class="val" id="colorVal">—</span></label>
+        <div class="swatches" id="swatches"></div>
+      </div>
+
+      <div class="field">
+        <label>Size <span class="val" id="sizeVal">—</span></label>
+        <div class="sizes" id="sizes"></div>
+      </div>
+
+      <div class="field">
+        <label>Your design</label>
+        <div class="dropzone" id="dropzone">
+          <div class="ico">⬆</div>
+          <p>Drop your artwork here, or <u>browse</u></p>
+          <small>PNG, JPG or WEBP · we check the quality instantly</small>
+        </div>
+        <input type="file" id="fileInput" accept="image/png,image/jpeg,image/webp" hidden />
+        <div class="validation" id="validation"></div>
+      </div>
+
+      <div class="field">
+        <label>Quantity</label>
+        <div class="qty">
+          <button id="qtyMinus" aria-label="Decrease">–</button>
+          <span id="qtyVal">1</span>
+          <button id="qtyPlus" aria-label="Increase">+</button>
+        </div>
+      </div>
+
+      <div class="actions">
+        <button class="btn pop" id="addBtn">Add to cart</button>
+        <a class="btn ghost" href="/#templates" style="justify-content:center">← Choose a template instead</a>
+      </div>
+    </section>
+  </main>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    window.PRODUCTS = {{ products | tojson }};
+  </script>
+  <script src="{{ url_for('static', filename='js/studio.js') }}"></script>
+</body>
+</html>
