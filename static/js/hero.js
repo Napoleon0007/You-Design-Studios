@@ -21,7 +21,9 @@
   const images = new Array(N);
   let loaded = 0;
   let ready = false;
+  let firstReady = false;
   let curFrame = -1;
+  let lastDrawn = -1;
 
   const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
@@ -30,29 +32,31 @@
     return BASE + PREFIX + String(i + 1).padStart(PAD, "0") + EXT;
   }
   function preload() {
+    // request the first frame first so it arrives fastest
     for (let i = 0; i < N; i++) {
       const img = new Image();
       img.decoding = "async";
-      img.onload = img.onerror = () => {
-        loaded++;
-        if (loader) {
-          const pct = Math.round((loaded / N) * 100);
-          loader.dataset.pct = pct;
-          loader.textContent = "Loading studio " + pct + "%";
-        }
-        if (loaded === N) onReady();
-      };
+      img.onload = img.onerror = () => onFrameLoaded(i);
       img.src = url(i);
       images[i] = img;
     }
   }
 
-  function onReady() {
-    ready = true;
-    if (loader) loader.classList.add("hide");
-    sizeCanvas();
-    draw(0);
-    if (typeof ScrollTrigger !== "undefined") ScrollTrigger.refresh();
+  // Reveal the first frame the instant it's ready and stream the rest in the
+  // background. Mobile no longer stares at a blank loader — the figure appears
+  // fast and the scrub sharpens as more frames arrive.
+  function onFrameLoaded() {
+    loaded++;
+    if (!firstReady && images[0] && images[0].naturalWidth) {
+      firstReady = true; ready = true;
+      if (loader) loader.classList.add("hide");
+      sizeCanvas();
+      draw(0, true);
+      if (typeof ScrollTrigger !== "undefined") ScrollTrigger.refresh();
+    } else if (!firstReady && loader) {
+      loader.textContent = "Loading studio " + Math.round((loaded / N) * 100) + "%";
+    }
+    if (loaded === N && typeof ScrollTrigger !== "undefined") ScrollTrigger.refresh();
   }
 
   // ---- canvas sizing (DPR-aware, cover fit) ----------------------------- //
@@ -65,13 +69,24 @@
     if (ready) draw(curFrame < 0 ? 0 : curFrame, true);
   }
 
+  // nearest already-loaded frame to `i` (so scrubbing works mid-preload)
+  function nearestLoaded(i) {
+    for (let d = 0; d < N; d++) {
+      const a = i - d, b = i + d;
+      if (a >= 0 && images[a] && images[a].naturalWidth) return a;
+      if (b < N && images[b] && images[b].naturalWidth) return b;
+    }
+    return -1;
+  }
+
   function draw(i, force) {
     if (!ctx) return;
     i = Math.max(0, Math.min(N - 1, i | 0));
-    if (i === curFrame && !force) return;
-    curFrame = i;
-    const img = images[i];
-    if (!img || !img.naturalWidth) return;
+    const idx = (images[i] && images[i].naturalWidth) ? i : nearestLoaded(i);
+    if (idx < 0) return;
+    if (idx === lastDrawn && !force) return;
+    lastDrawn = idx; curFrame = i;
+    const img = images[idx];
 
     const cw = canvas.width, ch = canvas.height;
     const ir = img.naturalWidth / img.naturalHeight;
