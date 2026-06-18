@@ -165,6 +165,20 @@
     }, { threshold: 0.18 });
     document.querySelectorAll(".reveal").forEach((el) => io.observe(el));
 
+    // mobile perf: only play videos that are on screen (poster + preload=none means
+    // they don't even download until needed), pause the rest.
+    const vids = document.querySelectorAll("video");
+    if (vids.length) {
+      const vio = new IntersectionObserver((entries) => {
+        entries.forEach((e) => {
+          const v = e.target;
+          if (e.isIntersecting) { const pr = v.play(); if (pr && pr.catch) pr.catch(() => {}); }
+          else v.pause();
+        });
+      }, { threshold: 0.2 });
+      vids.forEach((v) => vio.observe(v));
+    }
+
     // custom cursor (fine pointers only)
     const fine = window.matchMedia("(hover: hover) and (pointer: fine)").matches;
     if (fine) {

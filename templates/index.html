@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>{{ brand.name }} — {{ brand.tagline }}, {{ brand.country }}</title>
   <meta name="description" content="Upload any design, preview it live in 3D on premium streetwear, and we print &amp; ship it across {{ brand.country }}. No minimums." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -116,7 +116,8 @@
       <div class="showcase__media reveal">
         <span class="spin-badge"><span class="ring"></span>360° · real-time preview</span>
         <video src="{{ url_for('static', filename='media/spin_swae.mp4') }}"
-               autoplay muted loop playsinline></video>
+               poster="{{ url_for('static', filename='media/poster_swae.jpg') }}"
+               preload="none" muted loop playsinline></video>
       </div>
       <div class="reveal">
         <p class="eyebrow">Real-time preview</p>
@@ -147,17 +148,17 @@
     <div class="gallery">
       <a class="card reveal" href="/studio">
         <span class="card__use">Use this →</span>
-        <video src="{{ url_for('static', filename='media/spin_swae.mp4') }}" autoplay muted loop playsinline></video>
+        <video src="{{ url_for('static', filename='media/spin_swae.mp4') }}" poster="{{ url_for('static', filename='media/poster_swae.jpg') }}" preload="none" muted loop playsinline></video>
         <div class="card__meta"><h4>Swae — Hustle</h4><p>Graffiti streetwear</p></div>
       </a>
       <a class="card reveal" href="/studio">
         <span class="card__use">Use this →</span>
-        <video src="{{ url_for('static', filename='media/look_astro.mp4') }}" autoplay muted loop playsinline></video>
+        <video src="{{ url_for('static', filename='media/look_astro.mp4') }}" poster="{{ url_for('static', filename='media/poster_astro.jpg') }}" preload="none" muted loop playsinline></video>
         <div class="card__meta"><h4>Astrospacage</h4><p>Map / explorer graphic</p></div>
       </a>
       <a class="card reveal" href="/studio">
         <span class="card__use">Use this →</span>
-        <video src="{{ url_for('static', filename='media/look_throne.mp4') }}" autoplay muted loop playsinline></video>
+        <video src="{{ url_for('static', filename='media/look_throne.mp4') }}" poster="{{ url_for('static', filename='media/poster_throne.jpg') }}" preload="none" muted loop playsinline></video>
         <div class="card__meta"><h4>Throne</h4><p>Dark graphic hoodie</p></div>
       </a>
     </div>
