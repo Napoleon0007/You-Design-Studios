@@ -38,7 +38,8 @@ CREATE TABLE IF NOT EXISTS designs (
   token         TEXT UNIQUE NOT NULL,
   user_id       INTEGER REFERENCES users(id) ON DELETE SET NULL,
   product_slug  TEXT NOT NULL,
-  gelato_uid    TEXT,
+  provider      TEXT,                 -- 'gelato' | 'printful' (fulfilment routing)
+  gelato_uid    TEXT,                 -- the provider's product/variant UID
   color         TEXT,
   color_code    TEXT,
   size          TEXT,
@@ -48,6 +49,9 @@ CREATE TABLE IF NOT EXISTS designs (
   printfile_front_url TEXT,
   printfile_back_url  TEXT,
   preview_url   TEXT,
+  moderation_status TEXT NOT NULL DEFAULT 'review',  -- approved | review | blocked
+  moderation_reason TEXT,
+  rights_confirmed  INTEGER NOT NULL DEFAULT 0,       -- user affirmed they own the art
   created_at    INTEGER NOT NULL
 );
 
@@ -62,6 +66,7 @@ CREATE TABLE IF NOT EXISTS saved_designs (
 CREATE TABLE IF NOT EXISTS orders (
   id              INTEGER PRIMARY KEY AUTOINCREMENT,
   reference       TEXT UNIQUE NOT NULL,
+  resume_token    TEXT,                          -- secret for the magic "fix your design" link
   user_id         INTEGER REFERENCES users(id) ON DELETE SET NULL,
   status          TEXT NOT NULL DEFAULT 'created',
   currency        TEXT NOT NULL DEFAULT 'ZAR',
@@ -80,7 +85,8 @@ CREATE TABLE IF NOT EXISTS order_items (
   id          INTEGER PRIMARY KEY AUTOINCREMENT,
   order_id    INTEGER REFERENCES orders(id) ON DELETE CASCADE,
   design_id   INTEGER REFERENCES designs(id) ON DELETE SET NULL,
-  gelato_uid  TEXT,
+  provider    TEXT,                            -- 'gelato' | 'printful'
+  gelato_uid  TEXT,                            -- the provider's product/variant UID
   quantity    INTEGER NOT NULL DEFAULT 1,
   unit_price  INTEGER NOT NULL DEFAULT 0,        -- cents
   printfile_front_url TEXT,
@@ -93,8 +99,16 @@ CREATE INDEX IF NOT EXISTS idx_items_order   ON order_items(order_id);
 """
 
 # valid order states (the fulfillment state machine)
-ORDER_STATES = ("created", "paid", "submitted", "in_production",
-                "shipped", "delivered", "rejected", "failed", "cancelled")
+#   created     – order persisted, not yet paid
+#   paid        – Paystack payment confirmed (money captured; settles to bank ~T+2)
+#   in_review   – paid but HELD: a design awaits moderation approval (our "escrow")
+#   awaiting_redo – a design was rejected; customer invited to upload a compliant one
+#   submitted   – released to the fulfilment provider (Gelato/…)
+#   in_production / shipped / delivered – provider lifecycle (via webhooks)
+#   rejected / failed / cancelled / refunded – terminal outcomes
+ORDER_STATES = ("created", "paid", "in_review", "awaiting_redo", "submitted",
+                "in_production", "shipped", "delivered",
+                "rejected", "failed", "cancelled", "refunded")
 
 
 def connect() -> sqlite3.Connection:
@@ -105,9 +119,25 @@ def connect() -> sqlite3.Connection:
     return c
 
 
+def _ensure_column(c: sqlite3.Connection, table: str, col: str, decl: str = "TEXT") -> None:
+    """Idempotent ALTER — add a column to an existing table if it's missing."""
+    cols = {r["name"] for r in c.execute(f"PRAGMA table_info({table})")}
+    if col not in cols:
+        c.execute(f"ALTER TABLE {table} ADD COLUMN {col} {decl}")
+
+
 def init_db() -> None:
     with connect() as c:
         c.executescript(SCHEMA)
+        # migrate older DBs that predate multi-provider fulfilment routing
+        _ensure_column(c, "designs", "provider")
+        _ensure_column(c, "order_items", "provider")
+        # migrate older DBs that predate content moderation / IP gating
+        _ensure_column(c, "designs", "moderation_status", "TEXT NOT NULL DEFAULT 'review'")
+        _ensure_column(c, "designs", "moderation_reason")
+        _ensure_column(c, "designs", "rights_confirmed", "INTEGER NOT NULL DEFAULT 0")
+        # magic "fix your design" resume link
+        _ensure_column(c, "orders", "resume_token")
 
 
 def _now() -> int:
@@ -137,14 +167,17 @@ def create_design(**f: Any) -> dict:
     with connect() as c:
         cur = c.execute(
             """INSERT INTO designs
-               (token, user_id, product_slug, gelato_uid, color, color_code,
+               (token, user_id, product_slug, provider, gelato_uid, color, color_code,
                 size, size_code, art_key, placement, printfile_front_url,
-                printfile_back_url, preview_url, created_at)
-               VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
-            (token, f.get("user_id"), f.get("product_slug"), f.get("gelato_uid"),
-             f.get("color"), f.get("color_code"), f.get("size"), f.get("size_code"),
-             f.get("art_key"), placement, f.get("printfile_front_url"),
-             f.get("printfile_back_url"), f.get("preview_url"), _now()))
+                printfile_back_url, preview_url, moderation_status, moderation_reason,
+                rights_confirmed, created_at)
+               VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+            (token, f.get("user_id"), f.get("product_slug"), f.get("provider"),
+             f.get("gelato_uid"), f.get("color"), f.get("color_code"), f.get("size"),
+             f.get("size_code"), f.get("art_key"), placement, f.get("printfile_front_url"),
+             f.get("printfile_back_url"), f.get("preview_url"),
+             f.get("moderation_status", "review"), f.get("moderation_reason"),
+             1 if f.get("rights_confirmed") else 0, _now()))
         row = c.execute("SELECT * FROM designs WHERE id = ?", (cur.lastrowid,)).fetchone()
         return dict(row)
 
@@ -159,6 +192,24 @@ def get_design(token: str) -> Optional[dict]:
     with connect() as c:
         row = c.execute("SELECT * FROM designs WHERE token = ?", (token,)).fetchone()
         return dict(row) if row else None
+
+
+def set_moderation(token: str, status: str, reason: Optional[str] = None) -> bool:
+    """Admin approve/reject a design. status in moderation.STATUSES."""
+    with connect() as c:
+        cur = c.execute(
+            "UPDATE designs SET moderation_status = ?, moderation_reason = ? WHERE token = ?",
+            (status, reason, token))
+        return cur.rowcount > 0
+
+
+def list_moderation(status: str = "review", limit: int = 200) -> list[dict]:
+    """Designs at a given moderation status (newest first) — powers the review queue."""
+    with connect() as c:
+        rows = c.execute(
+            "SELECT * FROM designs WHERE moderation_status = ? ORDER BY created_at DESC LIMIT ?",
+            (status, limit)).fetchall()
+        return [dict(r) for r in rows]
 
 
 def save_design_for_user(user_id: int, design_id: int, name: Optional[str]) -> int:
@@ -187,24 +238,26 @@ def create_order(user_id: Optional[int], items: list[dict],
     subtotal = sum(int(i.get("unit_price", 0)) * int(i.get("quantity", 1)) for i in items)
     total = subtotal + int(shipping)
     ts = _now()
+    resume_token = secrets.token_urlsafe(24)   # the magic-link key for design redos
     with connect() as c:
         cur = c.execute(
-            """INSERT INTO orders(reference, user_id, status, currency, subtotal,
+            """INSERT INTO orders(reference, resume_token, user_id, status, currency, subtotal,
                                   shipping, total, shipping_json, created_at, updated_at)
-               VALUES (?,?,?,?,?,?,?,?,?,?)""",
-            ("PENDING", user_id, "created", currency, subtotal, int(shipping), total,
-             json.dumps(shipping_json) if shipping_json else None, ts, ts))
+               VALUES (?,?,?,?,?,?,?,?,?,?,?)""",
+            ("PENDING", resume_token, user_id, "created", currency, subtotal, int(shipping),
+             total, json.dumps(shipping_json) if shipping_json else None, ts, ts))
         oid = cur.lastrowid
         reference = f"YDS-{ts}-{oid}"
         c.execute("UPDATE orders SET reference = ? WHERE id = ?", (reference, oid))
         for i in items:
             c.execute(
-                """INSERT INTO order_items(order_id, design_id, gelato_uid, quantity,
-                                           unit_price, printfile_front_url, printfile_back_url)
-                   VALUES (?,?,?,?,?,?,?)""",
-                (oid, i.get("design_id"), i.get("gelato_uid"), int(i.get("quantity", 1)),
-                 int(i.get("unit_price", 0)), i.get("printfile_front_url"),
-                 i.get("printfile_back_url")))
+                """INSERT INTO order_items(order_id, design_id, provider, gelato_uid,
+                                           quantity, unit_price, printfile_front_url,
+                                           printfile_back_url)
+                   VALUES (?,?,?,?,?,?,?,?)""",
+                (oid, i.get("design_id"), i.get("provider"), i.get("gelato_uid"),
+                 int(i.get("quantity", 1)), int(i.get("unit_price", 0)),
+                 i.get("printfile_front_url"), i.get("printfile_back_url")))
     return get_order(reference)
 
 
@@ -214,9 +267,70 @@ def get_order(reference: str) -> Optional[dict]:
         if not row:
             return None
         order = dict(row)
-        items = c.execute("SELECT * FROM order_items WHERE order_id = ?", (order["id"],)).fetchall()
+        # customer email (guest checkout upserts a user keyed by email)
+        order["email"] = None
+        if order.get("user_id"):
+            u = c.execute("SELECT email, name FROM users WHERE id = ?", (order["user_id"],)).fetchone()
+            if u:
+                order["email"], order["name"] = u["email"], u["name"]
+        # items enriched with the linked design's preview / moderation / slug
+        items = c.execute(
+            """SELECT oi.*, d.token AS design_token, d.product_slug, d.preview_url,
+                      d.moderation_status, d.moderation_reason, d.rights_confirmed,
+                      d.art_key, d.color, d.color_code, d.size, d.size_code
+               FROM order_items oi LEFT JOIN designs d ON d.id = oi.design_id
+               WHERE oi.order_id = ?""", (order["id"],)).fetchall()
         order["items"] = [dict(i) for i in items]
         return order
+
+
+def list_orders(statuses: Optional[list[str]] = None, limit: int = 100) -> list[dict]:
+    """Admin queue: orders (newest first), optionally filtered to given statuses."""
+    with connect() as c:
+        if statuses:
+            q = ",".join("?" * len(statuses))
+            rows = c.execute(
+                f"SELECT reference FROM orders WHERE status IN ({q}) "
+                f"ORDER BY created_at DESC LIMIT ?", (*statuses, limit)).fetchall()
+        else:
+            rows = c.execute(
+                "SELECT reference FROM orders ORDER BY created_at DESC LIMIT ?",
+                (limit,)).fetchall()
+    return [o for o in (get_order(r["reference"]) for r in rows) if o]
+
+
+def update_order_item(item_id: int, **fields: Any) -> bool:
+    """Swap a line item's design/print files in place (used by the resume flow)."""
+    allowed = ("design_id", "provider", "gelato_uid",
+               "printfile_front_url", "printfile_back_url")
+    sets, vals = [], []
+    for k in allowed:
+        if k in fields:
+            sets.append(f"{k} = ?"); vals.append(fields[k])
+    if not sets:
+        return False
+    vals.append(item_id)
+    with connect() as c:
+        cur = c.execute(f"UPDATE order_items SET {', '.join(sets)} WHERE id = ?", vals)
+        return cur.rowcount > 0
+
+
+def get_order_by_resume_token(token: str) -> Optional[dict]:
+    """Resolve the magic 'fix your design' link back to its order."""
+    if not token:
+        return None
+    with connect() as c:
+        row = c.execute("SELECT reference FROM orders WHERE resume_token = ?", (token,)).fetchone()
+    return get_order(row["reference"]) if row else None
+
+
+def get_order_by_provider_id(provider_order_id: str) -> Optional[dict]:
+    """Find an order by the fulfilment provider's order id (e.g. a Gooten Id).
+    Stored in gelato_order_id, which now holds whichever provider fulfilled it."""
+    with connect() as c:
+        row = c.execute("SELECT reference FROM orders WHERE gelato_order_id = ?",
+                        (provider_order_id,)).fetchone()
+    return get_order(row["reference"]) if row else None
 
 
 def set_order_status(reference: str, status: str,

@@ -34,6 +34,7 @@ def render_print_file(art_bytes: bytes, area: dict,
     """
     p = {**DEFAULT_PLACEMENT, **(placement or {})}
     scale = _clamp(float(p["scale"]), 0.02, 1.0)
+    scale_y = p.get("scale_y")           # optional free-stretch height (fraction 0–1)
     cx = _clamp(float(p["cx"]), 0.0, 1.0)
     cy = _clamp(float(p["cy"]), 0.0, 1.0)
     rotation = float(p["rotation"])
@@ -50,13 +51,16 @@ def render_print_file(art_bytes: bytes, area: dict,
     if art.mode != "RGBA":
         art = art.convert("RGBA")
 
-    # target width from scale, preserve aspect, clamp so it fits the area
+    # width from scale; height from scale_y (free stretch) or aspect-preserved
     target_w = max(1, round(scale * w_px))
     aspect = art.width / art.height
-    target_h = max(1, round(target_w / aspect))
-    if target_h > h_px:
-        target_h = h_px
-        target_w = max(1, round(h_px * aspect))
+    if scale_y not in (None, "", 0, 0.0):
+        target_h = max(1, round(_clamp(float(scale_y), 0.02, 1.0) * h_px))
+    else:
+        target_h = max(1, round(target_w / aspect))
+        if target_h > h_px:
+            target_h = h_px
+            target_w = max(1, round(h_px * aspect))
     art = art.resize((target_w, target_h), Image.LANCZOS)
 
     if rotation % 360 != 0:

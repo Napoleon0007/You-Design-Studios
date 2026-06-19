@@ -9,14 +9,51 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Anton&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+  <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.5.0/model-viewer.min.js"></script>
+  <style>
+    /* ===== Static-TV banner + glitch logo (landing only) ===== */
+    .nav.tv-banner { position: relative; overflow: hidden; }
+    .nav.tv-banner > * { position: relative; z-index: 2; }
+    .nav.tv-banner::after {        /* fuzzy-TV texture over the banner */
+      content: ""; position: absolute; inset: 0; z-index: 1; pointer-events: none;
+      background:
+        repeating-linear-gradient(0deg, rgba(0,0,0,.18) 0 1px, transparent 1px 3px),
+        url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='140' height='140'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix type='saturate' values='0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)' opacity='0.6'/></svg>");
+      background-size: 100% 100%, 150px 150px;
+      mix-blend-mode: overlay; opacity: .35; animation: tvNoise .5s steps(4) infinite;
+    }
+    @keyframes tvNoise { 0%{background-position:0 0,0 0} 100%{background-position:0 0,45px -38px} }
+
+    /* the wordmark as a static-TV logo: RGB split + flicker + sync jitter */
+    .brand.tv-static { position: relative; display: inline-block;
+      animation: tvFlicker 5s steps(50) infinite; }
+    .brand.tv-static::before, .brand.tv-static::after {
+      content: attr(data-text); position: absolute; left: 0; top: 0;
+      pointer-events: none; mix-blend-mode: screen; opacity: .6;
+      font: inherit; letter-spacing: inherit; }
+    .brand.tv-static::before { color: #17e9ff; animation: tvShiftA 2.4s steps(36) infinite; }
+    .brand.tv-static::after  { color: #ff2f6e; animation: tvShiftB 3.2s steps(36) infinite; }
+    @keyframes tvFlicker { 0%,94%,100%{opacity:1} 95%{opacity:.7} 96%{opacity:.95} 97%{opacity:.82} }
+    @keyframes tvShiftA { 0%,100%{transform:translate(0,0)} 20%{transform:translate(-1.6px,.6px)}
+      45%{transform:translate(1.1px,-.5px)} 70%{transform:translate(-.6px,.3px)} 88%{transform:translate(1.4px,.4px)} }
+    @keyframes tvShiftB { 0%,100%{transform:translate(0,0)} 30%{transform:translate(1.6px,-.5px)}
+      55%{transform:translate(-1.1px,.5px)} 80%{transform:translate(.6px,-.3px)} }
+    @media (prefers-reduced-motion: reduce) {
+      .nav.tv-banner::after, .brand.tv-static,
+      .brand.tv-static::before, .brand.tv-static::after { animation: none; }
+    }
+  </style>
 </head>
 <body>
   <div class="grain"></div>
   <div class="scan"></div>
 
   <!-- ───────────────────────── nav ───────────────────────── -->
-  <nav class="nav">
-    <a class="brand" href="/">{{ brand.name }}<span class="dot">.</span></a>
+  <nav class="nav tv-banner">
+    <div class="brand-block" style="display:flex;flex-direction:column;gap:3px;align-items:flex-start">
+      <a class="brand tv-static" data-text="{{ brand.name }}." href="/">{{ brand.name }}<span class="dot">.</span></a>
+      <span class="brand-tagline" style="color:#0a0a0a;font:700 11px/1.1 'Space Grotesk',sans-serif;letter-spacing:.16em;text-transform:uppercase">Streetwear Print on Demand · {{ brand.country }}</span>
+    </div>
     <div class="nav-links">
       <a href="#how">How it works</a>
       <a href="#templates">Templates</a>
@@ -28,15 +65,20 @@
   <!-- ───────────────────────── hero ──────────────────────── -->
   <header class="hero">
     <div class="hero-stage">
+      <!-- Hero video (swap the src to try a different mockup). Falls back to the
+           frame-sequence canvas if HERO.video is unset in the script below. -->
+      <video id="heroVideo" class="hero-video" autoplay muted loop playsinline preload="auto"
+             poster="{{ url_for('static', filename='media/hero_v4_poster.jpg') }}">
+        <source src="{{ url_for('static', filename='media/hero_v4.mp4') }}" type="video/mp4" />
+      </video>
       <canvas id="heroCanvas"></canvas>
+      <div class="hero-grade" aria-hidden="true"></div>
       <div class="hero-loader" id="heroLoader">Loading studio 0%</div>
 
       <!-- opening headline -->
       <div class="hero-copy hero-top wrap">
-        <span class="hero-kicker">Print-on-demand · {{ brand.country }}</span>
-        <h1 class="hero-title">You design it.<br><span class="out">We make it real.</span></h1>
-        <p class="hero-sub">Upload your own artwork or remix a template, preview it live on
-          premium streetwear, and we print &amp; ship it across {{ brand.country }}. No minimums.</p>
+        <h1 class="hero-title">Wear your<br><span class="out">vision.</span></h1>
+        <p class="hero-sub">Custom-fit your streetwear. Be the designer. Be the Brand.</p>
       </div>
 
       <!-- captions that swap as he turns -->
@@ -66,24 +108,19 @@
     </div>
   </header>
 
-  <!-- ──────────────────────── marquee ────────────────────── -->
-  <div class="marquee" aria-hidden="true">
-    <div class="marquee__track">
-      <span>Custom print</span><span class="star">✦</span>
-      <span>Made in <em>South Africa</em></span><span class="star">✦</span>
-      <span>No minimums</span><span class="star">✦</span>
-      <span>Front &amp; back</span><span class="star">✦</span>
-      <span>Ship nationwide</span><span class="star">✦</span>
-      <span>Custom print</span><span class="star">✦</span>
-      <span>Made in <em>South Africa</em></span><span class="star">✦</span>
-      <span>No minimums</span><span class="star">✦</span>
-      <span>Front &amp; back</span><span class="star">✦</span>
-      <span>Ship nationwide</span><span class="star">✦</span>
-    </div>
+  <!-- trust strip — surfaces the shipping model -->
+  <div class="trust-strip" style="display:flex;flex-wrap:wrap;gap:14px 30px;justify-content:center;align-items:center;padding:15px 20px;background:#0f0d0b;border-top:1px solid rgba(255,235,210,.10);border-bottom:1px solid rgba(255,235,210,.10);font:600 12px/1 'Space Grotesk',sans-serif;letter-spacing:.1em;text-transform:uppercase;color:#b7ae9e">
+    <span>✦ Free shipping over R800</span>
+    <span>✦ Printed &amp; shipped in {{ brand.country }}</span>
+    <span>✦ No minimums</span>
+    <span>✦ Secure checkout</span>
   </div>
 
   <!-- ─────────────────────── how it works ────────────────── -->
   <section class="section wrap" id="how">
+    <video class="how-bg" src="{{ url_for('static', filename='media/spin_swae.mp4') }}"
+           autoplay muted loop playsinline preload="none" aria-hidden="true"></video>
+    <div class="how-tint" aria-hidden="true"></div>
     <div class="reveal">
       <p class="eyebrow">How it works</p>
       <h2 class="h2">Three steps to<br>your own drop.</h2>
@@ -91,21 +128,21 @@
     <div class="steps">
       <div class="step reveal">
         <div class="num">01</div>
-        <h3>Upload</h3>
-        <p>Drop in your artwork or pick a template. We instantly check the resolution
-          so it prints sharp — no surprises.</p>
+        <h3>Choose your 3D garment &amp; colour</h3>
+        <p>Pick a hoodie or tee, spin it in real-time 3D and set your colour —
+          see exactly what you'll get.</p>
       </div>
       <div class="step reveal">
         <div class="num">02</div>
-        <h3>Preview in 3D</h3>
-        <p>Choose colour and size, then watch your design wrap onto the garment.
-          Spin it 360°, nudge it into place, print front &amp; back.</p>
+        <h3>Upload your artwork</h3>
+        <p>Drop in your design or pick a template. We check the resolution instantly
+          so it prints sharp, then place it front &amp; back.</p>
       </div>
       <div class="step reveal">
         <div class="num">03</div>
-        <h3>We print &amp; ship</h3>
-        <p>Your order goes to the nearest printer in {{ brand.country }}. Tracked to
-          your door, with confirmation and receipt by email.</p>
+        <h3>Add to cart &amp; checkout</h3>
+        <p>Happy with it? Add to cart and check out securely — we print it and ship
+          it to your door in {{ brand.country }}.</p>
       </div>
     </div>
   </section>
@@ -115,9 +152,12 @@
     <div class="showcase">
       <div class="showcase__media reveal">
         <span class="spin-badge"><span class="ring"></span>360° · real-time preview</span>
-        <video src="{{ url_for('static', filename='media/spin_swae.mp4') }}"
-               poster="{{ url_for('static', filename='media/poster_swae.jpg') }}"
-               preload="none" muted loop playsinline></video>
+        <model-viewer class="showcase-person"
+               src="{{ url_for('static', filename='models/person_showcase.glb') }}"
+               alt="3D model of a person in streetwear"
+               auto-rotate auto-rotate-delay="0" rotation-per-second="22deg"
+               camera-controls touch-action="pan-y" disable-zoom
+               shadow-intensity="0.9" exposure="1.05" interaction-prompt="none"></model-viewer>
       </div>
       <div class="reveal">
         <p class="eyebrow">Real-time preview</p>
@@ -137,27 +177,69 @@
     </div>
   </section>
 
+  <!-- ─────────────── motion wall — every spinning mockup ─────────────── -->
+  <section class="section wrap" id="motion">
+    <div class="reveal">
+      <p class="eyebrow">The lookbook</p>
+      <h2 class="h2">The drop,<br>in motion.</h2>
+      <p class="lead">Our films and 3D mockups, all in one place — the whole vibe in
+        motion. Each one loads as you reach it.</p>
+    </div>
+    <div class="motion-grid">
+      <div class="motion-card reveal"><video autoplay muted loop playsinline preload="none"
+        poster="{{ url_for('static', filename='media/gallery/hero1_poster.jpg') }}"
+        src="{{ url_for('static', filename='media/gallery/hero1.mp4') }}"></video></div>
+      <div class="motion-card reveal"><video autoplay muted loop playsinline preload="none"
+        poster="{{ url_for('static', filename='media/gallery/hero2_poster.jpg') }}"
+        src="{{ url_for('static', filename='media/gallery/hero2.mp4') }}"></video></div>
+      <div class="motion-card reveal"><video preload="none" muted loop playsinline
+        poster="{{ url_for('static', filename='media/hero_v4_poster.jpg') }}"
+        src="{{ url_for('static', filename='media/hero_v4.mp4') }}"></video></div>
+      <div class="motion-card reveal"><video preload="none" muted loop playsinline
+        poster="{{ url_for('static', filename='media/hero_v1_poster.jpg') }}"
+        src="{{ url_for('static', filename='media/hero_v1.mp4') }}"></video></div>
+      <div class="motion-card reveal"><video preload="none" muted loop playsinline
+        poster="{{ url_for('static', filename='media/hero_v2_poster.jpg') }}"
+        src="{{ url_for('static', filename='media/hero_v2.mp4') }}"></video></div>
+      <div class="motion-card reveal"><video preload="none" muted loop playsinline
+        poster="{{ url_for('static', filename='media/poster_swae.jpg') }}"
+        src="{{ url_for('static', filename='media/spin_swae.mp4') }}"></video></div>
+      <div class="motion-card reveal"><video preload="none" muted loop playsinline
+        poster="{{ url_for('static', filename='media/poster_astro.jpg') }}"
+        src="{{ url_for('static', filename='media/look_astro.mp4') }}"></video></div>
+      <div class="motion-card reveal"><video preload="none" muted loop playsinline
+        poster="{{ url_for('static', filename='media/poster_throne.jpg') }}"
+        src="{{ url_for('static', filename='media/look_throne.mp4') }}"></video></div>
+      <div class="motion-card reveal"><video preload="none" muted loop playsinline
+        poster="{{ url_for('static', filename='media/hero_v3_poster.jpg') }}"
+        src="{{ url_for('static', filename='media/hero_v3.mp4') }}"></video></div>
+      <div class="motion-card reveal"><video preload="none" muted loop playsinline
+        poster="{{ url_for('static', filename='media/hero_v5_poster.jpg') }}"
+        src="{{ url_for('static', filename='media/hero_v5.mp4') }}"></video></div>
+    </div>
+  </section>
+
   <!-- ─────────────────────── templates ───────────────────── -->
   <section class="section wrap" id="templates">
     <div class="reveal">
-      <p class="eyebrow">Template library</p>
-      <h2 class="h2">Start from a<br>popular design.</h2>
-      <p class="lead">A growing library of print-ready templates — remix one, or bring
-        your own artwork. New drops added all the time.</p>
+      <p class="eyebrow">The lookbook</p>
+      <h2 class="h2">What you could<br>make here.</h2>
+      <p class="lead">Real pieces made in the studio — a taste of what your own
+        artwork becomes on premium streetwear. Bring a design and make yours.</p>
     </div>
     <div class="gallery">
       <a class="card reveal" href="/studio">
-        <span class="card__use">Use this →</span>
+        <span class="card__use">Make yours →</span>
         <video src="{{ url_for('static', filename='media/spin_swae.mp4') }}" poster="{{ url_for('static', filename='media/poster_swae.jpg') }}" preload="none" muted loop playsinline></video>
         <div class="card__meta"><h4>Swae — Hustle</h4><p>Graffiti streetwear</p></div>
       </a>
       <a class="card reveal" href="/studio">
-        <span class="card__use">Use this →</span>
+        <span class="card__use">Make yours →</span>
         <video src="{{ url_for('static', filename='media/look_astro.mp4') }}" poster="{{ url_for('static', filename='media/poster_astro.jpg') }}" preload="none" muted loop playsinline></video>
         <div class="card__meta"><h4>Astrospacage</h4><p>Map / explorer graphic</p></div>
       </a>
       <a class="card reveal" href="/studio">
-        <span class="card__use">Use this →</span>
+        <span class="card__use">Make yours →</span>
         <video src="{{ url_for('static', filename='media/look_throne.mp4') }}" poster="{{ url_for('static', filename='media/poster_throne.jpg') }}" preload="none" muted loop playsinline></video>
         <div class="card__meta"><h4>Throne</h4><p>Dark graphic hoodie</p></div>
       </a>
@@ -221,8 +303,29 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
   <script>
-    window.HERO = { frames: 121, pad: 3, base: "/static/media/hero_seq/", prefix: "f_", ext: ".jpg" };
+    // Scroll-scrub hero: #4 (tattoo guy, hoodie → shirt) as a frame sequence so it
+    // advances on scroll-down and reverses on scroll-up, smoothly on phones.
+    window.HERO = { frames: 81, pad: 3, base: "/static/media/hero1/", prefix: "f_",
+                    ext: ".jpg", startFrame: 0,
+                    landZoom: 1.12, portraitZoom: 1.02, focusY: 0.40 };
   </script>
   <script src="{{ url_for('static', filename='js/hero.js') }}"></script>
+  <script>
+    // Motion wall: each clip uses preload="none" + a poster, so nothing downloads
+    // until you scroll near it. Then we play it; when it leaves the screen we pause
+    // it again — fast first paint, light on data and on mobile batteries.
+    (function () {
+      var vids = document.querySelectorAll('.motion-card video');
+      if (!vids.length) return;
+      var play = function (v) { var p = v.play(); if (p && p.catch) p.catch(function () {}); };
+      if (!('IntersectionObserver' in window)) { vids.forEach(play); return; }
+      var io = new IntersectionObserver(function (entries) {
+        entries.forEach(function (e) {
+          if (e.isIntersecting) play(e.target); else e.target.pause();
+        });
+      }, { rootMargin: '300px 0px', threshold: 0.1 });
+      vids.forEach(function (v) { io.observe(v); });
+    })();
+  </script>
 </body>
 </html>

@@ -6,9 +6,72 @@
   <title>Design Studio — {{ brand.name }}</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <!-- speed up the 3D engine: warm the CDN connections + fetch the default model early -->
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
+  <link rel="preconnect" href="https://www.gstatic.com" crossorigin />
+  <link rel="preload" as="fetch" crossorigin href="{{ url_for('static', filename='models/meshy_tee.glb') }}" />
   <link href="https://fonts.googleapis.com/css2?family=Anton&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
   <link rel="stylesheet" href="{{ url_for('static', filename='css/studio.css') }}" />
+  <style>
+    /* Cart + checkout overlay — mobile-first sheet */
+    .cart-overlay { position:fixed; inset:0; z-index:60; background:rgba(20,18,16,.5);
+      display:flex; justify-content:flex-end; }
+    .cart-overlay[hidden] { display:none; }   /* class display:flex would beat bare [hidden] */
+    #checkoutPane[hidden] { display:none; }
+    .cart-sheet { width:100%; max-width:440px; background:#fff; height:100%;
+      display:flex; flex-direction:column; box-shadow:-8px 0 40px rgba(0,0,0,.2);
+      animation:cartIn .22s ease; }
+    @keyframes cartIn { from { transform:translateX(24px); opacity:.6 } to { transform:none; opacity:1 } }
+    @media (max-width:520px){ .cart-sheet{ max-width:none; border-radius:18px 18px 0 0; height:94vh; margin-top:auto; animation:sheetUp .24s ease } }
+    @keyframes sheetUp { from { transform:translateY(40px) } to { transform:none } }
+    .cart-sheet h2 { font:600 18px/1 "Space Grotesk",sans-serif; margin:0; }
+    .cart-head { display:flex; align-items:center; justify-content:space-between;
+      padding:18px 20px; border-bottom:1px solid #eee; }
+    .cart-close,.cart-back { background:none; border:0; font-size:20px; cursor:pointer; color:#666; padding:4px; }
+    .cart-back { font-size:14px; font-weight:600; }
+    .cart-body { flex:1; overflow:auto; padding:8px 20px; -webkit-overflow-scrolling:touch; }
+    .cart-foot { padding:16px 20px max(16px,env(safe-area-inset-bottom)); border-top:1px solid #eee; background:#fff; }
+    .cart-row { display:flex; gap:12px; padding:14px 0; border-bottom:1px solid #f1f1ef; align-items:center; }
+    .cart-th { width:56px; height:56px; border-radius:10px; background:#faf7f5 center/contain no-repeat;
+      border:1px solid #eee; flex:none; }
+    .cart-meta { flex:1; min-width:0; } .cart-name { font-weight:600; font-size:14px; }
+    .cart-vary { color:#888; font-size:12.5px; margin:2px 0 6px; } .cart-vary i { color:#b8860b; font-style:normal; }
+    .cart-q { display:flex; align-items:center; gap:6px; }
+    .cart-q button { width:30px; height:30px; border:1px solid #ddd; background:#fff; border-radius:8px;
+      font-size:15px; cursor:pointer; line-height:1; } .cart-q span { min-width:18px; text-align:center; font-size:14px; }
+    .cart-rm { width:auto !important; border:0 !important; color:#c0392b !important; font-size:12px !important; margin-left:6px; }
+    .cart-line { font-weight:700; font-size:14px; white-space:nowrap; }
+    .cart-empty { color:#999; text-align:center; padding:40px 0; }
+    .cart-sub { display:flex; justify-content:space-between; font-weight:700; margin-bottom:12px; font-size:16px; }
+    #toCheckout,#payBtn { width:100%; justify-content:center; padding:16px; font-size:15px; }
+    #toCheckout:disabled,#payBtn:disabled { opacity:.45; pointer-events:none; }
+    .co-field { margin-bottom:10px; } .co-field label { display:block; font-size:12px; color:#777; margin-bottom:4px; }
+    .co-field input { width:100%; padding:12px; border:1px solid #ddd; border-radius:10px; font-size:16px; }
+    .co-2 { display:flex; gap:10px; } .co-2 .co-field { flex:1; }
+    .co-summary { border-top:1px solid #eee; margin-top:14px; padding-top:12px; }
+    .co-summary .ln { display:flex; justify-content:space-between; padding:4px 0; font-size:14px; color:#444; }
+    .co-summary .ln.tot { font-weight:700; font-size:16px; color:#111; border-top:1px solid #eee; margin-top:6px; padding-top:10px; }
+    .co-shipnote { font-size:12px; color:#888; margin:6px 0 0; }
+    .co-secure { text-align:center; font-size:12px; color:#999; margin:12px 0 0; }
+
+    /* Originality reminder pop-up — replaces the inline rights checkbox */
+    #rightsRow { display:none; }   /* consent now happens via the pop-up below */
+    .ip-modal { position:fixed; inset:0; z-index:80; background:rgba(20,18,16,.55);
+      display:flex; align-items:center; justify-content:center; padding:20px; }
+    .ip-modal[hidden] { display:none; }
+    .ip-card { background:#fff; border-radius:18px; max-width:380px; width:100%;
+      padding:26px 22px max(22px,env(safe-area-inset-bottom)); text-align:center;
+      box-shadow:0 20px 60px rgba(0,0,0,.3); animation:ipIn .2s ease; }
+    @keyframes ipIn { from { transform:translateY(14px) scale(.98); opacity:.6 } to { transform:none; opacity:1 } }
+    .ip-ico { font-size:38px; line-height:1; margin-bottom:6px; }
+    .ip-card h3 { font:700 19px/1.2 "Space Grotesk",sans-serif; margin:6px 0 8px; color:#111; }
+    .ip-card p { font-size:14.5px; line-height:1.55; color:#444; margin:0 0 18px; }
+    .ip-card p b { color:#111; }
+    #ipAgree { width:100%; justify-content:center; padding:15px; font-size:15px; }
+    .ip-cancel { display:block; width:100%; background:none; border:0; color:#888;
+      font-size:13px; margin-top:10px; padding:8px; cursor:pointer; }
+  </style>
 </head>
 <body class="theme-light">
   <div class="grain"></div>
@@ -20,7 +83,7 @@
     </div>
     <div class="right">
       <button class="btn ghost" id="saveBtn" style="padding:10px 18px;font-size:13px">♡ Save design</button>
-      <a class="btn" href="#" style="padding:10px 18px;font-size:13px">Cart · 0</a>
+      <button class="btn" id="cartBtn" style="padding:10px 18px;font-size:13px">Cart · <span id="cartCount">0</span></button>
     </div>
   </nav>
 
@@ -36,7 +99,16 @@
         <img id="refPhoto" src="{{ products[0].ref_image }}" alt="Product preview" />
         <img id="overlayArt" class="stage__overlay-art" alt="" style="display:none" />
       </div>
+      <div class="stage__soon" id="comingSoon" hidden>
+        <span class="soon-name"></span>
+        <p>Live 3D preview coming soon — pick your colour, size and design; it'll print perfectly.</p>
+      </div>
       <span class="stage__note" id="stageNote">Front print · live preview</span>
+      <!-- Mobile-only: colour palette docked to the garment so you see it change live.
+           The #swatches element is MOVED here on phones (single source of truth). -->
+      <div class="stage-dock" id="stageDock" hidden>
+        <span class="dock-cap">Colour · <b id="dockColorVal">—</b></span>
+      </div>
     </section>
 
     <!-- controls -->
@@ -53,7 +125,7 @@
         <h1 id="pName">{{ products[0].name }}</h1>
         <div class="price" id="pPrice">R{{ products[0].price }}</div>
         <div class="blurb" id="pBlurb">{{ products[0].blurb }}</div>
-        <div class="sku" id="skuLine" title="Gelato product UID (mock catalogue)"></div>
+        <div class="sku" id="skuLine" title="Verified Gelato product UID"></div>
       </div>
 
       <div class="field">
@@ -71,10 +143,24 @@
         <div class="dropzone" id="dropzone">
           <div class="ico">⬆</div>
           <p>Drop your artwork here, or <u>browse</u></p>
-          <small>PNG, JPG or WEBP · we check the quality instantly</small>
+          <small>PNG, JPG or WEBP · we check quality instantly · <b>must be your own image — no copyrighted, brand or celebrity art</b></small>
         </div>
         <input type="file" id="fileInput" accept="image/png,image/jpeg,image/webp" hidden />
         <div class="validation" id="validation"></div>
+        <div class="modnote" id="modNote" hidden></div>
+        <button type="button" class="design-toggle" id="designToggle">✦ or browse our designs</button>
+        <div class="design-grid" id="designGrid" hidden></div>
+      </div>
+
+      <div class="field" id="xfField" style="display:none">
+        <label>Transform <span class="val" id="xfSide">front</span></label>
+        <div class="xf">
+          <div class="xf-row"><span>Width</span><input type="range" id="xfW" min="8" max="100" value="62" /></div>
+          <div class="xf-row"><span>Height</span><input type="range" id="xfH" min="8" max="100" value="50" /></div>
+          <div class="xf-row"><span>Rotate</span><input type="range" id="xfR" min="-180" max="180" value="0" /></div>
+          <button class="btn ghost" id="xfReset" style="width:100%;justify-content:center;padding:10px;font-size:12px;margin-top:6px">Reset to fit</button>
+          <small class="xf-hint">Drag the print on the garment to move it · pinch / scroll to size</small>
+        </div>
       </div>
 
       <div class="field">
@@ -86,6 +172,12 @@
         </div>
       </div>
 
+      <label class="rights" id="rightsRow">
+        <input type="checkbox" id="rightsCheck" />
+        <span>I own this artwork or have the rights to use it — no copyrighted, brand or
+        celebrity images. I understand designs are checked before printing.</span>
+      </label>
+
       <div class="actions">
         <button class="btn pop" id="addBtn">Add to cart</button>
         <a class="btn ghost" href="/#templates" style="justify-content:center">← Choose a template instead</a>
@@ -93,10 +185,90 @@
     </section>
   </main>
 
+  <!-- Cart + checkout overlay -->
+  <div class="cart-overlay" id="cartOverlay" hidden>
+    <div class="cart-sheet">
+      <!-- CART -->
+      <div id="cartPane">
+        <div class="cart-head"><h2>Your cart</h2><button class="cart-close" id="cartClose" aria-label="Close">✕</button></div>
+        <div class="cart-body">
+          <div id="cartItems"></div>
+          <div class="cart-empty" id="cartEmpty">Your cart is empty.</div>
+        </div>
+        <div class="cart-foot">
+          <div class="cart-sub"><span>Subtotal</span><span id="cartSubtotal">R0.00</span></div>
+          <button class="btn pop" id="toCheckout" disabled>Checkout</button>
+        </div>
+      </div>
+      <!-- CHECKOUT -->
+      <div id="checkoutPane" hidden>
+        <div class="cart-head"><button class="cart-back" id="checkoutBack">← Cart</button><h2>Checkout</h2><span style="width:30px"></span></div>
+        <div class="cart-body">
+          <div class="co-field"><label>Email (for your receipt &amp; updates)</label>
+            <input id="coEmail" type="email" inputmode="email" autocomplete="email" placeholder="you@email.com" /></div>
+          <div class="co-field"><label>Full name</label>
+            <input id="coName" type="text" autocomplete="name" placeholder="Name &amp; surname" /></div>
+          <div class="co-field"><label>Phone</label>
+            <input id="coPhone" type="tel" inputmode="tel" autocomplete="tel" placeholder="0__ ___ ____" /></div>
+          <div class="co-field"><label>Delivery address</label>
+            <input id="coAddr" type="text" autocomplete="address-line1" placeholder="Street address" /></div>
+          <div class="co-2">
+            <div class="co-field"><label>City / town</label><input id="coCity" type="text" autocomplete="address-level2" /></div>
+            <div class="co-field"><label>Province</label><input id="coProv" type="text" autocomplete="address-level1" /></div>
+          </div>
+          <div class="co-field"><label>Postal code</label>
+            <input id="coPostal" type="text" inputmode="numeric" autocomplete="postal-code" style="max-width:140px" /></div>
+
+          <div class="co-summary">
+            <div class="ln"><span>Subtotal</span><span id="coSub">—</span></div>
+            <div class="ln"><span>Shipping</span><span id="coShip">—</span></div>
+            <p class="co-shipnote" id="coShipNote"></p>
+            <div class="ln tot"><span>Total</span><span id="coTotal">—</span></div>
+          </div>
+        </div>
+        <div class="cart-foot">
+          <button class="btn pop" id="payBtn" disabled>Pay</button>
+          <p class="co-secure">🔒 Secure payment · Paystack (cards, EFT, SnapScan)</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Originality reminder pop-up (shown once when art is added) -->
+  <div class="ip-modal" id="ipModal" hidden>
+    <div class="ip-card">
+      <div class="ip-ico">✋</div>
+      <h3>Just a quick reminder</h3>
+      <p>Your design must be your <b>own original work</b>. Please don't use copyrighted images,
+      well-known brands or logos. By continuing you confirm you have the rights to print this artwork.</p>
+      <button class="btn pop" id="ipAgree">Got it — it's my own work</button>
+      <button class="ip-cancel" id="ipCancel">Use a different image</button>
+    </div>
+  </div>
+
   <div class="toast" id="toast"></div>
 
+  <!-- Three.js (r128 UMD globals) for the real-time 3D garment -->
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/DRACOLoader.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/geometries/DecalGeometry.js"></script>
+  <script src="{{ url_for('static', filename='js/garment3d.js') }}"></script>
   <script>
     window.PRODUCTS = {{ products | tojson }};
+    // Only products with their OWN 3D model appear here; everything else renders as a
+    // clean 2D photo. (Crew Sweatshirt has no model yet → stays 2D.)
+    // heavy-hoodie = pullover; premium-hoodie = full-zip — distinct models so they
+    // no longer look identical in 3D.
+    window.MODELS = {
+      "classic-tee":    "{{ url_for('static', filename='models/meshy_tee.glb') }}",
+      "premium-tee":    "{{ url_for('static', filename='models/meshy_tee_premium.glb') }}",
+      "heavy-hoodie":   "{{ url_for('static', filename='models/meshy_hoodie.glb') }}",
+      "premium-hoodie": "{{ url_for('static', filename='models/meshy_hoodie_zip.glb') }}",
+      "womens-tee":     "{{ url_for('static', filename='models/meshy_tee_premium.glb') }}",
+      "womens-crop":    "{{ url_for('static', filename='models/meshy_tee_premium.glb') }}"
+    };
   </script>
   <script src="{{ url_for('static', filename='js/studio.js') }}"></script>
 </body>

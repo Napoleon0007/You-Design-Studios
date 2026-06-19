@@ -1,0 +1,1185 @@
+{
+  "mode": "live",
+  "currency": "ZAR",
+  "country": "ZA",
+  "markup": 2.0,
+  "source": "gelato Product Catalog API",
+  "note": "Every UID verified against Gelato. Apparel only.",
+  "bases": [
+    {
+      "slug": "classic-tee",
+      "name": "Classic Tee",
+      "blank": "Gildan 64000 Softstyle",
+      "provider": "gelato",
+      "blurb": "Softstyle ringspun cotton. The everyday staple \u2014 light, smooth, true to size.",
+      "catalog": "t-shirts",
+      "fabric": "100% Cotton",
+      "gsm": "153",
+      "attrs": {
+        "gca": "t-shirt",
+        "gsc": "crewneck",
+        "gcu": "unisex",
+        "gqa": "classic",
+        "brand": "gildan_64000"
+      },
+      "uid_grammar": "apparel_product_gca_t-shirt_gsc_crewneck_gcu_unisex_gqa_classic_gsi_{size}_gco_{color}_gpr_{print}_gildan_64000",
+      "print_tokens": {
+        "front": "4-0",
+        "back": "0-4",
+        "both": "4-4"
+      },
+      "print_area": {
+        "front": {
+          "w_cm": 30,
+          "h_cm": 40,
+          "w_px": 3543,
+          "h_px": 4724,
+          "dpi": 300
+        },
+        "back": {
+          "w_cm": 30,
+          "h_cm": 40,
+          "w_px": 3543,
+          "h_px": 4724,
+          "dpi": 300
+        }
+      },
+      "sizes": [
+        {
+          "code": "s",
+          "label": "S",
+          "cost_zar": 196.14,
+          "retail_zar": 399
+        },
+        {
+          "code": "m",
+          "label": "M",
+          "cost_zar": 196.14,
+          "retail_zar": 399
+        },
+        {
+          "code": "l",
+          "label": "L",
+          "cost_zar": 196.14,
+          "retail_zar": 399
+        },
+        {
+          "code": "xl",
+          "label": "XL",
+          "cost_zar": 196.14,
+          "retail_zar": 399
+        },
+        {
+          "code": "2xl",
+          "label": "2XL",
+          "cost_zar": 238.18,
+          "retail_zar": 479
+        },
+        {
+          "code": "3xl",
+          "label": "3XL",
+          "cost_zar": 276.8,
+          "retail_zar": 559
+        }
+      ],
+      "colors": [
+        {
+          "gelato_code": "black",
+          "name": "Black",
+          "hex": "#25282A",
+          "verified": true
+        },
+        {
+          "gelato_code": "white",
+          "name": "White",
+          "hex": "#FFFFFF",
+          "verified": true
+        },
+        {
+          "gelato_code": "sand",
+          "name": "Sand",
+          "hex": "#DACEC0",
+          "verified": true
+        },
+        {
+          "gelato_code": "natural",
+          "name": "Natural",
+          "hex": "#DFD1A7",
+          "verified": true
+        },
+        {
+          "gelato_code": "military-green",
+          "name": "Military Green",
+          "hex": "#5E7461",
+          "verified": true
+        },
+        {
+          "gelato_code": "navy",
+          "name": "Navy",
+          "hex": "#263147",
+          "verified": true
+        },
+        {
+          "gelato_code": "heather-navy",
+          "name": "Heather Navy",
+          "hex": "#52647C",
+          "verified": true
+        },
+        {
+          "gelato_code": "charcoal",
+          "name": "Charcoal",
+          "hex": "#54585A",
+          "verified": true
+        },
+        {
+          "gelato_code": "dark-heather",
+          "name": "Dark Heather",
+          "hex": "#595a61",
+          "verified": true
+        },
+        {
+          "gelato_code": "graphite-heather",
+          "name": "Graphite Heather",
+          "hex": "#707372",
+          "verified": true
+        },
+        {
+          "gelato_code": "maroon",
+          "name": "Maroon",
+          "hex": "#6F263D",
+          "verified": true
+        },
+        {
+          "gelato_code": "cardinal-red",
+          "name": "Cardinal Red",
+          "hex": "#8A1538",
+          "verified": true
+        }
+      ],
+      "price_from": 399,
+      "cost_from": 196.14,
+      "verified": true,
+      "gender": "unisex"
+    },
+    {
+      "slug": "premium-tee",
+      "name": "Premium Tee",
+      "blank": "Bella+Canvas 3001",
+      "provider": "gelato",
+      "blurb": "Retail-grade combed cotton with a clean modern fit. The streetwear standard.",
+      "catalog": "t-shirts",
+      "fabric": "100% Cotton",
+      "gsm": "142",
+      "attrs": {
+        "gca": "t-shirt",
+        "gsc": "crewneck",
+        "gcu": "unisex",
+        "gqa": "prm",
+        "brand": "bella-and-canvas_3001"
+      },
+      "uid_grammar": "apparel_product_gca_t-shirt_gsc_crewneck_gcu_unisex_gqa_prm_gsi_{size}_gco_{color}_gpr_{print}_bella-and-canvas_3001",
+      "print_tokens": {
+        "front": "4-0",
+        "back": "0-4",
+        "both": "4-4"
+      },
+      "print_area": {
+        "front": {
+          "w_cm": 30,
+          "h_cm": 40,
+          "w_px": 3543,
+          "h_px": 4724,
+          "dpi": 300
+        },
+        "back": {
+          "w_cm": 30,
+          "h_cm": 40,
+          "w_px": 3543,
+          "h_px": 4724,
+          "dpi": 300
+        }
+      },
+      "sizes": [
+        {
+          "code": "xs",
+          "label": "XS",
+          "cost_zar": 264.62,
+          "retail_zar": 529
+        },
+        {
+          "code": "s",
+          "label": "S",
+          "cost_zar": 264.62,
+          "retail_zar": 529
+        },
+        {
+          "code": "m",
+          "label": "M",
+          "cost_zar": 264.62,
+          "retail_zar": 529
+        },
+        {
+          "code": "l",
+          "label": "L",
+          "cost_zar": 264.62,
+          "retail_zar": 529
+        },
+        {
+          "code": "xl",
+          "label": "XL",
+          "cost_zar": 264.62,
+          "retail_zar": 529
+        },
+        {
+          "code": "2xl",
+          "label": "2XL",
+          "cost_zar": 306.67,
+          "retail_zar": 619
+        },
+        {
+          "code": "3xl",
+          "label": "3XL",
+          "cost_zar": 345.48,
+          "retail_zar": 699
+        },
+        {
+          "code": "4xl",
+          "label": "4XL",
+          "cost_zar": 441.74,
+          "retail_zar": 889
+        },
+        {
+          "code": "5xl",
+          "label": "5XL",
+          "cost_zar": 486.25,
+          "retail_zar": 979
+        }
+      ],
+      "colors": [
+        {
+          "gelato_code": "black",
+          "name": "Black",
+          "hex": "#25282A",
+          "verified": true
+        },
+        {
+          "gelato_code": "white",
+          "name": "White",
+          "hex": "#FFFFFF",
+          "verified": true
+        },
+        {
+          "gelato_code": "natural",
+          "name": "Natural",
+          "hex": "#DFD1A7",
+          "verified": true
+        },
+        {
+          "gelato_code": "soft-cream",
+          "name": "Soft Cream",
+          "hex": "#DECB99",
+          "verified": true
+        },
+        {
+          "gelato_code": "military-green",
+          "name": "Military Green",
+          "hex": "#60705E",
+          "verified": true
+        },
+        {
+          "gelato_code": "forest",
+          "name": "Forest",
+          "hex": "#183028",
+          "verified": true
+        },
+        {
+          "gelato_code": "dark-olive",
+          "name": "Dark Olive",
+          "hex": "#36362D",
+          "verified": true
+        },
+        {
+          "gelato_code": "navy",
+          "name": "Navy",
+          "hex": "#1F2A44",
+          "verified": true
+        },
+        {
+          "gelato_code": "heather-navy",
+          "name": "Heather Navy",
+          "hex": "#3B4559",
+          "verified": true
+        },
+        {
+          "gelato_code": "dark-grey-heather",
+          "name": "Dark Grey Heather",
+          "hex": "#525657",
+          "verified": true
+        },
+        {
+          "gelato_code": "ash",
+          "name": "Ash",
+          "hex": "#dddbd1",
+          "verified": true
+        },
+        {
+          "gelato_code": "silver",
+          "name": "Silver",
+          "hex": "#C7C9C7",
+          "verified": true
+        }
+      ],
+      "price_from": 529,
+      "cost_from": 264.62,
+      "verified": true,
+      "gender": "unisex"
+    },
+    {
+      "slug": "crew-sweatshirt",
+      "name": "Crew Sweatshirt",
+      "blank": "Gildan 18000",
+      "provider": "gelato",
+      "blurb": "Heavy blend crewneck. Brushed-soft inside, holds its shape, no hood.",
+      "catalog": "sweatshirts",
+      "fabric": "50% Cotton, 50% Polyester",
+      "gsm": "271",
+      "attrs": {
+        "gca": "sweatshirt",
+        "gsc": "crewneck",
+        "gcu": "unisex",
+        "gqa": "classic",
+        "brand": "gildan_18000"
+      },
+      "uid_grammar": "apparel_product_gca_sweatshirt_gsc_crewneck_gcu_unisex_gqa_classic_gsi_{size}_gco_{color}_gpr_{print}_gildan_18000",
+      "print_tokens": {
+        "front": "4-0",
+        "back": "0-4",
+        "both": "4-4"
+      },
+      "print_area": {
+        "front": {
+          "w_cm": 30,
+          "h_cm": 40,
+          "w_px": 3543,
+          "h_px": 4724,
+          "dpi": 300
+        },
+        "back": {
+          "w_cm": 30,
+          "h_cm": 40,
+          "w_px": 3543,
+          "h_px": 4724,
+          "dpi": 300
+        }
+      },
+      "sizes": [
+        {
+          "code": "s",
+          "label": "S",
+          "cost_zar": 362.79,
+          "retail_zar": 729
+        },
+        {
+          "code": "m",
+          "label": "M",
+          "cost_zar": 362.79,
+          "retail_zar": 729
+        },
+        {
+          "code": "l",
+          "label": "L",
+          "cost_zar": 362.79,
+          "retail_zar": 729
+        },
+        {
+          "code": "xl",
+          "label": "XL",
+          "cost_zar": 362.79,
+          "retail_zar": 729
+        },
+        {
+          "code": "2xl",
+          "label": "2XL",
+          "cost_zar": 404.83,
+          "retail_zar": 809
+        },
+        {
+          "code": "3xl",
+          "label": "3XL",
+          "cost_zar": 443.64,
+          "retail_zar": 889
+        },
+        {
+          "code": "4xl",
+          "label": "4XL",
+          "cost_zar": 554.55,
+          "retail_zar": 1109
+        },
+        {
+          "code": "5xl",
+          "label": "5XL",
+          "cost_zar": 599.07,
+          "retail_zar": 1199
+        }
+      ],
+      "colors": [
+        {
+          "gelato_code": "black",
+          "name": "Black",
+          "hex": "#25282A",
+          "verified": true
+        },
+        {
+          "gelato_code": "white",
+          "name": "White",
+          "hex": "#FFFFFF",
+          "verified": true
+        },
+        {
+          "gelato_code": "sand",
+          "name": "Sand",
+          "hex": "#DACEC0",
+          "verified": true
+        },
+        {
+          "gelato_code": "military-green",
+          "name": "Military Green",
+          "hex": "#5E7461",
+          "verified": true
+        },
+        {
+          "gelato_code": "forest-green",
+          "name": "Forest Green",
+          "hex": "#273B33",
+          "verified": true
+        },
+        {
+          "gelato_code": "navy",
+          "name": "Navy",
+          "hex": "#1F2A44",
+          "verified": true
+        },
+        {
+          "gelato_code": "dark-heather",
+          "name": "Dark Heather",
+          "hex": "#595a61",
+          "verified": true
+        },
+        {
+          "gelato_code": "sport-grey",
+          "name": "Sport Grey",
+          "hex": "#97999b",
+          "verified": true
+        },
+        {
+          "gelato_code": "graphite-heather",
+          "name": "Graphite Heather",
+          "hex": "#B4B6BC",
+          "verified": true
+        },
+        {
+          "gelato_code": "ash",
+          "name": "Ash",
+          "hex": "#dddbd1",
+          "verified": true
+        },
+        {
+          "gelato_code": "maroon",
+          "name": "Maroon",
+          "hex": "#6F263D",
+          "verified": true
+        },
+        {
+          "gelato_code": "garnet",
+          "name": "Garnet",
+          "hex": "#7D2935",
+          "verified": true
+        }
+      ],
+      "price_from": 729,
+      "cost_from": 362.79,
+      "verified": true,
+      "gender": "unisex"
+    },
+    {
+      "slug": "heavy-hoodie",
+      "name": "Heavyweight Hoodie",
+      "blank": "Gildan 18500",
+      "provider": "gelato",
+      "blurb": "Classic heavyweight pullover. Thick fleece, roomy hood, built to last.",
+      "catalog": "hoodies",
+      "fabric": "50% Cotton, 50% Polyester",
+      "gsm": "279",
+      "attrs": {
+        "gca": "hoodie",
+        "gsc": "pullover",
+        "gcu": "unisex",
+        "gqa": "classic",
+        "brand": "gildan_18500"
+      },
+      "uid_grammar": "apparel_product_gca_hoodie_gsc_pullover_gcu_unisex_gqa_classic_gsi_{size}_gco_{color}_gpr_{print}_gildan_18500",
+      "print_tokens": {
+        "front": "4-0",
+        "back": "0-4",
+        "both": "4-4"
+      },
+      "print_area": {
+        "front": {
+          "w_cm": 30,
+          "h_cm": 40,
+          "w_px": 3543,
+          "h_px": 4724,
+          "dpi": 300
+        },
+        "back": {
+          "w_cm": 30,
+          "h_cm": 40,
+          "w_px": 3543,
+          "h_px": 4724,
+          "dpi": 300
+        }
+      },
+      "sizes": [
+        {
+          "code": "s",
+          "label": "S",
+          "cost_zar": 423.47,
+          "retail_zar": 849
+        },
+        {
+          "code": "m",
+          "label": "M",
+          "cost_zar": 423.47,
+          "retail_zar": 849
+        },
+        {
+          "code": "l",
+          "label": "L",
+          "cost_zar": 423.47,
+          "retail_zar": 849
+        },
+        {
+          "code": "xl",
+          "label": "XL",
+          "cost_zar": 423.47,
+          "retail_zar": 849
+        },
+        {
+          "code": "2xl",
+          "label": "2XL",
+          "cost_zar": 465.52,
+          "retail_zar": 939
+        },
+        {
+          "code": "3xl",
+          "label": "3XL",
+          "cost_zar": 504.14,
+          "retail_zar": 1009
+        },
+        {
+          "code": "4xl",
+          "label": "4XL",
+          "cost_zar": 624.37,
+          "retail_zar": 1249
+        },
+        {
+          "code": "5xl",
+          "label": "5XL",
+          "cost_zar": 668.88,
+          "retail_zar": 1339
+        }
+      ],
+      "colors": [
+        {
+          "gelato_code": "black",
+          "name": "Black",
+          "hex": "#25282A",
+          "verified": true
+        },
+        {
+          "gelato_code": "white",
+          "name": "White",
+          "hex": "#FFFFFF",
+          "verified": true
+        },
+        {
+          "gelato_code": "sand",
+          "name": "Sand",
+          "hex": "#DACEC0",
+          "verified": true
+        },
+        {
+          "gelato_code": "military-green",
+          "name": "Military Green",
+          "hex": "#5E7461",
+          "verified": true
+        },
+        {
+          "gelato_code": "forest-green",
+          "name": "Forest Green",
+          "hex": "#273B33",
+          "verified": true
+        },
+        {
+          "gelato_code": "navy",
+          "name": "Navy",
+          "hex": "#1F2A44",
+          "verified": true
+        },
+        {
+          "gelato_code": "dark-heather",
+          "name": "Dark Heather",
+          "hex": "#595a61",
+          "verified": true
+        },
+        {
+          "gelato_code": "sport-grey",
+          "name": "Sport Grey",
+          "hex": "#97999B",
+          "verified": true
+        },
+        {
+          "gelato_code": "graphite-heather",
+          "name": "Graphite Heather",
+          "hex": "#B4B6BC",
+          "verified": true
+        },
+        {
+          "gelato_code": "ash",
+          "name": "Ash",
+          "hex": "#dddbd1",
+          "verified": true
+        },
+        {
+          "gelato_code": "maroon",
+          "name": "Maroon",
+          "hex": "#6F263D",
+          "verified": true
+        },
+        {
+          "gelato_code": "garnet",
+          "name": "Garnet",
+          "hex": "#7D2935",
+          "verified": true
+        }
+      ],
+      "price_from": 849,
+      "cost_from": 423.47,
+      "verified": true,
+      "gender": "unisex"
+    },
+    {
+      "slug": "premium-hoodie",
+      "name": "Premium Hoodie",
+      "blank": "Gildan SF500 Softstyle",
+      "provider": "gelato",
+      "blurb": "Softstyle midweight pullover. Premium hand-feel with a tailored drape.",
+      "catalog": "hoodies",
+      "fabric": "80% Ring Spun Cotton / 20% Polyester",
+      "gsm": "285",
+      "attrs": {
+        "gca": "hoodie",
+        "gsc": "pullover",
+        "gcu": "unisex",
+        "gqa": "softstyle",
+        "brand": "gildan_sf500"
+      },
+      "uid_grammar": "apparel_product_gca_hoodie_gsc_pullover_gcu_unisex_gqa_softstyle_gsi_{size}_gco_{color}_gpr_{print}_gildan_sf500",
+      "print_tokens": {
+        "front": "4-0",
+        "back": "0-4",
+        "both": "4-4"
+      },
+      "print_area": {
+        "front": {
+          "w_cm": 30,
+          "h_cm": 40,
+          "w_px": 3543,
+          "h_px": 4724,
+          "dpi": 300
+        },
+        "back": {
+          "w_cm": 30,
+          "h_cm": 40,
+          "w_px": 3543,
+          "h_px": 4724,
+          "dpi": 300
+        }
+      },
+      "sizes": [
+        {
+          "code": "s",
+          "label": "S",
+          "cost_zar": 522.59,
+          "retail_zar": 1049
+        },
+        {
+          "code": "m",
+          "label": "M",
+          "cost_zar": 522.59,
+          "retail_zar": 1049
+        },
+        {
+          "code": "l",
+          "label": "L",
+          "cost_zar": 522.59,
+          "retail_zar": 1049
+        },
+        {
+          "code": "xl",
+          "label": "XL",
+          "cost_zar": 522.59,
+          "retail_zar": 1049
+        },
+        {
+          "code": "2xl",
+          "label": "2XL",
+          "cost_zar": 570.15,
+          "retail_zar": 1149
+        },
+        {
+          "code": "3xl",
+          "label": "3XL",
+          "cost_zar": 613.91,
+          "retail_zar": 1229
+        },
+        {
+          "code": "4xl",
+          "label": "4XL",
+          "cost_zar": 657.85,
+          "retail_zar": 1319
+        },
+        {
+          "code": "5xl",
+          "label": "5XL",
+          "cost_zar": 701.61,
+          "retail_zar": 1409
+        }
+      ],
+      "colors": [
+        {
+          "gelato_code": "black",
+          "name": "Black",
+          "hex": "#25282A",
+          "verified": true
+        },
+        {
+          "gelato_code": "white",
+          "name": "White",
+          "hex": "#FFFFFF",
+          "verified": true
+        },
+        {
+          "gelato_code": "sand",
+          "name": "Sand",
+          "hex": "#DACEC0",
+          "verified": true
+        },
+        {
+          "gelato_code": "military-green",
+          "name": "Military Green",
+          "hex": "#5E7461",
+          "verified": true
+        },
+        {
+          "gelato_code": "forest-green",
+          "name": "Forest Green",
+          "hex": "#273B33",
+          "verified": true
+        },
+        {
+          "gelato_code": "navy",
+          "name": "Navy",
+          "hex": "#263147",
+          "verified": true
+        },
+        {
+          "gelato_code": "charcoal",
+          "name": "Charcoal",
+          "hex": "#54585A",
+          "verified": true
+        },
+        {
+          "gelato_code": "dark-heather",
+          "name": "Dark Heather",
+          "hex": "#425563",
+          "verified": true
+        },
+        {
+          "gelato_code": "maroon",
+          "name": "Maroon",
+          "hex": "#6F263D",
+          "verified": true
+        },
+        {
+          "gelato_code": "royal",
+          "name": "Royal",
+          "hex": "#007ee0",
+          "verified": true
+        },
+        {
+          "gelato_code": "red",
+          "name": "Red",
+          "hex": "#D50032",
+          "verified": true
+        },
+        {
+          "gelato_code": "light-pink",
+          "name": "Light Pink",
+          "hex": "#E4C6D4",
+          "verified": true
+        }
+      ],
+      "price_from": 1049,
+      "cost_from": 522.59,
+      "verified": true,
+      "gender": "unisex"
+    },
+    {
+      "slug": "womens-tee",
+      "name": "Women's Tee",
+      "blank": "Bella+Canvas 3001",
+      "provider": "gelato",
+      "blurb": "A fitted women's cut in soft combed cotton \u2014 wear it solo or layered.",
+      "catalog": "t-shirts",
+      "fabric": "100% Cotton",
+      "gsm": "142",
+      "attrs": {
+        "gca": "t-shirt",
+        "gsc": "crewneck",
+        "gcu": "unisex",
+        "gqa": "prm",
+        "brand": "bella-and-canvas_3001"
+      },
+      "uid_grammar": "apparel_product_gca_t-shirt_gsc_crewneck_gcu_unisex_gqa_prm_gsi_{size}_gco_{color}_gpr_{print}_bella-and-canvas_3001",
+      "print_tokens": {
+        "front": "4-0",
+        "back": "0-4",
+        "both": "4-4"
+      },
+      "print_area": {
+        "front": {
+          "w_cm": 30,
+          "h_cm": 40,
+          "w_px": 3543,
+          "h_px": 4724,
+          "dpi": 300
+        },
+        "back": {
+          "w_cm": 30,
+          "h_cm": 40,
+          "w_px": 3543,
+          "h_px": 4724,
+          "dpi": 300
+        }
+      },
+      "sizes": [
+        {
+          "code": "xs",
+          "label": "XS",
+          "cost_zar": 264.62,
+          "retail_zar": 529
+        },
+        {
+          "code": "s",
+          "label": "S",
+          "cost_zar": 264.62,
+          "retail_zar": 529
+        },
+        {
+          "code": "m",
+          "label": "M",
+          "cost_zar": 264.62,
+          "retail_zar": 529
+        },
+        {
+          "code": "l",
+          "label": "L",
+          "cost_zar": 264.62,
+          "retail_zar": 529
+        },
+        {
+          "code": "xl",
+          "label": "XL",
+          "cost_zar": 264.62,
+          "retail_zar": 529
+        },
+        {
+          "code": "2xl",
+          "label": "2XL",
+          "cost_zar": 306.67,
+          "retail_zar": 619
+        },
+        {
+          "code": "3xl",
+          "label": "3XL",
+          "cost_zar": 345.48,
+          "retail_zar": 699
+        },
+        {
+          "code": "4xl",
+          "label": "4XL",
+          "cost_zar": 441.74,
+          "retail_zar": 889
+        },
+        {
+          "code": "5xl",
+          "label": "5XL",
+          "cost_zar": 486.25,
+          "retail_zar": 979
+        }
+      ],
+      "colors": [
+        {
+          "gelato_code": "black",
+          "name": "Black",
+          "hex": "#25282A",
+          "verified": true
+        },
+        {
+          "gelato_code": "white",
+          "name": "White",
+          "hex": "#FFFFFF",
+          "verified": true
+        },
+        {
+          "gelato_code": "natural",
+          "name": "Natural",
+          "hex": "#DFD1A7",
+          "verified": true
+        },
+        {
+          "gelato_code": "soft-cream",
+          "name": "Soft Cream",
+          "hex": "#DECB99",
+          "verified": true
+        },
+        {
+          "gelato_code": "military-green",
+          "name": "Military Green",
+          "hex": "#60705E",
+          "verified": true
+        },
+        {
+          "gelato_code": "forest",
+          "name": "Forest",
+          "hex": "#183028",
+          "verified": true
+        },
+        {
+          "gelato_code": "dark-olive",
+          "name": "Dark Olive",
+          "hex": "#36362D",
+          "verified": true
+        },
+        {
+          "gelato_code": "navy",
+          "name": "Navy",
+          "hex": "#1F2A44",
+          "verified": true
+        },
+        {
+          "gelato_code": "heather-navy",
+          "name": "Heather Navy",
+          "hex": "#3B4559",
+          "verified": true
+        },
+        {
+          "gelato_code": "dark-grey-heather",
+          "name": "Dark Grey Heather",
+          "hex": "#525657",
+          "verified": true
+        },
+        {
+          "gelato_code": "ash",
+          "name": "Ash",
+          "hex": "#dddbd1",
+          "verified": true
+        },
+        {
+          "gelato_code": "silver",
+          "name": "Silver",
+          "hex": "#C7C9C7",
+          "verified": true
+        }
+      ],
+      "price_from": 449,
+      "cost_from": 264.62,
+      "verified": true,
+      "gender": "women"
+    },
+    {
+      "slug": "womens-crop",
+      "name": "Women's Crop",
+      "blank": "Bella+Canvas 3001",
+      "provider": "gelato",
+      "blurb": "Cropped, boxy and bold \u2014 the statement piece of the drop.",
+      "catalog": "t-shirts",
+      "fabric": "100% Cotton",
+      "gsm": "142",
+      "attrs": {
+        "gca": "t-shirt",
+        "gsc": "crewneck",
+        "gcu": "unisex",
+        "gqa": "prm",
+        "brand": "bella-and-canvas_3001"
+      },
+      "uid_grammar": "apparel_product_gca_t-shirt_gsc_crewneck_gcu_unisex_gqa_prm_gsi_{size}_gco_{color}_gpr_{print}_bella-and-canvas_3001",
+      "print_tokens": {
+        "front": "4-0",
+        "back": "0-4",
+        "both": "4-4"
+      },
+      "print_area": {
+        "front": {
+          "w_cm": 30,
+          "h_cm": 40,
+          "w_px": 3543,
+          "h_px": 4724,
+          "dpi": 300
+        },
+        "back": {
+          "w_cm": 30,
+          "h_cm": 40,
+          "w_px": 3543,
+          "h_px": 4724,
+          "dpi": 300
+        }
+      },
+      "sizes": [
+        {
+          "code": "xs",
+          "label": "XS",
+          "cost_zar": 264.62,
+          "retail_zar": 529
+        },
+        {
+          "code": "s",
+          "label": "S",
+          "cost_zar": 264.62,
+          "retail_zar": 529
+        },
+        {
+          "code": "m",
+          "label": "M",
+          "cost_zar": 264.62,
+          "retail_zar": 529
+        },
+        {
+          "code": "l",
+          "label": "L",
+          "cost_zar": 264.62,
+          "retail_zar": 529
+        },
+        {
+          "code": "xl",
+          "label": "XL",
+          "cost_zar": 264.62,
+          "retail_zar": 529
+        },
+        {
+          "code": "2xl",
+          "label": "2XL",
+          "cost_zar": 306.67,
+          "retail_zar": 619
+        },
+        {
+          "code": "3xl",
+          "label": "3XL",
+          "cost_zar": 345.48,
+          "retail_zar": 699
+        },
+        {
+          "code": "4xl",
+          "label": "4XL",
+          "cost_zar": 441.74,
+          "retail_zar": 889
+        },
+        {
+          "code": "5xl",
+          "label": "5XL",
+          "cost_zar": 486.25,
+          "retail_zar": 979
+        }
+      ],
+      "colors": [
+        {
+          "gelato_code": "black",
+          "name": "Black",
+          "hex": "#25282A",
+          "verified": true
+        },
+        {
+          "gelato_code": "white",
+          "name": "White",
+          "hex": "#FFFFFF",
+          "verified": true
+        },
+        {
+          "gelato_code": "natural",
+          "name": "Natural",
+          "hex": "#DFD1A7",
+          "verified": true
+        },
+        {
+          "gelato_code": "soft-cream",
+          "name": "Soft Cream",
+          "hex": "#DECB99",
+          "verified": true
+        },
+        {
+          "gelato_code": "military-green",
+          "name": "Military Green",
+          "hex": "#60705E",
+          "verified": true
+        },
+        {
+          "gelato_code": "forest",
+          "name": "Forest",
+          "hex": "#183028",
+          "verified": true
+        },
+        {
+          "gelato_code": "dark-olive",
+          "name": "Dark Olive",
+          "hex": "#36362D",
+          "verified": true
+        },
+        {
+          "gelato_code": "navy",
+          "name": "Navy",
+          "hex": "#1F2A44",
+          "verified": true
+        },
+        {
+          "gelato_code": "heather-navy",
+          "name": "Heather Navy",
+          "hex": "#3B4559",
+          "verified": true
+        },
+        {
+          "gelato_code": "dark-grey-heather",
+          "name": "Dark Grey Heather",
+          "hex": "#525657",
+          "verified": true
+        },
+        {
+          "gelato_code": "ash",
+          "name": "Ash",
+          "hex": "#dddbd1",
+          "verified": true
+        },
+        {
+          "gelato_code": "silver",
+          "name": "Silver",
+          "hex": "#C7C9C7",
+          "verified": true
+        }
+      ],
+      "price_from": 429,
+      "cost_from": 264.62,
+      "verified": true,
+      "gender": "women"
+    }
+  ]
+}

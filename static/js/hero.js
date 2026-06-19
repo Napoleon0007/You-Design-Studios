@@ -9,10 +9,14 @@
 
   const cfg = window.HERO || {};
   const N = cfg.frames || 121;
+  // Start a little turned (3/4 view) instead of dead-on, and keep ending on the
+  // back view — progress 0..1 maps START_FRAME..N-1.
+  const START_FRAME = cfg.startFrame != null ? cfg.startFrame : 20;
   const PAD = cfg.pad || 3;
   const BASE = cfg.base || "/static/media/hero_seq/";
   const PREFIX = cfg.prefix || "f_";
   const EXT = cfg.ext || ".jpg";
+  const VIDEO = cfg.video || null;   // when set, the hero is a looping video, not the frame scrub
 
   const canvas = document.getElementById("heroCanvas");
   const loader = document.getElementById("heroLoader");
@@ -45,17 +49,20 @@
   // Reveal the first frame the instant it's ready and stream the rest in the
   // background. Mobile no longer stares at a blank loader — the figure appears
   // fast and the scrub sharpens as more frames arrive.
-  function onFrameLoaded() {
+  function onFrameLoaded(i) {
     loaded++;
     if (!firstReady && images[0] && images[0].naturalWidth) {
       firstReady = true; ready = true;
       if (loader) loader.classList.add("hide");
       sizeCanvas();
-      draw(0, true);
+      draw(START_FRAME, true);
       if (typeof ScrollTrigger !== "undefined") ScrollTrigger.refresh();
     } else if (!firstReady && loader) {
       loader.textContent = "Loading studio " + Math.round((loaded / N) * 100) + "%";
     }
+    // sharpen: if the exact frame we currently want just arrived (we were showing
+    // a nearest-loaded substitute), redraw it crisply.
+    if (firstReady && i === curFrame && lastDrawn !== curFrame) draw(curFrame, true);
     if (loaded === N && typeof ScrollTrigger !== "undefined") ScrollTrigger.refresh();
   }
 
@@ -66,7 +73,7 @@
     const w = canvas.clientWidth, h = canvas.clientHeight;
     canvas.width = Math.round(w * dpr);
     canvas.height = Math.round(h * dpr);
-    if (ready) draw(curFrame < 0 ? 0 : curFrame, true);
+    if (ready) draw(curFrame < 0 ? START_FRAME : curFrame, true);
   }
 
   // nearest already-loaded frame to `i` (so scrubbing works mid-preload)
@@ -94,9 +101,12 @@
     // Framing: portrait viewports (phones) COVER and fill the tall screen.
     // Wide viewports push BACK to a sharper, less-zoomed portrait crop
     // (face → waist), pillarboxed on black — avoids the 2x upscale blur.
-    const LAND_ZOOM = 1.3;   // 2.0 = old full-bleed cover; lower = pushed back / sharper
-    const FOCUS_Y = 0.22;    // vertical bias: 0 = top (head) … 1 = bottom
-    const scale = (cr > ir) ? (ch / ih) * LAND_ZOOM : Math.max(cw / iw, ch / ih);
+    // Framing is tunable per-clip via window.HERO (square clips need different
+    // values than the old portrait one). Defaults preserve the portrait framing.
+    const LAND_ZOOM = cfg.landZoom != null ? cfg.landZoom : 1.5;
+    const PORTRAIT_ZOOM = cfg.portraitZoom != null ? cfg.portraitZoom : 1.12;
+    const FOCUS_Y = cfg.focusY != null ? cfg.focusY : 0.18;
+    const scale = (cr > ir) ? (ch / ih) * LAND_ZOOM : Math.max(cw / iw, ch / ih) * PORTRAIT_ZOOM;
     const dw = iw * scale, dh = ih * scale;
     const dx = (cw - dw) / 2;
     const dy = (ch - dh) * FOCUS_Y;
@@ -141,7 +151,7 @@
   }
 
   function render(p) {
-    draw(Math.round(p * (N - 1)));
+    draw(Math.round(START_FRAME + p * (N - 1 - START_FRAME)));
     setText(p);
   }
 
@@ -222,6 +232,20 @@
   // ---- boot -------------------------------------------------------------- //
   window.addEventListener("resize", sizeCanvas, { passive: true });
   document.addEventListener("DOMContentLoaded", () => {
+    if (VIDEO) {
+      // Video hero: hide the frame-scrub canvas/loader, play the loop, and keep
+      // the scroll choreography for the headline + end CTA.
+      if (loader) loader.classList.add("hide");
+      if (canvas) canvas.style.display = "none";
+      const v = document.getElementById("heroVideo");
+      if (v) { const pr = v.play(); if (pr && pr.catch) pr.catch(() => {}); }
+      chrome();
+      initScroll();
+      return;
+    }
+    // Frame-scrub mode: drop the looping <video> so it can't sit over the canvas.
+    const vEl = document.getElementById("heroVideo");
+    if (vEl) { try { vEl.pause(); } catch (e) {} vEl.remove(); }
     sizeCanvas();
     chrome();
     initScroll();

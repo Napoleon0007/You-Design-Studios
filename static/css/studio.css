@@ -41,6 +41,12 @@
   object-fit: contain; pointer-events: none;
   filter: drop-shadow(0 6px 18px rgba(0,0,0,.45)); opacity: .98;
 }
+/* clean state for products that don't have a 3D model yet (no hero-mockup fallback) */
+.stage__soon { position: relative; z-index: 2; max-width: 300px; text-align: center;
+  color: var(--paper-dim); padding: 30px; }
+.stage__soon .soon-name { display: block; font-family: var(--font-display); text-transform: uppercase;
+  font-size: clamp(22px,3vw,30px); letter-spacing: .02em; color: var(--paper); margin-bottom: 12px; line-height: 1; }
+.stage__soon p { font-size: 13px; line-height: 1.55; }
 .side-toggle {
   position: absolute; top: 18px; left: 50%; transform: translateX(-50%); z-index: 4;
   display: inline-flex; background: rgba(10,10,11,.6); backdrop-filter: blur(8px);
@@ -73,6 +79,40 @@
   font-family: var(--font-ui); font-size: 14px; font-weight: 600; transition: .25s var(--ease); }
 .product-tabs button.on { border-color: var(--paper); color: var(--paper); background: var(--ink-2); }
 
+/* free-transform controls for the placed print */
+.xf { display: flex; flex-direction: column; gap: 10px; }
+.xf-row { display: flex; align-items: center; gap: 12px; }
+.xf-row span { width: 54px; font-size: 11px; color: var(--paper-dim); text-transform: uppercase; letter-spacing: .08em; }
+.xf-row input[type=range] { flex: 1; accent-color: var(--paper); height: 30px; cursor: pointer; }
+.xf-hint { display: block; color: var(--paper-dim); font-size: 11px; margin-top: 6px; line-height: 1.4; }
+
+/* ready-made design library picker — neon swipe rail */
+.design-toggle { display: inline-flex; align-items: center; gap: 8px; margin-top: 14px;
+  background: rgba(255,90,31,.07); border: 1px solid rgba(255,90,31,.5); color: var(--pop);
+  font-family: var(--font-ui); font-size: 12.5px; font-weight: 600; letter-spacing: .06em;
+  text-transform: uppercase; cursor: pointer; padding: 11px 16px; border-radius: 100px;
+  text-decoration: none; transition: .2s var(--ease); }
+.design-toggle:hover { background: var(--pop); color: var(--ink); border-color: var(--pop);
+  box-shadow: 0 6px 22px -8px rgba(255,90,31,.6); }
+.design-grid { display: flex; gap: 12px; margin-top: 14px; overflow-x: auto;
+  padding: 4px 2px 10px; scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin; scrollbar-color: rgba(255,90,31,.4) transparent; }
+.design-grid::-webkit-scrollbar { height: 6px; }
+.design-grid::-webkit-scrollbar-thumb { background: rgba(255,90,31,.35); border-radius: 100px; }
+.design-grid .muted { color: var(--paper-dim); font-size: 12px; margin: 4px 0; }
+.design-thumb { flex: 0 0 auto; width: 108px; height: 108px; scroll-snap-align: start;
+  border: 1px solid var(--line); border-radius: 14px; cursor: pointer; position: relative;
+  background: var(--ink-3) center / cover no-repeat;
+  box-shadow: 0 2px 10px rgba(0,0,0,.3);
+  transition: transform .15s var(--ease), box-shadow .2s, border-color .2s; }
+.design-thumb::after { content: "+"; position: absolute; right: 7px; bottom: 6px;
+  width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center;
+  font: 700 15px/1 var(--font-ui); color: var(--ink); background: var(--pop);
+  opacity: 0; transform: scale(.6); transition: .18s var(--ease); }
+.design-thumb:hover { transform: translateY(-3px) scale(1.02); border-color: var(--pop);
+  box-shadow: 0 10px 26px -8px rgba(255,90,31,.45); }
+.design-thumb:hover::after { opacity: 1; transform: scale(1); }
+
 .swatches { display: flex; gap: 12px; flex-wrap: wrap; }
 .swatch { width: 40px; height: 40px; border-radius: 50%; cursor: pointer; position: relative;
   border: 2px solid transparent; box-shadow: inset 0 0 0 1px var(--line); transition: transform .2s; }
@@ -86,13 +126,43 @@
 .size:hover { color: var(--paper); }
 .size.on { background: var(--paper); color: var(--ink); border-color: var(--paper); }
 
-/* upload + validation */
-.dropzone { border: 1.5px dashed var(--line); border-radius: 14px; padding: 26px; text-align: center;
-  cursor: pointer; transition: .25s var(--ease); background: var(--ink-3); }
-.dropzone:hover, .dropzone.drag { border-color: var(--pop); background: var(--ink-2); }
-.dropzone .ico { font-size: 26px; }
-.dropzone p { font-size: 14px; margin-top: 8px; }
-.dropzone small { color: var(--paper-dim); font-size: 12px; }
+/* upload — NEON DROP hero (eye-candy upload panel) */
+.dropzone { position: relative; border: 0; border-radius: 18px; padding: 30px 22px; text-align: center;
+  cursor: pointer; overflow: hidden; isolation: isolate;
+  background: linear-gradient(180deg, var(--ink-3), var(--ink-2));
+  box-shadow: 0 10px 30px -16px rgba(0,0,0,.6);
+  transition: transform .2s var(--ease), box-shadow .25s; }
+.dropzone::before { content: ""; position: absolute; inset: 0; border-radius: inherit; padding: 1.6px;
+  background: linear-gradient(120deg, var(--pop), var(--pop-warm), #d9a441, var(--pop));
+  background-size: 300% 100%;
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor; mask-composite: exclude;
+  animation: dzflow 6s linear infinite; z-index: 1; pointer-events: none; }
+.dropzone::after { content: ""; position: absolute; top: -34%; left: 50%; width: 200px; height: 200px;
+  transform: translateX(-50%); border-radius: 50%; z-index: 0; pointer-events: none;
+  background: radial-gradient(circle, rgba(255,90,31,.38), rgba(217,164,65,.16) 55%, transparent 70%);
+  filter: blur(24px); animation: dzdrift 7s ease-in-out infinite; }
+.dropzone > * { position: relative; z-index: 2; }
+.dropzone:hover, .dropzone.drag { transform: translateY(-2px);
+  box-shadow: 0 16px 40px -14px rgba(255,90,31,.5); }
+.dropzone.drag::before { animation-duration: 1.6s; }
+.dropzone .ico { width: 58px; height: 58px; margin: 0 auto; border-radius: 50%;
+  display: grid; place-items: center; font-size: 26px; color: var(--ink);
+  background: radial-gradient(circle at 50% 35%, var(--pop), #e8431a);
+  box-shadow: 0 0 0 6px rgba(255,90,31,.12), 0 6px 20px -4px rgba(255,90,31,.5);
+  animation: dzpulse 2.6s ease-in-out infinite; }
+.dropzone p { font: 600 16px/1.35 var(--font-ui); margin-top: 14px; color: var(--paper); }
+.dropzone p u { color: var(--pop); text-decoration-thickness: 2px; text-underline-offset: 3px; }
+.dropzone small { display: block; color: var(--paper-dim); font-size: 11.5px; margin-top: 10px;
+  line-height: 1.5; opacity: .9; }
+.dropzone small b { color: var(--paper); opacity: .85; }
+@keyframes dzflow { to { background-position: 300% 0; } }
+@keyframes dzpulse { 0%,100% { box-shadow: 0 0 0 6px rgba(255,90,31,.12), 0 6px 20px -4px rgba(255,90,31,.5); }
+  50% { box-shadow: 0 0 0 13px rgba(255,90,31,0), 0 6px 26px -2px rgba(255,90,31,.7); } }
+@keyframes dzdrift { 0%,100% { transform: translateX(-50%) translateY(0); }
+  50% { transform: translateX(-50%) translateY(10px); } }
+@media (prefers-reduced-motion: reduce) {
+  .dropzone::before, .dropzone::after, .dropzone .ico { animation: none; } }
 
 .validation { margin-top: 16px; border-radius: 12px; padding: 16px; font-size: 13px;
   border: 1px solid var(--line); display: none; }
@@ -104,6 +174,21 @@
 .validation.fail { border-color: rgba(229,96,77,.4); } .validation.fail .badge { background: var(--fail); }
 .validation .meta { color: var(--paper-dim); margin-top: 8px; line-height: 1.5; }
 .validation .meta b { color: var(--paper); font-weight: 600; }
+
+/* content / IP moderation verdict */
+.modnote { margin-top: 10px; border-radius: 10px; padding: 12px 14px; font-size: 12.5px;
+  line-height: 1.45; border: 1px solid var(--line); display: flex; gap: 9px; align-items: flex-start; }
+.modnote[hidden] { display: none; }
+.modnote .ico { font-size: 14px; line-height: 1.2; flex: 0 0 auto; }
+.modnote.approved { border-color: rgba(118,200,147,.45); color: var(--paper); }
+.modnote.review   { border-color: rgba(230,180,80,.45); }
+.modnote.blocked  { border-color: rgba(229,96,77,.5); }
+.modnote b { color: var(--paper); }
+
+/* rights / IP confirmation */
+.rights { display: flex; gap: 10px; align-items: flex-start; margin-top: 30px;
+  font-size: 12.5px; line-height: 1.45; color: var(--paper-dim); cursor: pointer; }
+.rights input { margin-top: 2px; width: 18px; height: 18px; flex: 0 0 auto; accent-color: var(--pop); cursor: pointer; }
 
 .qty { display: inline-flex; align-items: center; border: 1px solid var(--line); border-radius: 100px; }
 .qty button { width: 44px; height: 44px; background: transparent; border: 0; color: var(--paper);
@@ -124,34 +209,167 @@
   .studio { grid-template-columns: 1fr; }
   .stage { position: relative; top: 0; height: 56svh; border-right: 0; border-bottom: 1px solid var(--line); }
 }
-/* ===================== LIGHT STUDIO (this page only) ===================== *
- * Landing stays dark; the design workspace is white. Scoped to .theme-light
- * so it never touches the landing page. Most components flip automatically
- * because they read the CSS variables; the few hard-coded glass surfaces are
- * overridden below.                                                          */
+/* ===================== STUDIO THEME (this page only) ===================== *
+ * Unified BLACK workspace to match the brand (Rex-Trueform orange / black /
+ * gold). Scoped to .theme-light (the class the studio body carries) but now
+ * carrying the dark Furnace palette, so the design workspace is black like the
+ * landing. Components flip automatically because they read the CSS variables;
+ * the few hard-coded glass surfaces are overridden below.                    */
 body.theme-light {
-  --ink:       #f6f4ef;   /* page background (warm white) */
-  --ink-2:     #ffffff;   /* raised surface / panels      */
-  --ink-3:     #eeeae1;   /* cards / insets               */
-  --paper:     #18160f;   /* primary text                 */
-  --paper-dim: #6b685e;   /* muted text                   */
-  --line:      rgba(24,22,15,.14);
-  --olive:     #51592c;   /* readable accent on white     */
+  --ink:       #0a0a0a;   /* page background (black)      */
+  --ink-2:     #141210;   /* raised surface (warm black)  */
+  --ink-3:     #1c1813;   /* cards / insets (warm black)  */
+  --paper:     #f6f1e9;   /* primary text (warm off-white)*/
+  --paper-dim: #b7ae9e;   /* muted text                   */
+  --line:      rgba(255,235,210,.12);   /* warm dividers  */
+  --olive:     #d9a441;   /* gold accent                  */
 }
-body.theme-light .grain { opacity: .035; }
-body.theme-light .studio-nav { background: rgba(246,244,239,.85); }
+body.theme-light .grain { opacity: .05; }
+body.theme-light .studio-nav { background: rgba(10,10,11,.82); }
 body.theme-light .stage {
-  background: radial-gradient(120% 110% at 50% 30%, #ffffff, var(--ink) 74%);
+  background:
+    linear-gradient(rgba(6,7,14,.5), rgba(6,7,14,.74)),
+    url("/static/media/space-bg.jpg") center 35% / cover no-repeat,
+    #07070c;
+  transition: background-color .35s ease;
 }
-body.theme-light .stage__note { background: rgba(246,244,239,.82); color: var(--paper-dim); }
-body.theme-light .side-toggle { background: rgba(246,244,239,.82); }
+/* white / pale garments need a lighter backdrop so they stay visible on black */
+body.theme-light .stage.garment-light {
+  background:
+    linear-gradient(rgba(6,7,14,.66), rgba(6,7,14,.84)),
+    url("/static/media/space-bg.jpg") center 35% / cover no-repeat,
+    #07070c;
+}
+body.theme-light .stage__note { background: rgba(10,10,11,.6); color: var(--on-dark); }
+body.theme-light .side-toggle { background: rgba(10,10,11,.6); }
+
+/* mobile only: product picker + specs lifted ABOVE the garment stage (JS moves
+   the #productTabs field + name/price/blurb block into this slot at <=900px). */
+.prodhead-mobile { padding: 12px var(--gut) 4px; background: var(--ink);
+  min-width: 0; overflow: hidden; }                 /* bound to the grid track */
+.prodhead-mobile .field { margin-top: 0; min-width: 0; }
+.prodhead-mobile #productTabs { max-width: 100%; }  /* tabs scroll, don't widen the page */
+.prodhead-mobile #pName { margin-top: 14px; }
 
 /* mobile touch targets + safe areas */
 @media (max-width: 760px){
-  .studio-nav { padding-top: max(12px, env(safe-area-inset-top)); }
+  .studio-nav { padding-top: max(12px, env(safe-area-inset-top)); padding-left: 12px; padding-right: 12px; gap: 8px; }
+  .studio-nav .left { gap: 10px; min-width: 0; flex: 1 1 auto; overflow: hidden; }
+  .studio-nav .left .brand { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .studio-nav .right { gap: 8px; flex: 0 0 auto; }
+  .studio-nav .right .btn { padding: 9px 11px !important; font-size: 11.5px !important; white-space: nowrap; }
+  /* product tabs become a horizontal scroll strip so long garment names never overflow */
+  .product-tabs { overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+  .product-tabs::-webkit-scrollbar { display: none; }
+  .product-tabs button { flex: 0 0 auto; padding: 12px 16px; }
   .swatch { width: 46px; height: 46px; }
   .size { min-width: 58px; padding: 15px 0; }
   .qty button { width: 50px; height: 50px; }
   .dropzone { padding: 30px 20px; }
   .panel { padding-bottom: max(40px, env(safe-area-inset-bottom)); }
+}
+
+/* ============================================================= *
+ *  STUDIO POLISH — visual refinements (mobile-first)
+ * ============================================================= */
+
+/* #3 — hide the raw Gelato UID from customers (it's a dev/debug string) */
+.sku { display: none; }
+
+/* #2 — soft contact shadow so the 3D garment sits on a surface, not floating */
+#garment3d { z-index: 2; }
+.stage::after {
+  content: ""; position: absolute; left: 50%; bottom: 11%; z-index: 1;
+  width: min(52%, 320px); height: 38px; transform: translateX(-50%);
+  background: radial-gradient(ellipse at center, rgba(20,18,12,.20), rgba(20,18,12,0) 70%);
+  filter: blur(4px); pointer-events: none;
+}
+body.theme-light .stage::after {
+  background: radial-gradient(ellipse at center, rgba(20,18,12,.14), rgba(20,18,12,0) 72%);
+}
+
+/* #6 — loading overlay while a (heavy) GLB streams in (element injected by garment3d.js) */
+.g3d-loading {
+  position: absolute; inset: 0; z-index: 6; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 14px; pointer-events: none;
+}
+.g3d-spin {
+  width: 34px; height: 34px; border-radius: 50%;
+  border: 3px solid var(--line); border-top-color: var(--paper);
+  animation: g3dspin .8s linear infinite;
+}
+@keyframes g3dspin { to { transform: rotate(360deg); } }
+.g3d-load-txt { font-size: 11px; letter-spacing: .16em; text-transform: uppercase; color: var(--paper-dim); }
+
+/* #10 — panel polish: section dividers, tighter heading, softer swatch ring, tactile taps */
+.panel .field + .field { border-top: 1px solid var(--line); padding-top: 26px; }
+.panel h1 { letter-spacing: -0.01em; }
+.swatch.on { box-shadow: inset 0 0 0 1px var(--line), 0 0 0 2px var(--ink-2), 0 0 0 4px var(--pop); }
+.swatch, .size { transition: transform .12s var(--ease), box-shadow .2s var(--ease); }
+.swatch:active, .size:active { transform: scale(.93); }
+
+/* #5 — reset-view control + one-time interaction hint (elements injected by garment3d.js) */
+.g3d-reset {
+  position: absolute; right: 14px; bottom: 14px; z-index: 5;
+  width: 42px; height: 42px; border-radius: 50%; cursor: pointer;
+  background: rgba(255,255,255,.72); backdrop-filter: blur(8px);
+  border: 1px solid var(--line); color: var(--paper); font-size: 19px; line-height: 1;
+  display: grid; place-items: center; transition: transform .18s var(--ease);
+}
+.g3d-reset:hover { transform: rotate(-45deg); }
+.g3d-reset:active { transform: scale(.9); }
+.g3d-hint {
+  position: absolute; left: 50%; bottom: 60px; transform: translateX(-50%); z-index: 5;
+  font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--paper-dim);
+  background: rgba(255,255,255,.6); backdrop-filter: blur(6px); border: 1px solid var(--line);
+  padding: 6px 12px; border-radius: 100px; pointer-events: none; white-space: nowrap;
+  opacity: 0; animation: g3dHint 6.5s ease forwards;
+}
+@keyframes g3dHint { 0%,6% { opacity: 0 } 14%,68% { opacity: .9 } 100% { opacity: 0 } }
+
+/* #4 — sticky "Add to cart" on phone (thumb zone). The checkout chat's cart sheet
+   sits above this (z60) when open, so they never clash. */
+@media (max-width: 900px) {
+  .panel .actions {
+    position: sticky; bottom: 0; z-index: 30;
+    margin-top: 30px; padding: 12px 0 max(10px, env(safe-area-inset-bottom));
+    background: rgba(251,250,246,.93);
+    -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
+    border-top: 1px solid var(--line);
+  }
+  .panel .actions .btn.ghost { display: none; }   /* one clear action in the sticky bar */
+  .panel { padding-bottom: 8px; }                  /* sticky bar carries the safe-area inset */
+}
+
+/* ============================================================= *
+ *  MOBILE COLOUR DOCK — keep the palette on-screen WITH the garment
+ *  so colour changes are visible without scrolling. On phones the
+ *  #swatches element is relocated here (studio.js); desktop unchanged.
+ * ============================================================= */
+.stage-dock { display: none; }
+@media (max-width: 900px) {
+  /* give the dock room + lift the in-stage controls above it */
+  .stage { height: 50svh; }
+  .stage__note { display: none; }            /* decorative; the side-toggle already shows front/back */
+  .g3d-reset  { bottom: 80px; }              /* sit above the colour dock */
+  .g3d-hint   { bottom: 124px; }
+  .stage::after { bottom: 84px; }            /* contact shadow above the dock */
+
+  .stage-dock:not([hidden]) {
+    display: flex; flex-direction: column; gap: 8px;
+    position: absolute; left: 0; right: 0; bottom: 0; z-index: 6;
+    padding: 14px 14px max(12px, env(safe-area-inset-bottom));
+    background: linear-gradient(to top, var(--ink) 28%, rgba(0,0,0,0));
+    pointer-events: auto;
+  }
+  .stage-dock .dock-cap { font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: var(--paper-dim); }
+  .stage-dock .dock-cap b { color: var(--paper); letter-spacing: .02em; text-transform: none; font-size: 13px; }
+  /* the moved #swatches becomes a single-row, horizontally scrollable strip */
+  .stage-dock #swatches {
+    flex-wrap: nowrap; overflow-x: auto; -webkit-overflow-scrolling: touch;
+    scrollbar-width: none; gap: 12px; padding: 2px 0;
+  }
+  .stage-dock #swatches::-webkit-scrollbar { display: none; }
+  .stage-dock .swatch { flex: 0 0 auto; width: 38px; height: 38px; }
+  /* the now-empty panel colour field is hidden while docked (set by studio.js) */
 }

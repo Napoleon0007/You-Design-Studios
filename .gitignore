@@ -3,8 +3,12 @@ __pycache__/
 .DS_Store
 data/*.db
 data/files/
+data/outbox/
 data/gelato_catalog.json
 data/gelato_*.json
+# …but the VERIFIED apparel catalog IS needed at runtime (catalog.py reads it),
+# so it must ship to Railway. Without it the store loads with zero products.
+!data/gelato_apparel.json
 .env
 venv/
 .venv/
@@ -12,3 +16,9 @@ venv/
 # Anchored to repo root so it does NOT match the processed clips in static/media/.
 /_users_*.MP4
 /*.MP4
+# Source/original Meshy renders + garment source photos (~178MB of 12–60MB GLBs).
+# Only the Draco-compressed copies in static/models/ are used at runtime; shipping
+# these originals balloons `railway up` to ~200MB and times the upload out.
+/Garment photos for Meshy/
+# Stray mockup template that isn't referenced anywhere on the site.
+/brown-professional-premium-unisex-mockup-hood-design-template-*.webp

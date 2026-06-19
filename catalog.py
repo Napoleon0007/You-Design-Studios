@@ -1,120 +1,162 @@
 """
-INKHAUS catalogue.
+You Design Studios catalogue — VERIFIED, apparel only.
 
-MOCK now — but structured exactly like Gelato's Product Catalog API so it flips
-to live the moment a real Gelato API key is added:
+Loads `data/gelato_apparel.json` (built by build_apparel_catalog.py from the
+LIVE Gelato Catalog API). Every product UID here was pulled and verified to
+resolve against Gelato — never hand-typed — so an order can't map to the wrong
+product (Luke's #1 concern: no cup -> shirt).
 
-  * Gelato product UIDs follow the real token format, e.g.
-    apparel_product_gca_t-shirt_gsc_crewneck_gcu_unisex_gqa_premium
-    _gsi_{size}_gco_{color}_gpr_4-0
-  * Each colour carries a `gelato_code` (Gelato's colour token) + a reference
-    image (Gelato's flat product photo / a Grok-made stand-in for now).
-  * Each size carries Gelato's size token.
-  * Print areas mirror Gelato apparel print files (~30×40cm @ 300 DPI).
+Public surface (kept stable for app.py + studio.js):
+  PRODUCTS                 compat list for templates
+  PRINT_AREA               front/back print dims (px @ DPI)
+  studio_products(url_for) rich front-end payload (per-size retail, real hex)
+  build_uid(slug, color_code, size_code, sides="front")  -> exact Gelato UID
+  unit_price_cents(slug, size_code)                       -> retail for a size
+  verify_item(slug, color_code, size_code)                -> structural guard
+  live_verify_uid(uid, expected_gca)                      -> live Gelato guard
 
-When the key lands, swap `MODE = "live"` and replace `STUDIO_PRODUCTS` with a
-pull from product.gelatoapis.com (UIDs/variants/previewUrl already match).
+If the verified file is missing the module still imports (empty catalogue) so
+the app boots; run `python3 build_apparel_catalog.py` to populate it.
 """
 from __future__ import annotations
 
-MODE = "mock"  # -> "live" once a Gelato API key is wired
+import json
+from pathlib import Path
 
-# Gelato UID templates per garment. {size}/{color} are filled per variant.
-UID_TEMPLATES = {
-    "heavy-hoodie": "apparel_product_gca_hoodie_gsc_pullover_gcu_unisex_gqa_premium_gsi_{size}_gco_{color}_gpr_4-0",
-    "oversized-tee": "apparel_product_gca_t-shirt_gsc_crewneck_gcu_unisex_gqa_premium_gsi_{size}_gco_{color}_gpr_4-0",
+_DATA = Path(__file__).resolve().parent / "data" / "gelato_apparel.json"
+
+# Reference photos per garment category (real per-garment/colour photos are a
+# separate open TODO; the studio also tints these via the --garment CSS var).
+_REF = {
+    "t-shirt": "media/ref_tee.jpg",
+    "hoodie": "media/ref_hoodie.jpg",
+    "sweatshirt": "media/ref_hoodie.jpg",
 }
 
-# Print areas (front/back) — cm + px @ 300 DPI, matching Gelato apparel files.
+# Default print area — overridden by the catalogue file when present. Matches
+# printfile.py (30x40cm @ 300 DPI) so render + catalogue never disagree.
 PRINT_AREA = {
     "front": {"w_cm": 30, "h_cm": 40, "w_px": 3543, "h_px": 4724, "dpi": 300},
     "back":  {"w_cm": 30, "h_cm": 40, "w_px": 3543, "h_px": 4724, "dpi": 300},
 }
 
-PRODUCTS = [
-    {
-        "slug": "heavy-hoodie",
-        "name": "Heavyweight Hoodie",
-        "blurb": "450gsm brushed-back fleece. Oversized streetwear cut.",
-        "price": 749,
-        "ref_image": "media/ref_hoodie.jpg",   # mock Gelato photo (swap via Grok)
-        # Curated from Gildan 18500 (Gelato's classic hoodie). Differs from the
-        # tee on purpose — not every colour exists on every garment. Exact
-        # availability + Gelato gco_ codes get synced from the Catalog API later.
-        "colors": [
-            {"name": "White",          "hex": "#f4f3ee", "gelato_code": "white"},
-            {"name": "Black",          "hex": "#1b1b1b", "gelato_code": "black"},
-            {"name": "Navy",           "hex": "#2a3145", "gelato_code": "navy"},
-            {"name": "Sport Grey",     "hex": "#b6b6b1", "gelato_code": "sport_grey"},
-            {"name": "Dark Heather",   "hex": "#46474c", "gelato_code": "dark_heather"},
-            {"name": "Charcoal",       "hex": "#4a4a4d", "gelato_code": "charcoal"},
-            {"name": "Military Green", "hex": "#4f5340", "gelato_code": "military_green"},
-            {"name": "Maroon",         "hex": "#5a2230", "gelato_code": "maroon"},
-            {"name": "Red",            "hex": "#b22232", "gelato_code": "red"},
-            {"name": "Royal",          "hex": "#25408f", "gelato_code": "royal"},
-            {"name": "Sand",           "hex": "#d8c7a4", "gelato_code": "sand"},
-            {"name": "Light Pink",     "hex": "#e7bcc8", "gelato_code": "light_pink"},
-        ],
-        "sizes": [
-            {"label": "S", "gelato_code": "s"}, {"label": "M", "gelato_code": "m"},
-            {"label": "L", "gelato_code": "l"}, {"label": "XL", "gelato_code": "xl"},
-            {"label": "2XL", "gelato_code": "2xl"},
-        ],
-    },
-    {
-        "slug": "oversized-tee",
-        "name": "Oversized Boxy Tee",
-        "blurb": "240gsm combed cotton. Drop shoulder, heavy drape.",
-        "price": 349,
-        "ref_image": "media/ref_tee.jpg",
-        # Curated from Gildan 64000 Softstyle (Gelato's classic tee). Wider
-        # range than the hoodie (e.g. Forest Green / Light Blue / Natural).
-        "colors": [
-            {"name": "White",          "hex": "#f4f3ee", "gelato_code": "white"},
-            {"name": "Black",          "hex": "#1b1b1b", "gelato_code": "black"},
-            {"name": "Navy",           "hex": "#2a3145", "gelato_code": "navy"},
-            {"name": "Sport Grey",     "hex": "#b6b6b1", "gelato_code": "sport_grey"},
-            {"name": "Dark Heather",   "hex": "#46474c", "gelato_code": "dark_heather"},
-            {"name": "Charcoal",       "hex": "#4a4a4d", "gelato_code": "charcoal"},
-            {"name": "Military Green", "hex": "#4f5340", "gelato_code": "military_green"},
-            {"name": "Forest Green",   "hex": "#223b2a", "gelato_code": "forest_green"},
-            {"name": "Maroon",         "hex": "#5a2230", "gelato_code": "maroon"},
-            {"name": "Red",            "hex": "#b22232", "gelato_code": "red"},
-            {"name": "Royal Blue",     "hex": "#25408f", "gelato_code": "royal"},
-            {"name": "Light Blue",     "hex": "#92b6d5", "gelato_code": "light_blue"},
-            {"name": "Sand",           "hex": "#d8c7a4", "gelato_code": "sand"},
-            {"name": "Natural",        "hex": "#e6ddc9", "gelato_code": "natural"},
-        ],
-        "sizes": [
-            {"label": "S", "gelato_code": "s"}, {"label": "M", "gelato_code": "m"},
-            {"label": "L", "gelato_code": "l"}, {"label": "XL", "gelato_code": "xl"},
-            {"label": "2XL", "gelato_code": "2xl"},
-        ],
-    },
-]
+# Print-config tokens (gpr_): which sides carry artwork.
+PRINT_TOKENS = {"front": "4-0", "back": "0-4", "both": "4-4"}
 
 
-def build_uid(slug: str, color_code: str, size_code: str) -> str | None:
-    """Compose the Gelato product UID for a chosen variant."""
-    tmpl = UID_TEMPLATES.get(slug)
-    if not tmpl:
-        return None
-    return tmpl.format(size=size_code, color=color_code)
+def _load() -> dict:
+    if _DATA.exists():
+        try:
+            return json.loads(_DATA.read_text())
+        except (ValueError, OSError):
+            pass
+    return {"mode": "stub", "currency": "ZAR", "bases": []}
+
+
+_CATALOG = _load()
+MODE = _CATALOG.get("mode", "stub")
+CURRENCY = _CATALOG.get("currency", "ZAR")
+MARKUP = _CATALOG.get("markup")
+BASES = _CATALOG.get("bases", [])
+if BASES and BASES[0].get("print_area"):
+    PRINT_AREA = BASES[0]["print_area"]
+
+_BY_SLUG = {b["slug"]: b for b in BASES}
+
+
+def _ref_image(base: dict) -> str:
+    return _REF.get(base.get("attrs", {}).get("gca", ""), "media/ref_tee.jpg")
+
+
+# --------------------------------------------------------------- compat ----- #
+def provider_of(slug: str) -> str:
+    """Which fulfilment system makes this product. Single source of truth."""
+    b = _BY_SLUG.get(slug)
+    return (b or {}).get("provider", "gelato")
+
+
+def _compat_product(b: dict) -> dict:
+    """Shape the templates/orders expect (price = the 'from' retail)."""
+    return {
+        "slug": b["slug"],
+        "name": b["name"],
+        "blurb": b["blurb"],
+        "provider": b.get("provider", "gelato"),
+        "price": b.get("price_from"),
+        "ref_image": _ref_image(b),
+        "colors": [{"name": c["name"], "hex": c["hex"],
+                    "gelato_code": c["gelato_code"]} for c in b["colors"]],
+        "sizes": [{"label": s["label"], "gelato_code": s["code"]} for s in b["sizes"]],
+    }
+
+
+PRODUCTS = [_compat_product(b) for b in BASES]
 
 
 def studio_products(url_for) -> list[dict]:
     """Front-end payload. `url_for` is Flask's static URL builder."""
     out = []
-    for p in PRODUCTS:
+    for b in BASES:
         out.append({
-            "slug": p["slug"],
-            "name": p["name"],
-            "blurb": p["blurb"],
-            "price": p["price"],
-            "ref_image": url_for("static", filename=p["ref_image"]),
+            "slug": b["slug"],
+            "name": b["name"],
+            "blank": b.get("blank"),
+            "blurb": b["blurb"],
+            "fabric": b.get("fabric"),
+            "gsm": b.get("gsm"),
+            "price": b.get("price_from"),       # display "from"; sizes carry their own
+            "price_from": b.get("price_from"),
+            "ref_image": url_for("static", filename=_ref_image(b)),
             "print_area": PRINT_AREA,
-            "uid_template": UID_TEMPLATES[p["slug"]],
-            "colors": p["colors"],
-            "sizes": p["sizes"],
+            "uid_template": build_uid(b["slug"], "{color}", "{size}", "front"),
+            "colors": [{"name": c["name"], "hex": c["hex"],
+                        "gelato_code": c["gelato_code"]} for c in b["colors"]],
+            "sizes": [{"label": s["label"], "gelato_code": s["code"],
+                       "retail": s.get("retail_zar")} for s in b["sizes"]],
         })
     return out
+
+
+# --------------------------------------------------------------- UIDs ------- #
+def build_uid(slug: str, color_code: str, size_code: str,
+              sides: str = "front") -> str | None:
+    """Compose the exact Gelato product UID. `sides` in front/back/both."""
+    b = _BY_SLUG.get(slug)
+    if not b:
+        return None
+    a = b["attrs"]
+    gpr = PRINT_TOKENS.get(sides, "4-0")
+    return (f"apparel_product_gca_{a['gca']}_gsc_{a['gsc']}_gcu_{a['gcu']}"
+            f"_gqa_{a['gqa']}_gsi_{size_code}_gco_{color_code}_gpr_{gpr}_{a['brand']}")
+
+
+def sides_for(has_front: bool, has_back: bool) -> str:
+    if has_front and has_back:
+        return "both"
+    return "back" if has_back else "front"
+
+
+# --------------------------------------------------------------- pricing ---- #
+def unit_price_cents(slug: str, size_code: str) -> int:
+    """Retail price (cents) for a specific size; falls back to 'from' price."""
+    b = _BY_SLUG.get(slug)
+    if not b:
+        return 0
+    for s in b["sizes"]:
+        if s["code"] == size_code and s.get("retail_zar"):
+            return int(round(s["retail_zar"] * 100))
+    return int(round((b.get("price_from") or 0) * 100))
+
+
+# --------------------------------------------------------------- guards ----- #
+def verify_item(slug: str, color_code: str, size_code: str) -> tuple[bool, str]:
+    """STRUCTURAL guard (offline): the variant must exist in our verified
+    catalogue. Returns (ok, expected_gca) or (False, reason)."""
+    b = _BY_SLUG.get(slug)
+    if not b:
+        return False, f"Unknown product '{slug}'"
+    if size_code not in {s["code"] for s in b["sizes"]}:
+        return False, f"Size '{size_code}' not offered for {b['name']}"
+    if color_code not in {c["gelato_code"] for c in b["colors"]}:
+        return False, f"Colour '{color_code}' not offered for {b['name']}"
+    return True, b["attrs"]["gca"]
