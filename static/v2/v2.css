@@ -94,6 +94,15 @@ a { color: inherit; text-decoration: none; }
   background: radial-gradient(ellipse at center, rgba(0,0,0,.28), transparent 70%);
   filter: blur(6px); z-index: 1; pointer-events: none;
 }
+/* instant poster — a clean tee shown the moment the page opens (never a blank hero);
+   fades out once the live 3D garment has rendered. Stays put if WebGL is unavailable. */
+.hero-poster {
+  position: absolute; left: 50%; top: 49%; transform: translate(-50%, -50%);
+  height: 62%; width: auto; max-width: 88%; object-fit: contain; z-index: 3;
+  pointer-events: none; opacity: 1; transition: opacity .8s var(--ease);
+  filter: drop-shadow(0 26px 38px rgba(0,0,0,.16));
+}
+.hero-stage.hero-ready .hero-poster { opacity: 0; }
 /* fade the garment out/in during a swap */
 .hero-stage.swapping #garment3d { opacity: 0; transform: translateY(12px) scale(.985); }
 #garment3d { transition: opacity .42s var(--ease), transform .42s var(--ease); }

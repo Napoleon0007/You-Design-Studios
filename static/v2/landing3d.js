@@ -79,6 +79,8 @@
       if (d.ok && Array.isArray(d.designs)) designs = d.designs.map((x) => ({ url: x.url, title: x.title }));
     } catch (e) { /* no library → garments still cycle, blank-chested */ }
     await showCombo(0);
+    // the first garment frame is up → cross-fade the instant poster out (2 rAFs = painted)
+    requestAnimationFrame(() => requestAnimationFrame(() => stage.classList.add("hero-ready")));
     startTimer();
 
     // Pause the carousel while the visitor is inspecting a garment; resume after idle.

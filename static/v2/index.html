@@ -8,6 +8,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
   <link rel="preconnect" href="https://www.gstatic.com" crossorigin />
+  <link rel="preload" as="image" href="/static/v2/hero-poster.png" fetchpriority="high" />
   <link rel="preload" as="fetch" crossorigin href="/static/models/meshy_tee.glb" />
   <link rel="icon" type="image/svg+xml" href="/static/v2/favicon.svg" />
   <link rel="stylesheet" href="/static/v2/v2.css" />
@@ -41,6 +42,9 @@
     </div>
 
     <div class="hero-garment">
+      <!-- instant poster: a clean tee shown immediately so the page is never blank;
+           cross-fades out once the live 3D garment has rendered its first frame -->
+      <img class="hero-poster" src="/static/v2/hero-poster.png" alt="" aria-hidden="true" fetchpriority="high" />
       <canvas id="garment3d"></canvas>
       <div class="garment-shadow" aria-hidden="true"></div>
     </div>
