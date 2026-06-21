@@ -51,9 +51,20 @@
   <!-- ─────────────────────── gallery ─────────────────────── -->
   <section class="gallery2" id="gallery">
     <div class="gallery2-head">
-      <h2>The Gallery</h2>
-      <p>Pieces brought to life in the studio — a wall of looks to get the ideas flowing.</p>
+      <h2>The Collection</h2>
+      <p>Shirts we've already brought to life — flip through, then make your own.</p>
     </div>
+
+    <!-- ROLODEX — 2D shirts that have been done (cards built from /api/designs) -->
+    <div class="rolodex" id="rolodex" aria-roledescription="carousel" aria-label="Designs">
+      <button class="rdx-arrow prev" id="rdxPrev" type="button" aria-label="Previous">&lsaquo;</button>
+      <div class="rdx-track" id="rdxTrack"></div>
+      <button class="rdx-arrow next" id="rdxNext" type="button" aria-label="Next">&rsaquo;</button>
+    </div>
+    <div class="rdx-dots" id="rdxDots"></div>
+
+    <!-- the 3D clips keep their own cards -->
+    <div class="motion-head"><h3>In motion</h3><span>the studio, spinning</span></div>
     <div class="tile-grid">
       <div class="tile"><video preload="none" muted loop playsinline poster="/static/media/hero_v4_poster.jpg" src="/static/media/hero_v4.mp4"></video><span class="likes">218 likes</span></div>
       <div class="tile"><video preload="none" muted loop playsinline poster="/static/media/hero_v1_poster.jpg" src="/static/media/hero_v1.mp4"></video><span class="likes">186 likes</span></div>
@@ -79,6 +90,7 @@
   <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/geometries/DecalGeometry.js"></script>
   <script src="/static/js/garment3d.js"></script>
   <script src="/static/v2/landing3d.js"></script>
+  <script src="/static/v2/rolodex.js"></script>
   <script>
     // Brand name (in flux) — pull the live value so the wordmark always matches.
     fetch("/healthz").then((r) => r.json()).then((d) => {
