@@ -81,6 +81,17 @@ a { color: inherit; text-decoration: none; }
   letter-spacing: .14em; text-transform: uppercase; min-height: 1.2em; }
 .hero-cap b { color: #fff; font-weight: 600; }
 
+/* kinetic typography: staggered reveal on load + caption pop on each garment swap */
+.hero-copy .word, .hero-copy .hero-line, .hero-copy .hero-sub, .hero-copy .hero-cap {
+  opacity: 0; transform: translateY(16px); transition: opacity .8s var(--ease), transform .8s var(--ease);
+}
+.hero-copy.reveal .word { opacity: 1; transform: none; transition-delay: .05s; }
+.hero-copy.reveal .hero-line { opacity: 1; transform: none; transition-delay: .18s; }
+.hero-copy.reveal .hero-sub { opacity: 1; transform: none; transition-delay: .28s; }
+.hero-copy.reveal .hero-cap { opacity: 1; transform: none; transition-delay: .38s; }
+@keyframes capPop { 0% { opacity: 0; transform: translateY(8px); } 100% { opacity: 1; transform: none; } }
+.hero-cap.cap-pop { animation: capPop .5s var(--ease); }
+
 /* the floating garment */
 .hero-garment {
   position: absolute; inset: 0; z-index: 2;
@@ -215,3 +226,22 @@ a { color: inherit; text-decoration: none; }
     .126em .126em 0 #15151a,.144em .144em 0 #15151a,
     .17em .21em .12em rgba(0,0,0,.32);
 }
+
+/* logo to top-left, beside the hamburger menu */
+.v2nav{ display:flex; align-items:center; gap:12px; }
+.v2nav .mark{ justify-self:start; }
+.v2nav .acct{ margin-left:auto; }
+/* logo: smaller + softer so it blends into the hero */
+.v2nav .mark{ color: rgba(255,255,255,.84); text-shadow: 0 1px 10px rgba(0,0,0,.16); }
+.v2nav .navmark{ width: 18px; height: 18px; }
+.v2nav .navword{ font-size: clamp(12px, 1.3vw, 14px); letter-spacing: .04em; }
+/* hero tagline + blurb */
+.hero-tag{ font-weight:800; text-transform:uppercase; letter-spacing:.13em;
+  font-size:clamp(13px,1.7vw,19px); color:rgba(255,255,255,.95); margin-top:16px; }
+.hero-blurb{ font-weight:500; font-size:clamp(12px,1.35vw,15px); color:rgba(255,255,255,.72);
+  margin-top:7px; max-width:34ch; line-height:1.5; }
+/* top-left logo = the throw-up wordmark, small + clean */
+.v2nav .navword{ font-family:'Titan One', system-ui, sans-serif; font-weight:400;
+  letter-spacing:.02em; font-size:clamp(15px,1.5vw,18px);
+  -webkit-text-stroke:.6px rgba(0,0,0,.35); }
+.v2nav .navmark{ width:20px; height:20px; }
