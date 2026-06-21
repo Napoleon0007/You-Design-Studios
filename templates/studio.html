@@ -10,7 +10,8 @@
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
   <link rel="preconnect" href="https://www.gstatic.com" crossorigin />
   <link rel="preload" as="fetch" crossorigin href="{{ url_for('static', filename='models/meshy_tee.glb') }}" />
-  <link href="https://fonts.googleapis.com/css2?family=Anton&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="icon" type="image/svg+xml" href="/static/v2/favicon.svg" />
+  <link href="https://fonts.googleapis.com/css2?family=Anton&family=Archivo:wght@700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
   <link rel="stylesheet" href="{{ url_for('static', filename='css/studio.css') }}" />
   <style>
@@ -78,8 +79,15 @@
 
   <nav class="studio-nav">
     <div class="left">
-      <a class="back" href="/">← Back</a>
-      <a class="brand" href="/" style="font-size:clamp(13px,3vw,18px)">{{ brand.name }}<span class="dot">.</span></a>
+      <a class="back" href="/static/v2/index.html">← Back</a>
+      <a class="brand" href="/static/v2/index.html" aria-label="TRUeF">
+        <svg class="navmark" viewBox="0 0 100 100" fill="none" aria-hidden="true">
+          <rect x="9" y="9" width="82" height="82" rx="22" stroke="currentColor" stroke-width="7"/>
+          <rect x="30" y="31" width="40" height="10.5" rx="2" fill="currentColor"/>
+          <rect x="44.75" y="31" width="10.5" height="40" rx="2" fill="currentColor"/>
+        </svg>
+        <span class="navword">TRU<span class="e">e</span>F</span>
+      </a>
     </div>
     <div class="right">
       <button class="btn ghost" id="saveBtn" style="padding:10px 18px;font-size:13px">♡ Save design</button>

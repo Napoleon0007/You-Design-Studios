@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Create — Studio</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
+  <link rel="preconnect" href="https://www.gstatic.com" crossorigin />
+  <link rel="preload" as="fetch" crossorigin href="/static/models/meshy_tee.glb" />
+  <link rel="icon" type="image/svg+xml" href="/static/v2/favicon.svg" />
+  <link rel="stylesheet" href="/static/v2/v2.css" />
+</head>
+<body>
+  <!-- ───────────────────────── nav ───────────────────────── -->
+  <nav class="v2nav">
+    <div class="menu" aria-label="Menu"><span></span><span></span><span></span></div>
+    <a class="mark" href="#" aria-label="TRUeF">
+      <svg class="navmark" viewBox="0 0 100 100" fill="none" aria-hidden="true">
+        <rect x="9" y="9" width="82" height="82" rx="22" stroke="currentColor" stroke-width="7"/>
+        <rect x="30" y="31" width="40" height="10.5" rx="2" fill="currentColor"/>
+        <rect x="44.75" y="31" width="10.5" height="40" rx="2" fill="currentColor"/>
+      </svg>
+      <span class="navword">TRU<span class="e">e</span>F</span>
+    </a>
+    <a class="acct" href="/studio" aria-label="Account"></a>
+  </nav>
+
+  <!-- ───────────────────────── hero ──────────────────────── -->
+  <header class="hero-stage" id="hero">
+    <div class="hero-copy">
+      <h1 class="word">TRU<span class="e">e</span>F</h1>
+      <div class="hero-line"></div>
+      <nav class="hero-sub">
+        <a href="/studio" class="on">Create</a>
+        <span class="sep">/</span>
+        <a href="#gallery">Gallery</a>
+      </nav>
+      <p class="hero-cap"><b id="capGarment">Classic Tee</b> · <span id="capDesign">Your design here</span></p>
+    </div>
+
+    <div class="hero-garment">
+      <canvas id="garment3d"></canvas>
+      <div class="garment-shadow" aria-hidden="true"></div>
+    </div>
+
+    <a class="scroll-cue" href="#gallery" aria-label="Scroll to gallery"></a>
+  </header>
+
+  <!-- ─────────────────────── gallery ─────────────────────── -->
+  <section class="gallery2" id="gallery">
+    <div class="gallery2-head">
+      <h2>The Gallery</h2>
+      <p>Pieces brought to life in the studio — a wall of looks to get the ideas flowing.</p>
+    </div>
+    <div class="tile-grid">
+      <div class="tile"><video preload="none" muted loop playsinline poster="/static/media/hero_v4_poster.jpg" src="/static/media/hero_v4.mp4"></video><span class="likes">218 likes</span></div>
+      <div class="tile"><video preload="none" muted loop playsinline poster="/static/media/hero_v1_poster.jpg" src="/static/media/hero_v1.mp4"></video><span class="likes">186 likes</span></div>
+      <div class="tile"><video preload="none" muted loop playsinline poster="/static/media/hero_v2_poster.jpg" src="/static/media/hero_v2.mp4"></video><span class="likes">204 likes</span></div>
+      <div class="tile"><video preload="none" muted loop playsinline poster="/static/media/poster_swae.jpg" src="/static/media/spin_swae.mp4"></video><span class="likes">175 likes</span></div>
+      <div class="tile"><video preload="none" muted loop playsinline poster="/static/media/poster_astro.jpg" src="/static/media/look_astro.mp4"></video><span class="likes">231 likes</span></div>
+      <div class="tile"><video preload="none" muted loop playsinline poster="/static/media/poster_throne.jpg" src="/static/media/look_throne.mp4"></video><span class="likes">163 likes</span></div>
+      <div class="tile"><video preload="none" muted loop playsinline poster="/static/media/hero_v3_poster.jpg" src="/static/media/hero_v3.mp4"></video><span class="likes">142 likes</span></div>
+      <div class="tile"><video preload="none" muted loop playsinline poster="/static/media/hero_v5_poster.jpg" src="/static/media/hero_v5.mp4"></video><span class="likes">198 likes</span></div>
+    </div>
+    <div class="cta-row"><a class="btn-pill" href="/studio">Create yours +</a></div>
+  </section>
+
+  <footer class="v2foot">
+    <span data-brand>STUDIOS</span> — custom print-on-demand · South Africa
+  </footer>
+
+  <!-- Three.js (r128 UMD) + loaders + the shared studio engine -->
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/DRACOLoader.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/geometries/DecalGeometry.js"></script>
+  <script src="/static/js/garment3d.js"></script>
+  <script src="/static/v2/landing3d.js"></script>
+  <script>
+    // Brand name (in flux) — pull the live value so the wordmark always matches.
+    fetch("/healthz").then((r) => r.json()).then((d) => {
+      if (d && d.brand) {
+        document.querySelectorAll("[data-brand]").forEach((e) => (e.textContent = d.brand));
+        document.title = d.brand + " — Create";
+      }
+    }).catch(() => {});
+
+    // Gallery: load + play each clip only when it scrolls into view (poster shows
+    // instantly, video bytes fetched lazily); pause when it leaves.
+    (function () {
+      var vids = document.querySelectorAll(".tile video");
+      var play = function (v) { var p = v.play(); if (p && p.catch) p.catch(function () {}); };
+      if (!("IntersectionObserver" in window)) { vids.forEach(play); return; }
+      var io = new IntersectionObserver(function (es) {
+        es.forEach(function (e) { if (e.isIntersecting) play(e.target); else e.target.pause(); });
+      }, { rootMargin: "300px 0px", threshold: 0.1 });
+      vids.forEach(function (v) { io.observe(v); });
+    })();
+  </script>
+</body>
+</html>

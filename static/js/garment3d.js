@@ -73,6 +73,7 @@
   let resumeTimer = null, onscreen = true;
   let targetAzimuth = 0, haveAzTarget = false;
   let onPlacement = null;
+  let _lockPlacement = false;   // landing-showcase mode: drags spin, never move the print
 
   // ------------------------------------------------------------------ init -- //
   function _init(canvas, opts = {}) {
@@ -276,12 +277,56 @@
   }
 
   // --------------------------------------------------------------- print -- //
-  G.setArt = function (s, source) {
+  // Drop a flat, uniform background out of a print so only the motif lands on the
+  // garment — a white-bg design on a white shirt stops showing a mismatched panel,
+  // and the orange moth reads as printed, not pasted on. Edge flood-fill with a
+  // border-uniformity guard, so full-bleed artwork is left untouched; images that
+  // already carry transparency are returned unchanged. Work at ≤1024px (cheap +
+  // plenty for an on-screen chest print).
+  function knockoutBg(img) {
+    const w0 = img.naturalWidth || img.width, h0 = img.naturalHeight || img.height;
+    if (!w0 || !h0) return img;
+    const k = Math.min(1, 1024 / Math.max(w0, h0));
+    const w = Math.max(1, Math.round(w0 * k)), h = Math.max(1, Math.round(h0 * k));
+    const cv = document.createElement("canvas"); cv.width = w; cv.height = h;
+    const ctx = cv.getContext("2d", { willReadFrequently: true });
+    ctx.drawImage(img, 0, 0, w, h);
+    let data; try { data = ctx.getImageData(0, 0, w, h); } catch (e) { return img; }  // tainted → bail
+    const px = data.data;
+    const corners = [0, w - 1, (h - 1) * w, (h - 1) * w + (w - 1)];
+    if (corners.some((p) => px[p * 4 + 3] < 250)) return img;        // already cut-out (alpha PNG)
+    let br = 0, bg = 0, bb = 0;
+    corners.forEach((p) => { const i = p * 4; br += px[i]; bg += px[i + 1]; bb += px[i + 2]; });
+    br /= 4; bg /= 4; bb /= 4;
+    const t2 = 46 * 46;
+    const near = (i) => { const a = px[i] - br, b = px[i + 1] - bg, c = px[i + 2] - bb; return a * a + b * b + c * c < t2; };
+    let border = 0, match = 0;
+    for (let x = 0; x < w; x++) { border += 2; if (near(x * 4)) match++; if (near(((h - 1) * w + x) * 4)) match++; }
+    for (let y = 0; y < h; y++) { border += 2; if (near((y * w) * 4)) match++; if (near((y * w + w - 1) * 4)) match++; }
+    if (match / border < 0.62) return img;                          // full-bleed art — keep it
+    const seen = new Uint8Array(w * h), st = [];
+    for (let x = 0; x < w; x++) { st.push(x, (h - 1) * w + x); }
+    for (let y = 0; y < h; y++) { st.push(y * w, y * w + w - 1); }
+    while (st.length) {
+      const p = st.pop(); if (seen[p]) continue; seen[p] = 1;
+      const i = p * 4; if (!near(i)) continue;
+      px[i + 3] = 0;
+      const x = p % w, y = (p / w) | 0;
+      if (x > 0) st.push(p - 1); if (x < w - 1) st.push(p + 1);
+      if (y > 0) st.push(p - w); if (y < h - 1) st.push(p + w);
+    }
+    ctx.putImageData(data, 0, 0);
+    return cv;
+  }
+
+  G.setArt = function (s, source, opts) {
+    opts = opts || {};
     return new Promise((resolve) => {
       if (!source) { artImg[s] = null; if (art[s]) art[s].dispose(); art[s] = null; buildDecal(s); resolve(); return; }
       const done = (img) => {
         artImg[s] = img;
-        const t = new THREE.Texture(img);
+        const src = opts.knockout ? knockoutBg(img) : img;   // blend the print into the fabric
+        const t = new THREE.Texture(src);
         t.encoding = THREE.sRGBEncoding; t.needsUpdate = true; t.anisotropy = 4;
         if (art[s]) art[s].dispose(); art[s] = t;
         buildDecal(s); resolve(img);
@@ -294,6 +339,14 @@
 
   G.setPlacement = function (s, p) { placement[s] = Object.assign({}, placement[s], p || {}); buildDecal(s); };
   G.getPlacement = function (s) { return Object.assign({}, placement[s]); };
+
+  // Landing showcase helpers (no effect on the studio, which never calls them).
+  G.setAutoSpin = function (on) {
+    autoSpin = !!on;
+    if (controls) { controls.autoRotate = !!on; controls.autoRotateSpeed = 1.1; }
+    if (on && resumeTimer) { clearTimeout(resumeTimer); resumeTimer = null; }
+  };
+  G.lockPlacement = function (on) { _lockPlacement = !!on; };
 
   function removeDecal(s) {
     if (decal[s]) { scene.remove(decal[s]); decal[s].geometry.dispose(); decal[s].material.dispose(); decal[s] = null; }
@@ -355,6 +408,12 @@
       color: mat && mat.color ? "#" + mat.color.getHexString() : null, garmentColor,
       decalFront: !!decal.front, decalBack: !!decal.back, artFront: !!art.front,
       autoSpin: autoSpin, autoRotate: !!(controls && controls.autoRotate), onscreen: onscreen,
+      camPos: camera ? camera.position.toArray().map((n) => +n.toFixed(2)) : null,
+      fitDist: +fitDist.toFixed(2),
+      modelNDC: (mesh && camera) ? (function () {
+        const v = new THREE.Box3().setFromObject(mesh).getCenter(new THREE.Vector3());
+        v.project(camera); return { x: +v.x.toFixed(2), y: +v.y.toFixed(2), z: +v.z.toFixed(2) };
+      })() : null,
       uvAttr: !!(mesh && mesh.geometry && mesh.geometry.attributes && mesh.geometry.attributes.uv) };
   };
   G.probeUV = function () {
@@ -397,6 +456,7 @@
     const onMove = (ev) => { if (!dragging) return; const h = hit(ev); if (h) apply(h); };
     const onUp = () => { if (!dragging) return; dragging = false; scheduleResume(2000); window.removeEventListener("pointermove", onMove); window.removeEventListener("pointerup", onUp); };
     host.addEventListener("pointerdown", (ev) => {
+      if (_lockPlacement) return;            // showcase: let OrbitControls spin instead
       const h = hit(ev); if (!h) return;
       const s = sideOf(h); if (!art[s]) return;
       dragging = true; pauseSpin();
@@ -406,6 +466,7 @@
       apply(h);
     }, true);
     host.addEventListener("wheel", (ev) => {
+      if (_lockPlacement) return;            // showcase: wheel = zoom (OrbitControls)
       const h = hit(ev); if (!h) return;
       const s = sideOf(h); if (!art[s]) return;
       ev.stopPropagation(); ev.preventDefault();

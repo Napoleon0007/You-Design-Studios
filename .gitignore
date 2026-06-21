@@ -22,3 +22,8 @@ venv/
 /Garment photos for Meshy/
 # Stray mockup template that isn't referenced anywhere on the site.
 /brown-professional-premium-unisex-mockup-hood-design-template-*.webp
+# Reference screenshots + raw design SOURCE + parked designs — not needed at
+# runtime (the live library is data/designs/); keep `railway up` lean.
+/2nd draft of printing website/
+/Clothing art/
+data/designs_parked/
