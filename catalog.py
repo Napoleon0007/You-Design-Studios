@@ -82,6 +82,7 @@ def _compat_product(b: dict) -> dict:
         "name": b["name"],
         "blurb": b["blurb"],
         "provider": b.get("provider", "gelato"),
+        "gender": b.get("gender", "unisex"),
         "price": b.get("price_from"),
         "ref_image": _ref_image(b),
         "colors": [{"name": c["name"], "hex": c["hex"],
@@ -102,6 +103,7 @@ def studio_products(url_for) -> list[dict]:
             "name": b["name"],
             "blank": b.get("blank"),
             "blurb": b["blurb"],
+            "gender": b.get("gender", "unisex"),
             "fabric": b.get("fabric"),
             "gsm": b.get("gsm"),
             "price": b.get("price_from"),       # display "from"; sizes carry their own

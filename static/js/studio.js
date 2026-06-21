@@ -424,6 +424,29 @@
   $$("#productTabs button").forEach((b) =>
     b.addEventListener("click", () => selectProduct(PRODUCTS.find((p) => p.slug === b.dataset.slug))));
 
+  // ---- range filter: All / Men (unisex) / Women -------------------------- //
+  (() => {
+    const gf = $("#genderFilter"); if (!gf) return;
+    const tabs = $$("#productTabs button");
+    gf.addEventListener("click", (e) => {
+      const btn = e.target.closest("button"); if (!btn) return;
+      const g = btn.dataset.g;
+      $$("#genderFilter button").forEach((x) => x.classList.toggle("on", x === btn));
+      let firstVisible = null;
+      tabs.forEach((t) => {
+        const show = g === "all" || t.dataset.gender === g;
+        t.style.display = show ? "" : "none";
+        if (show && !firstVisible) firstVisible = t;
+      });
+      // if the selected product is now hidden, jump to the first one still showing
+      const onTab = $("#productTabs button.on");
+      if (firstVisible && (!onTab || onTab.style.display === "none")) {
+        const p = PRODUCTS.find((x) => x.slug === firstVisible.dataset.slug);
+        if (p) selectProduct(p);
+      }
+    });
+  })();
+
   // ---- mobile colour dock ----------------------------------------------- //
   // On phones, move the colour swatches onto the bottom of the garment stage so
   // the palette is visible WITH the garment (tap a colour → see it change). The

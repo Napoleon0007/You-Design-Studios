@@ -122,9 +122,14 @@
     <!-- controls -->
     <section class="panel">
       <div class="field" style="margin-top:0">
+        <div class="gender-filter" id="genderFilter" aria-label="Range">
+          <button data-g="all" class="on" type="button">All</button>
+          <button data-g="unisex" type="button">Men</button>
+          <button data-g="women" type="button">Women</button>
+        </div>
         <div class="product-tabs" id="productTabs">
           {% for p in products %}
-          <button data-slug="{{ p.slug }}" class="{{ 'on' if loop.first }}">{{ p.name }}</button>
+          <button data-slug="{{ p.slug }}" data-gender="{{ p.gender }}" class="{{ 'on' if loop.first }}">{{ p.name }}</button>
           {% endfor %}
         </div>
       </div>

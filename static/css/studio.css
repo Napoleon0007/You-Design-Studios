@@ -118,6 +118,14 @@ body.theme-light .stage.garment-light {
   margin-bottom: 14px; }
 .field > label .val { color: var(--paper); letter-spacing: .02em; text-transform: none; font-size: 14px; }
 
+/* range filter — segmented All / Men / Women */
+.gender-filter { display: inline-flex; gap: 4px; background: var(--ink-3); border: 1px solid var(--line);
+  border-radius: 100px; padding: 4px; margin-bottom: 16px; }
+.gender-filter button { border: 0; background: transparent; color: var(--paper-dim); cursor: pointer;
+  font-family: var(--font-ui); font-size: 12px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase;
+  padding: 11px 18px; border-radius: 100px; transition: background .2s var(--ease), color .2s; }
+.gender-filter button.on { background: #18181a; color: #fff; }
+
 .product-tabs { display: flex; gap: 10px; }
 .product-tabs button { flex: 1; padding: 13px; border-radius: 12px; cursor: pointer;
   background: var(--ink-2); border: 1px solid var(--line); color: var(--paper-dim);
