@@ -57,7 +57,7 @@ def _cache_heavy_static(resp):
 # Brand / store config  (rename here)
 # --------------------------------------------------------------------------- #
 BRAND = {
-    "name": "TRUeF Studios",
+    "name": "TRUEF Studios",
     "tagline": "Custom print-on-demand",
     "country": "South Africa",
     "currency": "R",
