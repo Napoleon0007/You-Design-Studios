@@ -1,9 +1,11 @@
 /* =============================================================
- *  Landing (v2) — Lacoste-style cycling 3D garment showcase.
- *  Reuses the studio's Garment3D engine: loads a model, recolours it,
- *  prints a design on the chest, floats + auto-spins it (drag to spin,
- *  pinch to zoom). Every ~5s a new {garment + design + colour + backdrop}
- *  combo fades in and the whole stage shifts colour to match.
+ *  Landing (v2) — cycling 3D garment showcase.
+ *  Reuses the studio's Garment3D engine. Every ~6s a new garment
+ *  glides in: it MATERIALISES (a slow blur+scale+fade reveal, "out of
+ *  thin air") after a quick fade-out, so every transition is smooth.
+ *  Most garments are clean BLANKS (colour + shape only); only one shirt
+ *  in the rotation carries a print, using a curated set of cool designs.
+ *  Models are preloaded + cached by the engine so shape swaps are instant.
  * ============================================================= */
 (() => {
   "use strict";
@@ -14,7 +16,7 @@
   const capArt = document.getElementById("capDesign");
   if (!G || !canvas || !stage) return;
 
-  // No WebGL → fall back to the people videos (CSS reveals the fallback poster).
+  // No WebGL → keep the instant poster tee on screen (it never fades out).
   if (!G.supported) { document.body.classList.add("no3d"); return; }
 
   // Our real garments (the 4 with 3D models). Crew Sweatshirt has no model yet.
@@ -25,44 +27,43 @@
     { model: "/static/models/meshy_hoodie_zip.glb",  name: "Zip Hoodie" },
   ];
   // Garment colourways + refined, airy backdrops (the stage shifts to one each cycle).
-  // Each index pairs a garment colour with a backdrop it contrasts against, so the
-  // garment always reads — and the whole set stays desaturated/premium ("clean").
   const COLOURS = ["#f4f3ef", "#1b1b1b", "#d9c9a8", "#a9b39a", "#bcc9d8", "#c87f63", "#6f7d8c"];
   //                off-white  charcoal   sand       sage       dusty-blue terracotta slate
   const BACKDROPS = ["#dcb6ae", "#aebfa6", "#aebfd2", "#cf9e84", "#d8c6a6", "#aeb2b0", "#c7b6cc"];
   //                 blush      sage       sky        clay       sand       stone      lilac
+  // The cool prints that ride the ONE printed shirt in the rotation (all others blank).
+  const COOL_IDS = ["skull-2.jpg", "neon.jpg", "paint-splash.jpg", "dark-surreal.jpg",
+                    "the-guardian.webp", "shamaan.jpg", "green-tides.jpg"];
 
-  let designs = [];          // [{url, title}] from the live library
+  let designs = [], cool = [];
   let i = 0, timer = null, busy = false, curModel = null;
-  const PERIOD = 5200;
-
+  const PERIOD = 6000;
+  const wait = (ms) => new Promise((r) => setTimeout(r, ms));
   const setBackdrop = (hex) => document.documentElement.style.setProperty("--stage-bg", hex);
 
   async function showCombo(n) {
     if (busy) return;
     busy = true;
-    // The garment SHAPE changes only every other cycle ("maybe a different
-    // garment"); the design + colour + backdrop change every cycle. That keeps the
-    // garment on screen continuously — only a shape change does a brief fade.
-    const g = GARMENTS[Math.floor(n / 2) % GARMENTS.length];
+    const g = GARMENTS[Math.floor(n / 2) % GARMENTS.length];   // shape changes every other cycle
     const colour = COLOURS[n % COLOURS.length];
-    const design = designs.length ? designs[n % designs.length] : null;
-    setBackdrop(BACKDROPS[n % BACKDROPS.length]);
+    // Only one shirt in the rotation is printed; the rest are clean blanks.
+    const printed = (n % 4 === 2) && cool.length > 0;
+    const design = printed ? cool[Math.floor(n / 4) % cool.length] : null;
     const needModel = g.model !== curModel;
-    if (needModel) stage.classList.add("swapping");      // fade only when the shape swaps
+
+    setBackdrop(BACKDROPS[n % BACKDROPS.length]);
+    stage.classList.add("swapping");           // fade the current garment out (quick)
+    await wait(360);
     try {
-      if (needModel) {
-        await Promise.all([G.load(g.model), new Promise((r) => setTimeout(r, 320))]);
-        curModel = g.model;
-      }
-      G.setColor(colour);                                 // instant recolour
+      G.setColor(colour);                        // recolour the shared texture first (no colour flash)
+      if (needModel) { await G.load(g.model); curModel = g.model; }   // instant once cached
       G.setSide("front");
-      await G.setArt("front", design ? design.url : null, { knockout: true });  // blend into fabric
+      await G.setArt("front", design ? design.url : null, { knockout: true });
       G.setAutoSpin(true);
     } catch (e) { /* a bad swap shouldn't stop the carousel */ }
     if (capName) capName.textContent = g.name;
-    if (capArt) capArt.textContent = design ? design.title : "Your design here";
-    if (needModel) requestAnimationFrame(() => stage.classList.remove("swapping"));
+    if (capArt) capArt.textContent = design ? design.title : "Blank canvas";
+    requestAnimationFrame(() => stage.classList.remove("swapping"));  // materialise IN (slow reveal)
     busy = false;
   }
 
@@ -76,16 +77,23 @@
     try {
       const r = await fetch("/api/designs");
       const d = await r.json();
-      if (d.ok && Array.isArray(d.designs)) designs = d.designs.map((x) => ({ url: x.url, title: x.title }));
-    } catch (e) { /* no library → garments still cycle, blank-chested */ }
+      if (d.ok && Array.isArray(d.designs)) {
+        designs = d.designs.map((x) => ({ url: x.url, title: x.title, id: x.id }));
+        cool = designs.filter((x) => COOL_IDS.indexOf(x.id) !== -1);
+        if (!cool.length) cool = designs.slice(0, 6);   // fallback: first few designs
+      }
+    } catch (e) { /* no library → garments still cycle, all blank */ }
+
     await showCombo(0);
-    // the first garment frame is up → cross-fade the instant poster out (2 rAFs = painted)
+    // first garment frame is up → cross-fade the instant poster out (2 rAFs = painted)
     requestAnimationFrame(() => requestAnimationFrame(() => stage.classList.add("hero-ready")));
     startTimer();
+    // Warm the cache with the other models so their first swap is instant + smooth.
+    G.preload(GARMENTS.map((x) => x.model));
 
     // Pause the carousel while the visitor is inspecting a garment; resume after idle.
     let idle = null;
-    const hold = () => { stopTimer(); if (idle) clearTimeout(idle); idle = setTimeout(startTimer, 6000); };
+    const hold = () => { stopTimer(); if (idle) clearTimeout(idle); idle = setTimeout(startTimer, 6500); };
     canvas.addEventListener("pointerdown", hold);
     canvas.addEventListener("wheel", hold, { passive: true });
     // Don't animate/cycle in a background tab.

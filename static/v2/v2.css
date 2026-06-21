@@ -103,9 +103,13 @@ a { color: inherit; text-decoration: none; }
   filter: drop-shadow(0 26px 38px rgba(0,0,0,.16));
 }
 .hero-stage.hero-ready .hero-poster { opacity: 0; }
-/* fade the garment out/in during a swap */
-.hero-stage.swapping #garment3d { opacity: 0; transform: translateY(12px) scale(.985); }
-#garment3d { transition: opacity .42s var(--ease), transform .42s var(--ease); }
+/* the garment MATERIALISES in: a slow blur + scale + fade reveal ("out of thin
+   air"), with a quicker fade-out before each swap, so every garment glides in. */
+.hero-stage #garment3d { transition: opacity .95s var(--ease), transform .95s var(--ease), filter .95s var(--ease); }
+.hero-stage.swapping #garment3d {
+  opacity: 0; transform: translateY(8px) scale(.9); filter: blur(16px);
+  transition: opacity .34s ease, transform .34s ease, filter .34s ease;   /* fade OUT quick */
+}
 
 /* hide the studio-only injected hint/reset on the landing */
 .hero-garment .g3d-hint, .hero-garment .g3d-reset { display: none !important; }

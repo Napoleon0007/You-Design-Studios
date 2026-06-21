@@ -193,65 +193,90 @@
   }
 
   // ------------------------------------------------------------- load GLB -- //
-  G.load = function (url) {
-    showLoading(true);
-    return new Promise((resolve, reject) => {
+  // Models are parsed ONCE and cached by URL: a swap to an already-loaded model is
+  // instant (no re-download / re-Draco-decode / re-material), so the landing's
+  // garment carousel never hitches on a shape change. G.preload warms the cache in
+  // the background so even the first swap to each model is instant.
+  const _modelCache = Object.create(null);
+  const _inflight = Object.create(null);
+
+  // One-time setup of a freshly-parsed scene: matte non-metal fabric whose albedo IS
+  // our recolour canvas (drop Meshy's baked metal/emissive/detail maps so no
+  // colour-independent "pattern" shows through), centred on the origin + measured.
+  function _normalise(gltf) {
+    const meshes = [];
+    gltf.scene.traverse((o) => { if (o.isMesh) meshes.push(o); });
+    if (!meshes.length) return null;
+    meshes.forEach((m) => {
+      (Array.isArray(m.material) ? m.material : [m.material]).forEach((one) => {
+        if (!one) return;
+        one.map = tex; one.color = new THREE.Color(0xffffff);
+        one.roughness = 0.92; one.metalness = 0;
+        one.metalnessMap = null; one.roughnessMap = null;
+        one.normalMap = null; one.aoMap = null; one.bumpMap = null;
+        one.displacementMap = null; one.lightMap = null;
+        if (one.emissive) one.emissive.setRGB(0, 0, 0);
+        one.emissiveMap = null;
+        one.needsUpdate = true;
+      });
+    });
+    const vol = (o) => { const s = new THREE.Box3().setFromObject(o).getSize(new THREE.Vector3()); return s.x * s.y * s.z; };
+    const main = meshes.reduce((a, b) => (vol(b) > vol(a) ? b : a));   // largest mesh carries decals/raycast
+    const box = new THREE.Box3().setFromObject(gltf.scene);
+    const c = box.getCenter(new THREE.Vector3());
+    const size = box.getSize(new THREE.Vector3());
+    gltf.scene.position.sub(c);
+    gltf.scene.updateMatrixWorld(true);
+    main.userData._root = gltf.scene;
+    return { root: gltf.scene, mesh: main, size: size };
+  }
+
+  // Fetch + parse a model into the cache WITHOUT displaying it (de-dupes in-flight).
+  function _fetchModel(url) {
+    if (_modelCache[url]) return Promise.resolve(_modelCache[url]);
+    if (_inflight[url]) return _inflight[url];
+    const p = new Promise((resolve, reject) => {
       const loader = new THREE.GLTFLoader();
       const dl = getDraco(); if (dl) loader.setDRACOLoader(dl);
       loader.load(url, (gltf) => {
-        // clear old garment + decals
-        ["front", "back"].forEach(removeDecal);
-        if (mesh && mesh.userData._root) scene.remove(mesh.userData._root);
-        gltf.scene.updateMatrixWorld(true);
-        const meshes = [];
-        gltf.scene.traverse((o) => { if (o.isMesh) meshes.push(o); });
-        if (!meshes.length) { showLoading(false); reject(new Error("no mesh in GLB")); return; }
-
-        // Recolour EVERY mesh's material with our canvas. A garment can be more than
-        // one mesh (e.g. a separate collar/label/cuff) — any we miss keeps its baked
-        // texture and shows through as a ghost pattern. Normalise all to matte,
-        // non-metal fabric whose albedo IS the recolour canvas (folds come from the
-        // geometry + normal map). [Meshy ships metalness=1 + white emissive + 4K map.]
-        meshes.forEach((m) => {
-          (Array.isArray(m.material) ? m.material : [m.material]).forEach((one) => {
-            if (!one) return;
-            one.map = tex; one.color = new THREE.Color(0xffffff);
-            one.roughness = 0.92; one.metalness = 0;
-            one.metalnessMap = null; one.roughnessMap = null;
-            // Drop EVERY baked detail map. Meshy bakes the AI's surface detail into
-            // the normal/AO maps, which reads as a "pattern" on the shirt in every
-            // colour. Plain garment is the goal — form comes from geometry + lighting.
-            one.normalMap = null; one.aoMap = null; one.bumpMap = null;
-            one.displacementMap = null; one.lightMap = null;
-            if (one.emissive) one.emissive.setRGB(0, 0, 0);
-            one.emissiveMap = null;
-            one.needsUpdate = true;
-          });
-        });
-
-        // the largest mesh carries the decals + raycasting (robust for multi-part models)
-        const vol = (o) => { const s = new THREE.Box3().setFromObject(o).getSize(new THREE.Vector3()); return s.x * s.y * s.z; };
-        mesh = meshes.reduce((a, b) => (vol(b) > vol(a) ? b : a));
-        mat = Array.isArray(mesh.material) ? mesh.material[0] : mesh.material;
-
-        const box = new THREE.Box3().setFromObject(gltf.scene);
-        const c = box.getCenter(new THREE.Vector3());
-        const size = box.getSize(new THREE.Vector3());
-        calibrateArea(size);                       // fit the print boxes to THIS model
-        gltf.scene.position.sub(c);
-        gltf.scene.updateMatrixWorld(true);
-        mesh.userData._root = gltf.scene;
-        const maxDim = Math.max(size.x, size.y);
-        fitDist = (maxDim / (2 * Math.tan((camera.fov * Math.PI / 180) / 2))) * 1.5;
-        controls.minDistance = fitDist * 0.55; controls.maxDistance = fitDist * 1.9;
-        setCam(side, fitDist);
-        scene.add(gltf.scene);
-        ["front", "back"].forEach(buildDecal);   // re-apply any existing art
-        redraw(); kick();
-        showLoading(false);
-        resolve(gltf);
-      }, undefined, (err) => { showLoading(false); reject(err); });
+        const entry = _normalise(gltf);
+        if (!entry) { delete _inflight[url]; reject(new Error("no mesh in GLB")); return; }
+        _modelCache[url] = entry; delete _inflight[url]; resolve(entry);
+      }, undefined, (err) => { delete _inflight[url]; reject(err); });
     });
+    _inflight[url] = p;
+    return p;
+  }
+
+  G.preload = function (urls) {
+    if (!G.supported || !THREE || !THREE.GLTFLoader) return;
+    (urls || []).forEach((u) => { if (u) _fetchModel(u).catch(function () {}); });
+  };
+
+  // Swap a (cached or freshly-loaded) model entry into the scene + reframe it.
+  function _showModel(entry) {
+    ["front", "back"].forEach(removeDecal);
+    if (mesh && mesh.userData._root && mesh.userData._root !== entry.root) {
+      scene.remove(mesh.userData._root);
+    }
+    mesh = entry.mesh;
+    mat = Array.isArray(mesh.material) ? mesh.material[0] : mesh.material;
+    calibrateArea(entry.size);                     // fit the print boxes to THIS model
+    const maxDim = Math.max(entry.size.x, entry.size.y);
+    fitDist = (maxDim / (2 * Math.tan((camera.fov * Math.PI / 180) / 2))) * 1.5;
+    controls.minDistance = fitDist * 0.55; controls.maxDistance = fitDist * 1.9;
+    setCam(side, fitDist);
+    if (entry.root.parent !== scene) scene.add(entry.root);
+    ["front", "back"].forEach(buildDecal);         // re-apply any existing art
+    redraw(); kick();
+  }
+
+  G.load = function (url) {
+    if (_modelCache[url]) { _showModel(_modelCache[url]); return Promise.resolve(_modelCache[url]); }
+    showLoading(true);
+    return _fetchModel(url).then(
+      (entry) => { _showModel(entry); showLoading(false); return entry; },
+      (err) => { showLoading(false); throw err; });
   };
 
   // -------------------------------------------------------------- colour -- //
