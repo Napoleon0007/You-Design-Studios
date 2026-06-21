@@ -34,6 +34,10 @@
   // The cool prints that ride the ONE printed shirt in the rotation (all others blank).
   const COOL_IDS = ["skull-2.jpg", "neon.jpg", "paint-splash.jpg", "dark-surreal.jpg",
                     "the-guardian.webp", "shamaan.jpg", "green-tides.jpg"];
+  // Opening shot: a BLACK tee branded with the framed-TF mark on the chest (front)
+  // and the TRUeF wordmark on the back.
+  const BRAND_MARK = "/static/v2/brand_mark.png";
+  const BRAND_WORD = "/static/v2/brand_word.png";
 
   let designs = [], cool = [];
   let i = 0, timer = null, busy = false, curModel = null;
@@ -44,25 +48,36 @@
   async function showCombo(n) {
     if (busy) return;
     busy = true;
-    const g = GARMENTS[Math.floor(n / 2) % GARMENTS.length];   // shape changes every other cycle
-    const colour = COLOURS[n % COLOURS.length];
+    const brand = (n === 0);                                    // opening shot: branded black tee
+    const g = brand ? GARMENTS[0] : GARMENTS[Math.floor(n / 2) % GARMENTS.length];   // shape changes every other cycle
+    const colour = brand ? "#1b1b1b" : COLOURS[n % COLOURS.length];
     // Every garment carries a print, cycling the curated cool set.
     const pool = cool.length ? cool : designs;
-    const design = pool.length ? pool[n % pool.length] : null;
+    const design = (!brand && pool.length) ? pool[n % pool.length] : null;
     const needModel = g.model !== curModel;
 
-    setBackdrop(BACKDROPS[n % BACKDROPS.length]);
+    const bd = BACKDROPS[n % BACKDROPS.length];
+    setBackdrop(bd);                            // CSS fallback (poster phase / no-3D)
+    if (G.setRoomTint) G.setRoomTint(bd);       // tint the 3D room to match
     stage.classList.add("swapping");           // fade the current garment out (quick)
     await wait(360);
     try {
       G.setColor(colour);                        // recolour the shared texture first (no colour flash)
       if (needModel) { await G.load(g.model); curModel = g.model; }   // instant once cached
       G.setSide("front");
-      await G.setArt("front", design ? design.url : null, { knockout: true });
+      if (brand) {
+        await G.setArt("front", BRAND_MARK);   // framed-TF mark on the chest (already transparent)
+        await G.setArt("back", BRAND_WORD);    // TRUeF wordmark on the back
+      } else {
+        await G.setArt("front", design ? design.url : null, { knockout: true });
+        await G.setArt("back", null);                              // clear the brand back-print on later shirts
+      }
       G.setAutoSpin(true);
     } catch (e) { /* a bad swap shouldn't stop the carousel */ }
     if (capName) capName.textContent = g.name;
-    if (capArt) capArt.textContent = design ? design.title : "Your design here";
+    if (capArt) capArt.textContent = brand ? "TRUeF" : (design ? design.title : "Your design here");
+    const cap = document.querySelector(".hero-cap");
+    if (cap) { cap.classList.remove("cap-pop"); void cap.offsetWidth; cap.classList.add("cap-pop"); }   // kinetic caption
     requestAnimationFrame(() => stage.classList.remove("swapping"));  // materialise IN (slow reveal)
     busy = false;
   }
@@ -74,6 +89,7 @@
   async function boot() {
     G.init(canvas, {});
     G.lockPlacement(true);                            // drags spin; never move the print
+    if (G.setRoom) { G.setRoom(true); stage.classList.add("room-3d"); }   // 3D atmospheric space behind the garment
     try {
       const r = await fetch("/api/designs");
       const d = await r.json();
@@ -90,6 +106,19 @@
     startTimer();
     // Warm the cache with the other models so their first swap is instant + smooth.
     G.preload(GARMENTS.map((x) => x.model));
+
+    // kinetic type: staggered reveal on load + gentle parallax/fade on scroll
+    const copy = document.querySelector(".hero-copy");
+    if (copy) requestAnimationFrame(() => copy.classList.add("reveal"));
+    let stick = false;
+    window.addEventListener("scroll", () => {
+      if (stick) return; stick = true;
+      requestAnimationFrame(() => {
+        const y = window.scrollY || 0;
+        if (copy) { copy.style.transform = "translateY(" + (y * 0.18) + "px)"; copy.style.opacity = String(Math.max(0, 1 - y / 520)); }
+        stick = false;
+      });
+    }, { passive: true });
 
     // Pause the carousel while the visitor is inspecting a garment; resume after idle.
     let idle = null;

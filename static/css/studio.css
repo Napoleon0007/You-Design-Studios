@@ -60,11 +60,12 @@ body.theme-light .grain { display: none; }
 /* soft white wash keeps the garment bright + legible over any backdrop colour */
 .stage::before {
   content: ""; position: absolute; inset: 0; z-index: 1; pointer-events: none;
-  background: radial-gradient(120% 100% at 50% 32%, #ffffff 0%, rgba(255,255,255,.64) 40%, rgba(255,255,255,0) 86%);
+  /* gentle wash only — let the (contrasting) cycling colour read behind the garment */
+  background: radial-gradient(120% 100% at 50% 32%, rgba(255,255,255,.26) 0%, rgba(255,255,255,.1) 46%, rgba(255,255,255,0) 84%);
 }
-/* pale garments need more wash so they don't vanish on a light backdrop */
+/* pale garments sit on a DEEP backdrop (contrast rule) → darken behind them so they pop */
 body.theme-light .stage.garment-light::before {
-  background: radial-gradient(120% 100% at 50% 32%, #ffffff 0%, rgba(255,255,255,.82) 48%, rgba(255,255,255,.2) 92%);
+  background: radial-gradient(120% 100% at 50% 32%, rgba(0,0,0,.18) 0%, rgba(0,0,0,.07) 50%, rgba(0,0,0,0) 88%);
 }
 #garment3d { position: absolute; inset: 0; z-index: 2; }
 

@@ -30,6 +30,7 @@
   const $ = (s, r = document) => r.querySelector(s);
   const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
   const PRODUCTS = window.PRODUCTS || [];
+  let repaintBackdrop = null;   // set by the stage-backdrop cycler; re-run when the garment colour changes
 
   const els = {
     swatches: $("#swatches"), sizes: $("#sizes"),
@@ -135,6 +136,7 @@
       // pale garments disappear on the white stage → swap to a soft grey backdrop so they read
       stage.classList.toggle("garment-light", isLightColor(c.hex));
     }
+    if (repaintBackdrop) repaintBackdrop();   // keep the background contrasting THIS shirt colour
     if (state.is3D) window.Garment3D.setColor(c.hex);
     buildUid();
   }
@@ -448,12 +450,23 @@
   (() => {
     const stage = document.getElementById("stage");
     if (!stage) return;
-    const BACKDROPS = ["#dcb6ae", "#aebfa6", "#aebfd2", "#cf9e84", "#d8c6a6", "#aeb2b0", "#c7b6cc"];
+    const HUES = ["#dcb6ae", "#aebfa6", "#aebfd2", "#cf9e84", "#d8c6a6", "#aeb2b0", "#c7b6cc"];
     const PERIOD = 6000;
+    const lum = (hex) => { const h = (hex || "#888").replace("#", ""); return (0.299 * parseInt(h.slice(0,2),16) + 0.587 * parseInt(h.slice(2,4),16) + 0.114 * parseInt(h.slice(4,6),16)) / 255; };
+    const mix = (hex, t, target) => { const h = hex.replace("#", ""); const f = (i) => Math.round(parseInt(h.slice(i,i+2),16) + (target - parseInt(h.slice(i,i+2),16)) * t).toString(16).padStart(2,"0"); return "#" + f(0) + f(2) + f(4); };
+    // RULE: the background must NEVER match the shirt. Push the backdrop to the OPPOSITE
+    // lightness of the garment so a white shirt never sits on a light/white wall.
+    const contrast = (base) => {
+      const gl = lum(state.colorHex || "#888888");
+      if (gl > 0.62) return mix(base, 0.62, 26);   // light/white shirt → deep backdrop
+      if (gl < 0.30) return base;                   // dark shirt → the light pastel
+      return mix(base, 0.4, 26);                    // mid shirt → deepen for separation
+    };
     let bi = 0, timer = null;
-    const set = () => stage.style.setProperty("--studio-bg", BACKDROPS[bi % BACKDROPS.length]);
+    const set = () => stage.style.setProperty("--studio-bg", contrast(HUES[bi % HUES.length]));
     const start = () => { if (!timer) timer = setInterval(() => { bi += 1; set(); }, PERIOD); };
     const stop = () => { if (timer) { clearInterval(timer); timer = null; } };
+    repaintBackdrop = set;          // selectColor calls this when the garment colour changes
     set(); start();
     document.addEventListener("visibilitychange", () => document.hidden ? stop() : start());
   })();

@@ -76,6 +76,11 @@
   let _lockPlacement = false;   // landing-showcase mode: drags spin, never move the print
   let _frozen = false;          // studio design mode: hold the garment perfectly still
   let _interacting = false;     // user is actively dragging the showcase garment
+  // cinematic showcase state (landing only): breathing lens, parallax, lit reveal,
+  // travelling key light. All gated on _cine so the studio is unaffected.
+  let _cine = false, _clock = 0, _baseFov = 35, _reveal = 1;
+  let _hemi = null, _amb = null, _key = null, _fill = null, _rim = null, _baseLight = null;
+  let _paraX = 0, _paraY = 0, _paraTX = 0, _paraTY = 0;   // eased parallax offset (current/target)
 
   // ------------------------------------------------------------------ init -- //
   function _init(canvas, opts = {}) {
@@ -99,11 +104,13 @@
     // ~seconds of synchronous GPU work on mobile (the model couldn't even start
     // loading until it finished) for almost no gain on matte fabric. The hemi +
     // ambient + 3 directionals carry the look and init is now near-instant.
-    scene.add(new THREE.HemisphereLight(0xffffff, 0x3a3a3a, 0.85));
-    scene.add(new THREE.AmbientLight(0xffffff, 0.28));
-    const key = new THREE.DirectionalLight(0xffffff, 1.05); key.position.set(0.6, 1.0, 1.2); scene.add(key);
-    const fill = new THREE.DirectionalLight(0xffffff, 0.42); fill.position.set(-1.0, 0.4, 0.6); scene.add(fill);
-    const rim = new THREE.DirectionalLight(0xffffff, 0.5); rim.position.set(0, 0.6, -1.4); scene.add(rim);
+    _hemi = new THREE.HemisphereLight(0xffffff, 0x3a3a3a, 0.85); scene.add(_hemi);
+    _amb = new THREE.AmbientLight(0xffffff, 0.28); scene.add(_amb);
+    _key = new THREE.DirectionalLight(0xffffff, 1.05); _key.position.set(0.6, 1.0, 1.2); scene.add(_key);
+    _fill = new THREE.DirectionalLight(0xffffff, 0.42); _fill.position.set(-1.0, 0.4, 0.6); scene.add(_fill);
+    _rim = new THREE.DirectionalLight(0xffffff, 0.5); _rim.position.set(0, 0.6, -1.4); scene.add(_rim);
+    _baseLight = { hemi: 0.85, amb: 0.28, key: 1.05, fill: 0.42, rim: 0.5 };
+    _baseFov = camera.fov;
 
     texCanvas = document.createElement("canvas");
     texCanvas.width = texCanvas.height = TEX;
@@ -117,6 +124,11 @@
     // of rotating (handled in bindPlacementPointer). Front/back also has the toggle.
     controls.enablePan = false; controls.autoRotate = false; controls.enableRotate = true;
     controls.rotateSpeed = 0.9;
+    // Keep the garment a clean turntable — a drag must never tumble it over the top or
+    // under the floor (the #1 "glitchy" feel). A small tilt range stays natural; the
+    // showcase (lockPlacement) tightens this to a perfectly level spin.
+    controls.minPolarAngle = Math.PI / 2 - 0.28;
+    controls.maxPolarAngle = Math.PI / 2 + 0.16;
 
     raycaster = new THREE.Raycaster();
     pointer = new THREE.Vector2();
@@ -131,6 +143,16 @@
       io.observe(stage);
     } catch (e) { onscreen = true; }
     if (controls) controls.enableZoom = true;   // pinch-to-zoom on touch
+    // parallax input for the cinematic showcase — only applied while _cine (landing)
+    window.addEventListener("pointermove", (e) => {
+      _paraTX = ((e.clientX / window.innerWidth) * 2 - 1) * 0.06;
+      _paraTY = -((e.clientY / window.innerHeight) * 2 - 1) * 0.04;
+    }, { passive: true });
+    window.addEventListener("deviceorientation", (e) => {
+      if (e.gamma == null) return;
+      _paraTX = Math.max(-1, Math.min(1, e.gamma / 28)) * 0.06;
+      _paraTY = Math.max(-1, Math.min(1, ((e.beta || 45) - 45) / 28)) * 0.04;
+    });
     addStageControls();
     redraw();
     running = true;
@@ -268,6 +290,7 @@
     fitDist = (maxDim / (2 * Math.tan((camera.fov * Math.PI / 180) / 2))) * 1.5;
     controls.minDistance = fitDist * 0.55; controls.maxDistance = fitDist * 1.9;
     setCam(side, fitDist);
+    if (_roomOn && _modelSize) { _modelSize.copy(entry.size); _layoutRoom(); }   // keep the room floor at this garment's feet
     if (entry.root.parent !== scene) scene.add(entry.root);
     ["front", "back"].forEach(buildDecal);         // re-apply any existing art
     redraw(); kick();
@@ -291,6 +314,198 @@
     kick();
   }
   G.setColor = function (hex) { garmentColor = hex || "#d7dade"; redraw(); };
+
+  // ----------------------------------------------------- atmospheric room -- //
+  // Landing showcase ONLY: a foggy 3D space behind the garment — a floor that
+  // recedes into haze + a soft enveloping wall + a grounded contact shadow, all
+  // tinted by the cycling colour. The studio never calls setRoom(), so it stays a
+  // clean transparent white stage. Geometry is trivial (a few planes) + fog, so it
+  // costs nothing on mobile (no HDRI/PMREM — that's what hurt load before).
+  let _room = null, _fog = null, _roomOn = false, _roomTint = "#aebfa6", _smoke = [];
+  let _modelSize = null;   // THREE.Vector3, created lazily in buildRoom (THREE isn't ready at module load)
+  let _floorMat = null, _wallCanvas = null, _wallTex = null, _floorCanvas = null, _floorTex = null;
+
+  function _mix(hex, toward, t) {
+    const h = (hex || "#888888").replace("#", "");
+    const r = parseInt(h.slice(0, 2), 16), g = parseInt(h.slice(2, 4), 16), b = parseInt(h.slice(4, 6), 16);
+    const f = (c) => Math.round(c + (toward - c) * t);
+    return new THREE.Color(f(r) / 255, f(g) / 255, f(b) / 255);
+  }
+  function _radialShadowTex() {
+    const c = document.createElement("canvas"); c.width = c.height = 128;
+    const x = c.getContext("2d");
+    const grd = x.createRadialGradient(64, 64, 3, 64, 64, 64);
+    grd.addColorStop(0, "rgba(0,0,0,0.55)"); grd.addColorStop(0.6, "rgba(0,0,0,0.2)");
+    grd.addColorStop(1, "rgba(0,0,0,0)");
+    x.fillStyle = grd; x.fillRect(0, 0, 128, 128);
+    const t = new THREE.CanvasTexture(c); t.needsUpdate = true; return t;
+  }
+  function buildRoom() {
+    _room = new THREE.Group();
+    if (!_modelSize) _modelSize = new THREE.Vector3(1, 1.6, 0.35);
+    _fog = new THREE.Fog(0xaebfa6, 2, 12);
+    // receding floor with a faint grid — the perspective lines are the depth cue that
+    // make the space read BIG (from the reference). Recoloured per tint in _drawFloor.
+    _floorCanvas = document.createElement("canvas"); _floorCanvas.width = _floorCanvas.height = 128;
+    _floorTex = new THREE.CanvasTexture(_floorCanvas);
+    _floorTex.wrapS = _floorTex.wrapT = THREE.RepeatWrapping; _floorTex.repeat.set(34, 34);
+    _floorMat = new THREE.MeshStandardMaterial({ map: _floorTex, roughness: 1, metalness: 0 });
+    const floor = new THREE.Mesh(new THREE.PlaneGeometry(170, 170), _floorMat);
+    floor.rotation.x = -Math.PI / 2; floor.name = "floor"; _room.add(floor);
+    // enveloping wall: vertical gradient + faint grid (vertical lines + horizontal rings)
+    _wallCanvas = document.createElement("canvas"); _wallCanvas.width = 64; _wallCanvas.height = 256;
+    _wallTex = new THREE.CanvasTexture(_wallCanvas);
+    _wallTex.wrapS = THREE.RepeatWrapping; _wallTex.repeat.set(18, 1);
+    const wall = new THREE.Mesh(
+      new THREE.CylinderGeometry(30, 30, 60, 64, 1, true),
+      new THREE.MeshBasicMaterial({ map: _wallTex, side: THREE.BackSide, fog: true, depthWrite: false }));
+    wall.name = "wall"; _room.add(wall);
+    // bright key-light pool on the floor under the garment ("lights on")
+    const pool = new THREE.Mesh(new THREE.PlaneGeometry(1, 1),
+      new THREE.MeshBasicMaterial({ map: _poolTex(), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, opacity: 0.4 }));
+    pool.rotation.x = -Math.PI / 2; pool.name = "pool"; _room.add(pool);
+    // soft contact shadow grounding the garment
+    const sh = new THREE.Mesh(new THREE.PlaneGeometry(1, 1),
+      new THREE.MeshBasicMaterial({ map: _radialShadowTex(), transparent: true, depthWrite: false, opacity: 0.5 }));
+    sh.rotation.x = -Math.PI / 2; sh.name = "shadow"; _room.add(sh);
+    // gentle smoke/haze drifting up at the back (theatre) — 8 soft sprites, recycled
+    _smoke = []; const stex = _smokeTex();
+    for (let i = 0; i < 8; i++) {
+      const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: stex, transparent: true, depthWrite: false, opacity: 0, color: 0xf2f2ee }));
+      sp.userData.ph = i / 8; _room.add(sp); _smoke.push(sp);
+    }
+    scene.add(_room);
+  }
+  function _drawFloor() {
+    if (!_floorCanvas) return;
+    const x = _floorCanvas.getContext("2d");
+    x.fillStyle = "#" + _mix(_roomTint, 0, 0.22).getHexString(); x.fillRect(0, 0, 128, 128);
+    x.strokeStyle = "rgba(255,255,255,0.06)"; x.lineWidth = 2;
+    x.strokeRect(0, 0, 128, 128);   // tile edges → a grid once repeated across the floor
+    if (_floorTex) _floorTex.needsUpdate = true;
+  }
+  function _drawWall() {
+    if (!_wallCanvas) return;
+    const x = _wallCanvas.getContext("2d");
+    const g = x.createLinearGradient(0, 0, 0, 256);
+    g.addColorStop(0, "#" + _mix(_roomTint, 0, 0.42).getHexString());   // top: deeper
+    g.addColorStop(1, "#" + _mix(_roomTint, 0, 0.05).getHexString());   // bottom: near tint
+    x.fillStyle = g; x.fillRect(0, 0, 64, 256);
+    x.strokeStyle = "rgba(255,255,255,0.055)"; x.lineWidth = 1;
+    x.beginPath(); x.moveTo(0.5, 0); x.lineTo(0.5, 256); x.moveTo(32.5, 0); x.lineTo(32.5, 256); x.stroke();
+    x.beginPath();
+    for (let y = 0; y <= 256; y += 32) { x.moveTo(0, y + 0.5); x.lineTo(64, y + 0.5); }
+    x.stroke();
+    if (_wallTex) _wallTex.needsUpdate = true;
+  }
+  function _applyRoomTint() {
+    if (!_roomOn || !scene) return;
+    const bg = new THREE.Color(_roomTint);   // match the CSS --stage-bg exactly (no desktop seam)
+    scene.background = bg;
+    if (_fog) _fog.color = bg.clone();
+    _drawFloor();
+    _drawWall();
+  }
+  function _layoutRoom() {
+    if (!_room) return;
+    const groundY = -_modelSize.y * 0.5;
+    const floor = _room.getObjectByName("floor");
+    const wall = _room.getObjectByName("wall");
+    const sh = _room.getObjectByName("shadow");
+    if (floor) floor.position.y = groundY;
+    if (wall) {
+      const R = Math.max(2, fitDist * 3.2), H = Math.max(20, fitDist * 8);
+      wall.scale.set(R / 30, H / 60, R / 30);
+      wall.position.y = groundY + H * 0.5;
+    }
+    if (sh) { sh.scale.set(_modelSize.x * 2.0, _modelSize.z * 3.0, 1); sh.position.set(0, groundY + 0.004, 0); }
+    const pool = _room.getObjectByName("pool");
+    if (pool) { pool.scale.set(_modelSize.x * 3.4, _modelSize.z * 4.6, 1); pool.position.set(0, groundY + 0.002, 0); }
+    if (_fog) { _fog.near = fitDist * 0.95; _fog.far = fitDist * 3.8; }
+  }
+  G.setRoom = function (on) {
+    if (!THREE || !scene) return;
+    if (on) {
+      if (!_room) buildRoom();
+      _roomOn = true; _room.visible = true; scene.fog = _fog;
+      _cine = true; _reveal = 0;                       // cinematic motion + "lights come on"
+      _applyRoomTint(); _layoutRoom();
+    } else {
+      _roomOn = false; if (_room) _room.visible = false;
+      scene.fog = null; scene.background = null;
+      _cine = false; _restoreLights();
+    }
+  };
+  G.setRoomTint = function (hex) {
+    _roomTint = hex || _roomTint; _applyRoomTint();
+    try { document.documentElement.style.setProperty("--stage-bg", _roomTint); } catch (e) {}   // keep CSS seam in sync
+  };
+
+  // soft bright "light pool" the key light casts on the floor under the garment
+  function _poolTex() {
+    const c = document.createElement("canvas"); c.width = c.height = 128;
+    const x = c.getContext("2d");
+    const grd = x.createRadialGradient(64, 64, 2, 64, 64, 64);
+    grd.addColorStop(0, "rgba(255,255,255,0.6)"); grd.addColorStop(0.5, "rgba(255,255,255,0.16)");
+    grd.addColorStop(1, "rgba(255,255,255,0)");
+    x.fillStyle = grd; x.fillRect(0, 0, 128, 128);
+    const t = new THREE.CanvasTexture(c); t.needsUpdate = true; return t;
+  }
+
+  function _smokeTex() {
+    const c = document.createElement("canvas"); c.width = c.height = 128;
+    const x = c.getContext("2d");
+    const g = x.createRadialGradient(64, 64, 4, 64, 64, 64);
+    g.addColorStop(0, "rgba(255,255,255,0.5)"); g.addColorStop(0.5, "rgba(255,255,255,0.16)");
+    g.addColorStop(1, "rgba(255,255,255,0)");
+    x.fillStyle = g; x.fillRect(0, 0, 128, 128);
+    const t = new THREE.CanvasTexture(c); t.needsUpdate = true; return t;
+  }
+  // Gentle theatre: soft haze drifting up from the back of the room (subtle, gated on _cine).
+  function _updateSmoke() {
+    const groundY = -_modelSize.y * 0.5, span = _modelSize.y * 1.7;
+    for (let i = 0; i < _smoke.length; i++) {
+      const sp = _smoke[i];
+      const ph = (sp.userData.ph + _clock * 0.018) % 1;
+      sp.position.set(Math.sin(i * 1.7 + _clock * 0.12) * fitDist * 1.1,
+        groundY + ph * span, -fitDist * (1.1 + (i % 3) * 0.45));
+      const s = fitDist * (1.1 + (i % 4) * 0.4); sp.scale.set(s, s, 1);
+      sp.material.opacity = Math.sin(ph * Math.PI) * 0.15;
+    }
+  }
+
+  // Per-frame cinematic motion for the landing showcase (gated on _cine):
+  // a breathing lens, eased pointer/gyro parallax, a travelling key light, and a
+  // one-time "lights come on" reveal when the room is enabled.
+  function _updateCine() {
+    _clock += 0.016;
+    if (_smoke.length) _updateSmoke();
+
+    if (camera) { camera.fov = _baseFov + Math.sin(_clock * 0.45) * 0.7; camera.updateProjectionMatrix(); }
+    // freeze parallax while the user is touching the garment so the orbit centre never
+    // drifts under their finger (that drift was the touch glitch)
+    if (_interacting || dragging) { _paraTX = 0; _paraTY = 0; }
+    _paraX += (_paraTX - _paraX) * 0.06; _paraY += (_paraTY - _paraY) * 0.06;
+    if (controls && !haveAzTarget) controls.target.set(_paraX, 0.02 + _paraY, 0);
+    if (_key) { _key.position.x = 0.6 + Math.sin(_clock * 0.3) * 0.9; _key.position.z = 1.1 + Math.cos(_clock * 0.3) * 0.3; }
+    if (_reveal < 1) {
+      _reveal = Math.min(1, _reveal + 0.018);
+      const e = _reveal * _reveal * (3 - 2 * _reveal);   // smoothstep
+      if (_hemi) _hemi.intensity = _baseLight.hemi * (0.3 + 0.7 * e);
+      if (_amb)  _amb.intensity  = _baseLight.amb  * (0.3 + 0.7 * e);
+      if (_key)  _key.intensity  = _baseLight.key  * (0.2 + 0.8 * e);
+      if (_fill) _fill.intensity = _baseLight.fill * (0.2 + 0.8 * e);
+      if (_rim)  _rim.intensity  = _baseLight.rim  * (0.2 + 0.8 * e);
+    }
+  }
+  function _restoreLights() {
+    if (!_baseLight) return;
+    if (camera) { camera.fov = _baseFov; camera.updateProjectionMatrix(); }
+    if (_hemi) _hemi.intensity = _baseLight.hemi; if (_amb) _amb.intensity = _baseLight.amb;
+    if (_key) _key.intensity = _baseLight.key; if (_fill) _fill.intensity = _baseLight.fill;
+    if (_rim) _rim.intensity = _baseLight.rim;
+    if (controls) controls.target.set(0, 0.02, 0);
+  }
 
   function drawGrid(ctx) {
     ctx.save(); ctx.font = "bold 18px monospace"; ctx.textBaseline = "top";
@@ -374,7 +589,20 @@
     if (controls) { controls.autoRotate = !!on; controls.autoRotateSpeed = 1.1; }
     if (on && resumeTimer) { clearTimeout(resumeTimer); resumeTimer = null; }
   };
-  G.lockPlacement = function (on) { _lockPlacement = !!on; };
+  G.lockPlacement = function (on) {
+    _lockPlacement = !!on;
+    if (!controls) return;
+    if (_lockPlacement) {
+      // Hero showcase: lock to a level turntable (horizontal spin only) and turn OFF
+      // zoom so scrolling the page over the hero never hijacks / zooms the camera.
+      controls.minPolarAngle = controls.maxPolarAngle = Math.PI / 2;
+      controls.enableZoom = false;
+    } else {
+      controls.minPolarAngle = Math.PI / 2 - 0.28;
+      controls.maxPolarAngle = Math.PI / 2 + 0.16;
+      controls.enableZoom = true;
+    }
+  };
   // Studio design mode: freeze the garment dead-still so artwork can be placed/dragged
   // without the idle auto-spin ever resuming. Releasing un-freezes (does not auto-spin).
   G.freezeSpin = function (on) {
@@ -443,6 +671,12 @@
       color: mat && mat.color ? "#" + mat.color.getHexString() : null, garmentColor,
       decalFront: !!decal.front, decalBack: !!decal.back, artFront: !!art.front,
       autoSpin: autoSpin, autoRotate: !!(controls && controls.autoRotate), onscreen: onscreen,
+      minPolar: controls ? +controls.minPolarAngle.toFixed(3) : null,
+      maxPolar: controls ? +controls.maxPolarAngle.toFixed(3) : null,
+      zoom: !!(controls && controls.enableZoom), lockPlacement: _lockPlacement,
+      room: _roomOn, hasFog: !!(scene && scene.fog), hasBg: !!(scene && scene.background),
+      target: controls ? controls.target.toArray().map((n) => +n.toFixed(3)) : null,
+      smoke: _smoke.length, interacting: _interacting,
       camPos: camera ? camera.position.toArray().map((n) => +n.toFixed(2)) : null,
       fitDist: +fitDist.toFixed(2),
       modelNDC: (mesh && camera) ? (function () {
@@ -557,6 +791,11 @@
         camera.position.set(Math.sin(na) * d, camera.position.y, Math.cos(na) * d);
       }
     }
+    // autoRotate is authoritative here: spin only when we WANT to, and NEVER while the
+    // user is dragging, while a front/back tween is running, or while frozen — this kills
+    // the "fighting" / jumpy feel when interacting with the hero.
+    if (_cine) _updateCine();       // breathing lens + parallax + travelling light (landing)
+    if (controls) controls.autoRotate = autoSpin && !haveAzTarget && !_interacting && !_frozen;
     controls.update();              // advances autoRotate + damping inertia
     renderer.render(scene, camera);
   }
