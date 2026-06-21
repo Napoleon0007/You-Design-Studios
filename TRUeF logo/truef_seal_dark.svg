@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="440" height="440" viewBox="0 0 200 200">
+  <rect width="200" height="200" fill="#161617"/>
+  <defs><path id="t2" d="M 30 100 A 70 70 0 0 1 170 100"/><path id="b2" d="M 35 100 A 65 65 0 0 0 165 100"/></defs>
+  <circle cx="100" cy="100" r="93" fill="none" stroke="#faf9f6" stroke-width="2.4"/>
+  <circle cx="100" cy="100" r="79" fill="none" stroke="#faf9f6" stroke-width="1"/>
+  <text font-family="Space Grotesk,Arial" font-weight="700" font-size="12.5" letter-spacing="3.6" fill="#faf9f6"><textPath href="#t2" startOffset="50%" text-anchor="middle">TRUeF · STUDIOS</textPath></text>
+  <text font-family="Space Grotesk,Arial" font-weight="600" font-size="11" letter-spacing="3.4" fill="#9a9a90"><textPath href="#b2" startOffset="50%" text-anchor="middle">WEAR · YOUR · TRUTH</textPath></text>
+  <g fill="#faf9f6" transform="translate(100,62) scale(0.36) translate(-50,-60)"><rect x="34" y="4" width="32" height="26" rx="7"/><rect x="8" y="40" width="84" height="21" rx="10"/><rect x="39" y="40" width="22" height="74" rx="10"/></g>
+  <text x="100" y="126" text-anchor="middle" font-family="Anton,Impact,Arial" font-size="44" letter-spacing="1.5" fill="#faf9f6">TRUTH</text>
+  <path d="M28 100 l4 -4 4 4 -4 4 z" fill="#faf9f6"/><path d="M172 100 l-4 -4 -4 4 4 4 z" fill="#faf9f6"/>
+</svg>
