@@ -168,8 +168,10 @@
     state.libraryDesign = null;            // this is a user upload, not a library pick
 
     const localURL = URL.createObjectURL(file);
-    if (state.is3D) { window.Garment3D.setArt(state.side, localURL); }
-    else { els.overlay.src = localURL; els.overlay.style.display = "block"; }
+    if (state.is3D) {
+      window.Garment3D.setArt(state.side, localURL);
+      if (window.Garment3D.freezeSpin) window.Garment3D.freezeSpin(true);   // stop spin the instant art lands
+    } else { els.overlay.src = localURL; els.overlay.style.display = "block"; }
     state.design = file;
     state.art[state.side].has = true;
     const _img = new Image();
@@ -336,16 +338,30 @@
   }
   function initTransform(s) {
     // Land the art filling the shirt's full print WIDTH, aspect preserved, centred.
-    // No manual scale — the person just drags it on the garment to position it.
+    // The garment FREEZES (no idle spin) so the person can drag the art to position it,
+    // and the Transform panel appears so they can stretch it wider to fill the chest.
     const p = PLACEMENT[s];
     p.scale = 1.0; p.scale_y = null; p.cx = 0.5; p.cy = 0.46; p.rotation = 0;
-    if (state.is3D) window.Garment3D.setPlacement(s, p);
+    if (state.is3D) {
+      window.Garment3D.setPlacement(s, p);
+      if (window.Garment3D.freezeSpin) window.Garment3D.freezeSpin(true);   // hold still for design
+    }
     refreshTransform();
   }
+  // Show the Width / Height / Rotate panel whenever there's art on the current side,
+  // and keep its sliders in sync with the live placement (drag / pinch update them too).
   function refreshTransform() {
-    // The manual width/height/rotate panel is gone — art auto-fills the width and
-    // is positioned by dragging it directly on the garment. Keep the panel hidden.
-    if (els.xfField) els.xfField.style.display = "none";
+    if (!els.xfField) return;
+    const has = state.is3D && state.art[state.side] && state.art[state.side].has;
+    els.xfField.style.display = has ? "" : "none";
+    if (!has) return;
+    if (els.xfSide) els.xfSide.textContent = state.side;
+    const p = PLACEMENT[state.side] || {};
+    if (els.xfW) els.xfW.value = Math.round((p.scale != null ? p.scale : 0.62) * 100);
+    let hy = p.scale_y;
+    if (hy == null) hy = aspectFitScaleY(state.side, (state.art[state.side] || {}).aspect || 1);
+    if (els.xfH) els.xfH.value = Math.round(Math.min(1, Math.max(0.08, hy)) * 100);
+    if (els.xfR) els.xfR.value = Math.round(p.rotation || 0);
   }
   function applyTransform() {
     const p = PLACEMENT[state.side];
@@ -365,8 +381,10 @@
 
   // ---- ready-made design library ---------------------------------------- //
   function applyArtSuccess(side, url, d) {
-    if (state.is3D) window.Garment3D.setArt(side, url);
-    else { els.overlay.src = url; els.overlay.style.display = "block"; }
+    if (state.is3D) {
+      window.Garment3D.setArt(side, url);
+      if (window.Garment3D.freezeSpin) window.Garment3D.freezeSpin(true);   // hold still for design
+    } else { els.overlay.src = url; els.overlay.style.display = "block"; }
     state.verdict = d.verdict; state.artKey = d.art_key;
     state.art[side].key = d.art_key; state.art[side].has = true;
     state.moderation = d.moderation || null;       // curated library → approved
@@ -423,6 +441,22 @@
   if (PRODUCTS.length) selectProduct(PRODUCTS[0]);
   $$("#productTabs button").forEach((b) =>
     b.addEventListener("click", () => selectProduct(PRODUCTS.find((p) => p.slug === b.dataset.slug))));
+
+  // ---- stage backdrop: cycle the SAME colours as the landing hero ------- //
+  // Mirrors landing3d.js BACKDROPS so the studio shares the brand's colour-shift
+  // behind the garment. Smooth cross-fade via CSS; pauses when the tab is hidden.
+  (() => {
+    const stage = document.getElementById("stage");
+    if (!stage) return;
+    const BACKDROPS = ["#dcb6ae", "#aebfa6", "#aebfd2", "#cf9e84", "#d8c6a6", "#aeb2b0", "#c7b6cc"];
+    const PERIOD = 6000;
+    let bi = 0, timer = null;
+    const set = () => stage.style.setProperty("--studio-bg", BACKDROPS[bi % BACKDROPS.length]);
+    const start = () => { if (!timer) timer = setInterval(() => { bi += 1; set(); }, PERIOD); };
+    const stop = () => { if (timer) { clearInterval(timer); timer = null; } };
+    set(); start();
+    document.addEventListener("visibilitychange", () => document.hidden ? stop() : start());
+  })();
 
   // ---- range filter: All / Men (unisex) / Women -------------------------- //
   (() => {

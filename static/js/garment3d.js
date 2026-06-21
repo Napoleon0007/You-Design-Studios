@@ -74,6 +74,8 @@
   let targetAzimuth = 0, haveAzTarget = false;
   let onPlacement = null;
   let _lockPlacement = false;   // landing-showcase mode: drags spin, never move the print
+  let _frozen = false;          // studio design mode: hold the garment perfectly still
+  let _interacting = false;     // user is actively dragging the showcase garment
 
   // ------------------------------------------------------------------ init -- //
   function _init(canvas, opts = {}) {
@@ -367,11 +369,19 @@
 
   // Landing showcase helpers (no effect on the studio, which never calls them).
   G.setAutoSpin = function (on) {
+    if (on && (_interacting || _frozen)) return;   // never re-enable spin while dragging or frozen (studio design mode)
     autoSpin = !!on;
     if (controls) { controls.autoRotate = !!on; controls.autoRotateSpeed = 1.1; }
     if (on && resumeTimer) { clearTimeout(resumeTimer); resumeTimer = null; }
   };
   G.lockPlacement = function (on) { _lockPlacement = !!on; };
+  // Studio design mode: freeze the garment dead-still so artwork can be placed/dragged
+  // without the idle auto-spin ever resuming. Releasing un-freezes (does not auto-spin).
+  G.freezeSpin = function (on) {
+    _frozen = !!on;
+    if (_frozen) { autoSpin = false; if (controls) controls.autoRotate = false;
+      if (resumeTimer) { clearTimeout(resumeTimer); resumeTimer = null; } }
+  };
 
   function removeDecal(s) {
     if (decal[s]) { scene.remove(decal[s]); decal[s].geometry.dispose(); decal[s].material.dispose(); decal[s] = null; }
@@ -481,7 +491,15 @@
     const onMove = (ev) => { if (!dragging) return; const h = hit(ev); if (h) apply(h); };
     const onUp = () => { if (!dragging) return; dragging = false; scheduleResume(2000); window.removeEventListener("pointermove", onMove); window.removeEventListener("pointerup", onUp); };
     host.addEventListener("pointerdown", (ev) => {
-      if (_lockPlacement) return;            // showcase: let OrbitControls spin instead
+      if (_lockPlacement) {
+        // Showcase: a drag SPINS via OrbitControls. Stop the auto-spin AND the
+        // front/back camera tween so neither fights the user's finger; resume the
+        // gentle spin a moment after they let go.
+        _interacting = true; pauseSpin(); haveAzTarget = false;
+        const up = () => { _interacting = false; scheduleResume(2500); window.removeEventListener("pointerup", up); };
+        window.addEventListener("pointerup", up);
+        return;
+      }
       const h = hit(ev); if (!h) return;
       const s = sideOf(h); if (!art[s]) return;
       dragging = true; pauseSpin();
@@ -491,7 +509,9 @@
       apply(h);
     }, true);
     host.addEventListener("wheel", (ev) => {
-      if (_lockPlacement) return;            // showcase: wheel = zoom (OrbitControls)
+      if (_lockPlacement) {                  // showcase: wheel = zoom (OrbitControls)
+        pauseSpin(); haveAzTarget = false; scheduleResume(2500); return;
+      }
       const h = hit(ev); if (!h) return;
       const s = sideOf(h); if (!art[s]) return;
       ev.stopPropagation(); ev.preventDefault();
@@ -509,6 +529,7 @@
     if (resumeTimer) { clearTimeout(resumeTimer); resumeTimer = null; }
   }
   function scheduleResume(delay) {
+    if (_frozen) return;                 // studio design mode: never resume the spin
     if (resumeTimer) clearTimeout(resumeTimer);
     resumeTimer = setTimeout(() => {
       resumeTimer = null; autoSpin = true;

@@ -47,14 +47,24 @@ body.theme-light .grain { display: none; }
 /* the bright editing-space floor — garment centres here */
 .stage {
   position: sticky; top: 62px; align-self: start; height: calc(100vh - 62px);
-  background: radial-gradient(120% 100% at 50% 32%, #ffffff 0%, #e9e9e4 78%);
+  background: #e9e9e4;                 /* fallback behind the cycling colour layer */
   display: grid; place-items: center; overflow: hidden;
   border-right: 1px solid var(--line);
-  transition: background-color .35s ease;
 }
-/* pale garments need a touch more floor contrast so they don't vanish on white */
-body.theme-light .stage.garment-light {
-  background: radial-gradient(120% 100% at 50% 32%, #f3f3ef 0%, #e2e2dc 80%);
+/* cycling colour layer — shares the landing's BACKDROPS palette (set via --studio-bg) */
+.stage__bg {
+  position: absolute; inset: 0; z-index: 0;
+  background: var(--studio-bg, #e9e9e4);
+  transition: background-color .9s ease;
+}
+/* soft white wash keeps the garment bright + legible over any backdrop colour */
+.stage::before {
+  content: ""; position: absolute; inset: 0; z-index: 1; pointer-events: none;
+  background: radial-gradient(120% 100% at 50% 32%, #ffffff 0%, rgba(255,255,255,.64) 40%, rgba(255,255,255,0) 86%);
+}
+/* pale garments need more wash so they don't vanish on a light backdrop */
+body.theme-light .stage.garment-light::before {
+  background: radial-gradient(120% 100% at 50% 32%, #ffffff 0%, rgba(255,255,255,.82) 48%, rgba(255,255,255,.2) 92%);
 }
 #garment3d { position: absolute; inset: 0; z-index: 2; }
 
