@@ -110,6 +110,10 @@ a { color: inherit; text-decoration: none; }
   opacity: 0; transform: translateY(8px) scale(.9); filter: blur(16px);
   transition: opacity .34s ease, transform .34s ease, filter .34s ease;   /* fade OUT quick */
 }
+/* with the 3D room on, don't blur/smear the whole scene on swap — just a gentle dip;
+   and drop the flat CSS shadow (the room renders its own grounded contact shadow). */
+.hero-stage.room-3d.swapping #garment3d { opacity: .82; transform: none; filter: none; transition: opacity .3s ease; }
+.hero-stage.room-3d .garment-shadow { display: none; }
 
 /* hide the studio-only injected hint/reset on the landing */
 .hero-garment .g3d-hint, .hero-garment .g3d-reset { display: none !important; }
@@ -197,3 +201,17 @@ a { color: inherit; text-decoration: none; }
 /* ------------------------------------------------------- footer --- */
 .v2foot { background: #18181a; color: rgba(255,255,255,.6); padding: 40px var(--gut);
   text-align: center; font-size: 13px; letter-spacing: .04em; }
+
+
+/* TRUEF throw-up logo — hero wordmark (designed logo) */
+.word{
+  font-family:'Titan One',system-ui,sans-serif; font-weight:400;
+  text-transform:uppercase; line-height:.9; letter-spacing:.005em;
+  font-size:clamp(46px,12.5vw,150px); max-width:12ch;
+  color:#faf7f2; -webkit-text-stroke:3px #15151a; paint-order:stroke fill;
+  text-shadow:
+    .018em .018em 0 #15151a,.036em .036em 0 #15151a,.054em .054em 0 #15151a,
+    .072em .072em 0 #15151a,.09em .09em 0 #15151a,.108em .108em 0 #15151a,
+    .126em .126em 0 #15151a,.144em .144em 0 #15151a,
+    .17em .21em .12em rgba(0,0,0,.32);
+}
