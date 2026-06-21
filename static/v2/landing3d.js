@@ -3,8 +3,8 @@
  *  Reuses the studio's Garment3D engine. Every ~6s a new garment
  *  glides in: it MATERIALISES (a slow blur+scale+fade reveal, "out of
  *  thin air") after a quick fade-out, so every transition is smooth.
- *  Most garments are clean BLANKS (colour + shape only); only one shirt
- *  in the rotation carries a print, using a curated set of cool designs.
+ *  Every garment carries a print (a curated set of cool designs), recoloured
+ *  to the colourway and blended into the fabric.
  *  Models are preloaded + cached by the engine so shape swaps are instant.
  * ============================================================= */
 (() => {
@@ -46,9 +46,9 @@
     busy = true;
     const g = GARMENTS[Math.floor(n / 2) % GARMENTS.length];   // shape changes every other cycle
     const colour = COLOURS[n % COLOURS.length];
-    // Only one shirt in the rotation is printed; the rest are clean blanks.
-    const printed = (n % 4 === 2) && cool.length > 0;
-    const design = printed ? cool[Math.floor(n / 4) % cool.length] : null;
+    // Every garment carries a print, cycling the curated cool set.
+    const pool = cool.length ? cool : designs;
+    const design = pool.length ? pool[n % pool.length] : null;
     const needModel = g.model !== curModel;
 
     setBackdrop(BACKDROPS[n % BACKDROPS.length]);
@@ -62,7 +62,7 @@
       G.setAutoSpin(true);
     } catch (e) { /* a bad swap shouldn't stop the carousel */ }
     if (capName) capName.textContent = g.name;
-    if (capArt) capArt.textContent = design ? design.title : "Blank canvas";
+    if (capArt) capArt.textContent = design ? design.title : "Your design here";
     requestAnimationFrame(() => stage.classList.remove("swapping"));  // materialise IN (slow reveal)
     busy = false;
   }
