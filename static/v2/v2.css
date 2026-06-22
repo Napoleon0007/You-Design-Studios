@@ -114,12 +114,14 @@ a { color: inherit; text-decoration: none; }
   filter: drop-shadow(0 26px 38px rgba(0,0,0,.16));
 }
 .hero-stage.hero-ready .hero-poster { opacity: 0; }
-/* the garment MATERIALISES in: a slow blur + scale + fade reveal ("out of thin
-   air"), with a quicker fade-out before each swap, so every garment glides in. */
-.hero-stage #garment3d { transition: opacity .95s var(--ease), transform .95s var(--ease), filter .95s var(--ease); }
+/* Seamless swap: the garment only DIPS (never to empty) while the next colour +
+   print apply instantly (models are cached/preloaded), then settles. The landing
+   is never blank between shirts — one flows straight into the next. */
+.hero-stage #garment3d { transition: opacity .7s var(--ease), transform .7s var(--ease), filter .7s var(--ease); }
 .hero-stage.swapping #garment3d {
-  opacity: 0; transform: translateY(8px) scale(.9); filter: blur(16px);
-  transition: opacity .34s ease, transform .34s ease, filter .34s ease;   /* fade OUT quick */
+  opacity: .9; transform: translateY(10px) scale(.9);
+  filter: brightness(.7);   /* #5: recede + dim INTO the room's depth, then step FORWARD into the light */
+  transition: opacity .22s ease, transform .22s ease, filter .22s ease;
 }
 /* with the 3D room on, don't blur/smear the whole scene on swap — just a gentle dip;
    and drop the flat CSS shadow (the room renders its own grounded contact shadow). */
@@ -393,3 +395,24 @@ a { color: inherit; text-decoration: none; }
   .room-halo{ background:radial-gradient(26% 26% at 50% 45%,
     rgba(255,255,255,.40) 0%, rgba(255,255,255,.12) 46%, transparent 70%); }
 }
+
+/* ============================================================
+ *  #5 — LIVING LIGHT + DEPTH PARALLAX (the space feels lit + alive)
+ * ============================================================ */
+/* The studio breathes: the spotlight pulses + the haze drifts. We animate the
+   glow's OPACITY only (the parallax JS owns its transform) and the haze freely
+   (JS never touches it). Calm + slow; off for reduced-motion users. */
+@media (prefers-reduced-motion: no-preference){
+  .room-glow{ animation: keyBreathe 11s ease-in-out infinite; }
+  .room-haze{ animation: hazeDrift 15s ease-in-out infinite; }
+}
+@keyframes keyBreathe{ 0%,100%{ opacity:.9 } 50%{ opacity:1 } }
+@keyframes hazeDrift{
+  0%,100%{ opacity:.8; transform:translate3d(0,0,0) scale(1); }
+  50%    { opacity:1;  transform:translate3d(0,-1.4%,0) scale(1.05); }
+}
+/* Depth parallax couples the GROUND: the contact shadow + colour reflection nudge
+   with the room (--ground-shift set by the parallax loop) so the floor reads as one
+   connected plane under the garment. Keeps the existing -50% centring. */
+.garment-reflect{ transform: translateX(calc(-50% + var(--ground-shift, 0px))); }
+.garment-shadow{  transform: translateX(calc(-50% + var(--ground-shift, 0px))); }
