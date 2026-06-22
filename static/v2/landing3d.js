@@ -126,8 +126,10 @@
     // first garment frame is up → cross-fade the instant poster out (2 rAFs = painted)
     requestAnimationFrame(() => requestAnimationFrame(() => stage.classList.add("hero-ready")));
     startTimer();
-    // Warm the cache with the other models so their first swap is instant + smooth.
-    G.preload(GARMENTS.map((x) => x.model));
+    // Warm the OTHER models AFTER first paint, STAGGERED — so the landing's initial
+    // load isn't a ~10MB burst of all 4 GLBs at once. Each is cached well before the
+    // carousel needs it (shape changes every other 6s cycle: 2nd shape ≈12s in).
+    GARMENTS.slice(1).forEach((g, k) => setTimeout(() => G.preload([g.model]), 1800 + k * 1800));
 
     // kinetic type: staggered reveal on load + gentle parallax/fade on scroll
     const copy = document.querySelector(".hero-copy");
