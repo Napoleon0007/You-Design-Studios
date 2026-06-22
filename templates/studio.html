@@ -58,8 +58,10 @@
 
     /* Originality reminder pop-up — replaces the inline rights checkbox */
     #rightsRow { display:none; }   /* consent now happens via the pop-up below */
-    .ip-modal { position:fixed; inset:0; z-index:80; background:rgba(20,18,16,.55);
-      display:flex; align-items:center; justify-content:center; padding:20px; }
+    /* Anchored to the BOTTOM so the garment + the print that just landed stay
+       visible above it (the reminder shouldn't hide the shirt). */
+    .ip-modal { position:fixed; inset:0; z-index:80; background:rgba(20,18,16,.38);
+      display:flex; align-items:flex-end; justify-content:center; padding:20px 20px max(28px,env(safe-area-inset-bottom)); }
     .ip-modal[hidden] { display:none; }
     .ip-card { background:#fff; border-radius:18px; max-width:380px; width:100%;
       padding:26px 22px max(22px,env(safe-area-inset-bottom)); text-align:center;

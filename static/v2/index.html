@@ -32,6 +32,15 @@
 
   <!-- ───────────────────────── hero ──────────────────────── -->
   <header class="hero-stage" id="hero">
+    <!-- 3D SPACE: a lit studio room behind the garment — back-wall grid, a
+         perspective floor receding to a horizon, a spotlight pool + vignette.
+         Pure CSS/DOM (decoupled from the WebGL camera), rides --stage-bg. -->
+    <div class="hero-room" aria-hidden="true">
+      <div class="room-grid room-wall"></div>
+      <div class="room-grid room-floor"></div>
+      <div class="room-glow"></div>
+      <div class="room-vignette"></div>
+    </div>
     <div class="hero-copy">
       <p class="hero-tag">Be your own brand.</p>
       <p class="hero-blurb">Your art on premium tees &amp; hoodies — you design it, you wear it, you own it.</p>

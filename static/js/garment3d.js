@@ -669,7 +669,7 @@
     return { hasMesh: !!mesh, matType: mat && mat.type, mapSet: !!(mat && mat.map),
       isCanvasTex: !!(mat && mat.map && mat.map.isCanvasTexture),
       color: mat && mat.color ? "#" + mat.color.getHexString() : null, garmentColor,
-      decalFront: !!decal.front, decalBack: !!decal.back, artFront: !!art.front,
+      decalFront: !!decal.front, decalBack: !!decal.back, artFront: !!art.front, artBack: !!art.back,
       autoSpin: autoSpin, autoRotate: !!(controls && controls.autoRotate), onscreen: onscreen,
       minPolar: controls ? +controls.minPolarAngle.toFixed(3) : null,
       maxPolar: controls ? +controls.maxPolarAngle.toFixed(3) : null,

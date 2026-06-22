@@ -40,7 +40,7 @@
   const BRAND_WORD = "/static/v2/brand_word.png";
 
   let designs = [], cool = [];
-  let i = 0, timer = null, busy = false, curModel = null;
+  let i = 0, timer = null, busy = false, curModel = null, userActive = false;
   const PERIOD = 6000;
   const wait = (ms) => new Promise((r) => setTimeout(r, ms));
   const setBackdrop = (hex) => document.documentElement.style.setProperty("--stage-bg", hex);
@@ -82,7 +82,7 @@
     busy = false;
   }
 
-  const next = () => { i += 1; showCombo(i); };
+  const next = () => { if (userActive || busy) return; i += 1; showCombo(i); };
   const startTimer = () => { if (!timer) timer = setInterval(next, PERIOD); };
   const stopTimer = () => { if (timer) { clearInterval(timer); timer = null; } };
 
@@ -120,13 +120,49 @@
       });
     }, { passive: true });
 
-    // Pause the carousel while the visitor is inspecting a garment; resume after idle.
+    // Carousel vs. interaction: NEVER swap the garment while the visitor is
+    // touching it. A swap mid-drag (recolour + front/back tween + the
+    // materialise blur on the canvas) was the "glitch when I play with it".
+    // Stop the carousel the instant a finger lands; resume only after they've
+    // been idle for a beat. pointerup/cancel are on window so a release that
+    // ends off-canvas still counts.
     let idle = null;
-    const hold = () => { stopTimer(); if (idle) clearTimeout(idle); idle = setTimeout(startTimer, 6500); };
-    canvas.addEventListener("pointerdown", hold);
-    canvas.addEventListener("wheel", hold, { passive: true });
+    const IDLE_RESUME = 4500;
+    const armResume = () => { if (idle) clearTimeout(idle); idle = setTimeout(() => { if (!userActive) startTimer(); }, IDLE_RESUME); };
+    const onGrab = () => {
+      userActive = true; stopTimer();
+      if (idle) { clearTimeout(idle); idle = null; }
+      stage.classList.remove("swapping");   // snap to full size — never drag a blurred/scaled canvas
+    };
+    const onRelease = () => { userActive = false; armResume(); };
+    canvas.addEventListener("pointerdown", onGrab);
+    window.addEventListener("pointerup", onRelease);
+    window.addEventListener("pointercancel", onRelease);
+    canvas.addEventListener("wheel", () => { stopTimer(); armResume(); }, { passive: true });
     // Don't animate/cycle in a background tab.
-    document.addEventListener("visibilitychange", () => (document.hidden ? stopTimer() : startTimer()));
+    document.addEventListener("visibilitychange", () => { if (document.hidden) stopTimer(); else if (!userActive) startTimer(); });
+
+    // ---- 3D-space parallax: nudge the room layers with cursor / device tilt.
+    //      DOM transforms only (never the WebGL camera) so it can't fight a drag.
+    (function () {
+      const room = document.querySelector(".hero-room");
+      if (!room) return;
+      const wall = room.querySelector(".room-wall"),
+            floor = room.querySelector(".room-floor"),
+            glow = room.querySelector(".room-glow");
+      let px = 0, py = 0, tx = 0, ty = 0, praf = false;
+      const apply = () => {
+        px += (tx - px) * 0.08; py += (ty - py) * 0.08;
+        if (wall)  wall.style.transform  = "translateX(calc(-50% + " + (px * 14).toFixed(2) + "px)) translateY(" + (py * 9).toFixed(2) + "px)";
+        if (floor) floor.style.transform = "translateX(calc(-50% + " + (px * 8).toFixed(2) + "px)) rotateX(80deg)";
+        if (glow)  glow.style.transform  = "translate(" + (px * 22).toFixed(2) + "px," + (py * 16).toFixed(2) + "px)";
+        if (Math.abs(tx - px) > 0.0005 || Math.abs(ty - py) > 0.0005) requestAnimationFrame(apply);
+        else praf = false;
+      };
+      const kick = () => { if (!praf) { praf = true; requestAnimationFrame(apply); } };
+      window.addEventListener("pointermove", (e) => { tx = (e.clientX / window.innerWidth) * 2 - 1; ty = (e.clientY / window.innerHeight) * 2 - 1; kick(); }, { passive: true });
+      window.addEventListener("deviceorientation", (e) => { if (e.gamma == null) return; tx = Math.max(-1, Math.min(1, e.gamma / 30)); ty = Math.max(-1, Math.min(1, ((e.beta || 45) - 45) / 30)); kick(); });
+    })();
   }
   boot();
 })();

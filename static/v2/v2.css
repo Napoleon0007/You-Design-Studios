@@ -245,12 +245,72 @@ a { color: inherit; text-decoration: none; }
   letter-spacing:.02em; font-size:clamp(15px,1.5vw,18px);
   -webkit-text-stroke:.6px rgba(0,0,0,.35); }
 .v2nav .navmark{ width:20px; height:20px; }
-/* hero as ONE immersive "4D space": depth bloom around the garment falling into a dark void,
-   over the single cycling --stage-bg colour (no flat seam, no second room) */
-.hero-stage{
-  background:
-    radial-gradient(135% 115% at 60% 38%,
-      rgba(255,255,255,.15) 0%, rgba(255,255,255,0) 30%,
-      rgba(0,0,0,.10) 58%, rgba(0,0,0,.36) 100%),
-    var(--stage-bg);
+/* ============================================================
+ *  HERO 3D SPACE — a lit studio room BEHIND the floating garment.
+ *  Back-wall grid + a perspective FLOOR whose lines recede to a
+ *  horizon, a soft SPOTLIGHT pool behind the garment, an edge
+ *  VIGNETTE for depth. The whole room rides the cycling --stage-bg
+ *  colour; the grid/glow are white-alpha so they read on every
+ *  colourway. Pure CSS/DOM — decoupled from the WebGL camera, so it
+ *  can NEVER fight a drag (this is what was reintroducing the glitch).
+ * ============================================================ */
+.hero-stage{ background: var(--stage-bg); }
+
+.hero-room{
+  position:absolute; inset:0; z-index:0; overflow:hidden; pointer-events:none;
+  perspective:760px; perspective-origin:60% 46%;
 }
+.room-grid{
+  position:absolute; left:50%; will-change:transform;
+  background-image:
+    linear-gradient(rgba(255,255,255,.17) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,.17) 1px, transparent 1px);
+}
+/* BACK WALL — fine grid that fades up + toward the centre light */
+.room-wall{
+  top:-12%; width:220%; height:86%; transform:translateX(-50%);
+  background-size:62px 62px; opacity:.92;
+  -webkit-mask-image:radial-gradient(135% 108% at 50% 94%, #000 10%, transparent 78%);
+          mask-image:radial-gradient(135% 108% at 50% 94%, #000 10%, transparent 78%);
+}
+/* FLOOR — grid laid down in perspective, receding to the horizon (brighter +
+   denser than the wall so the recession reads through the foreshortening) */
+.room-floor{
+  bottom:-4%; width:250%; height:130%;
+  transform:translateX(-50%) rotateX(80deg); transform-origin:50% 100%;
+  background-size:78px 78px; opacity:1;
+  background-image:
+    linear-gradient(rgba(255,255,255,.26) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,.26) 1px, transparent 1px);
+  -webkit-mask-image:linear-gradient(to top, #000 0%, rgba(0,0,0,.6) 30%, transparent 70%);
+          mask-image:linear-gradient(to top, #000 0%, rgba(0,0,0,.6) 30%, transparent 70%);
+}
+/* studio SPOTLIGHT pool behind the garment — gentle, so it lifts the grid
+   rather than washing it out */
+.room-glow{
+  position:absolute; inset:0; will-change:transform;
+  background:radial-gradient(54% 48% at 60% 42%,
+    rgba(255,255,255,.20) 0%, rgba(255,255,255,.06) 34%, transparent 66%);
+}
+/* edge VIGNETTE — frames the scene + pushes the centre back */
+.room-vignette{
+  position:absolute; inset:0;
+  background:radial-gradient(128% 120% at 60% 42%,
+    transparent 36%, rgba(0,0,0,.15) 70%, rgba(0,0,0,.42) 100%);
+}
+/* mobile: garment is centred, so centre the light + tighten the room */
+@media (max-width:859px){
+  .hero-room{ perspective-origin:50% 48%; }
+  .room-glow{ background:radial-gradient(64% 46% at 50% 44%,
+    rgba(255,255,255,.30) 0%, rgba(255,255,255,.09) 32%, transparent 64%); }
+  .room-vignette{ background:radial-gradient(130% 120% at 50% 44%,
+    transparent 38%, rgba(0,0,0,.14) 72%, rgba(0,0,0,.40) 100%); }
+}
+
+/* bigger, softer contact shadow so the garment reads as floating ABOVE the floor */
+.garment-shadow{
+  bottom:13%; width:min(42vw, 420px); height:34px;
+  background:radial-gradient(ellipse at center, rgba(0,0,0,.32), transparent 72%);
+  filter:blur(10px);
+}
+@media (min-width:860px){ .garment-shadow{ right:10%; bottom:15%; } }

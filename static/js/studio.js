@@ -252,7 +252,11 @@
   }
 
   els.drop.addEventListener("click", () => els.file.click());
-  els.file.addEventListener("change", (e) => handleFile(e.target.files[0]));
+  // Reset the input AFTER reading the file so re-picking the SAME image — e.g.
+  // uploading the same artwork for the back, or re-trying — always re-fires
+  // 'change' (a file input is silent when the value is unchanged). This was the
+  // "I uploaded another artwork and nothing happened" bug.
+  els.file.addEventListener("change", (e) => { const f = e.target.files[0]; handleFile(f); e.target.value = ""; });
   ["dragover", "dragenter"].forEach((ev) => els.drop.addEventListener(ev, (e) => { e.preventDefault(); els.drop.classList.add("drag"); }));
   ["dragleave", "drop"].forEach((ev) => els.drop.addEventListener(ev, (e) => { e.preventDefault(); els.drop.classList.remove("drag"); }));
   els.drop.addEventListener("drop", (e) => handleFile(e.dataTransfer.files[0]));

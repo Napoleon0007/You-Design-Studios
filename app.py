@@ -10,6 +10,7 @@ storefront is fully functional now and goes live the moment real keys land.
 from __future__ import annotations
 
 import io
+import json
 import os
 from pathlib import Path
 
@@ -702,6 +703,94 @@ def _release_to_providers(order: dict) -> list[str]:
     for prov, n in by_provider.items():
         out.append(f"{prov}×{n} (queued)")
     return out
+
+
+# --------------------------------------------------------------------------- #
+# SA PRINTER DASHBOARD — the local-fulfilment portal ("SA printer dashboard").
+# South African print shops have no public API (TeePrint / OTC / OneOff / …),
+# so released jobs land HERE instead: the print shop sees the print-ready files
+# + garment specs + the shipping address, accepts the job (-> in_production) and
+# marks it shipped (-> shipped, with optional tracking). Routing target is
+# provider 'local-sa'; until a specific shop is wired, every released job shows
+# so the queue is usable. Guarded by PRINTER_KEY in production (open on dev).
+# --------------------------------------------------------------------------- #
+def _printer_ok() -> bool:
+    key = os.environ.get("PRINTER_KEY")
+    if not key:
+        return True  # local dev — SET PRINTER_KEY before deploying
+    given = request.args.get("key") or request.headers.get("X-Printer-Key")
+    return bool(given) and given == key
+
+
+def _printer_view(order: dict) -> dict:
+    """Shape one order for the print shop: address + line items + print files."""
+    try:
+        addr = json.loads(order.get("shipping_json") or "{}") or {}
+    except (ValueError, TypeError):
+        addr = {}
+    items, units = [], 0
+    for it in order.get("items", []):
+        qty = it.get("quantity") or 1
+        units += qty
+        items.append({
+            "product": _product_name(it.get("product_slug")),
+            "colour": it.get("color") or "—",
+            "size": it.get("size") or "—",
+            "qty": qty,
+            "provider": it.get("provider") or "gelato",
+            "front": it.get("printfile_front_url"),
+            "back": it.get("printfile_back_url"),
+            "preview": it.get("preview_url"),
+        })
+    return {
+        "reference": order["reference"],
+        "status": order["status"],
+        "created_at": order.get("created_at"),
+        "name": order.get("name") or addr.get("name") or "Customer",
+        "address": addr,
+        "items": items,
+        "units": units,
+        "tracking_url": order.get("tracking_url"),
+    }
+
+
+@app.route("/printer")
+def printer_dashboard():
+    if not _printer_ok():
+        return ("Unauthorized — append ?key=YOUR_PRINTER_KEY", 401)
+    queue = [_printer_view(o) for o in db.list_orders(["submitted", "in_production"], limit=100)]
+    done = [_printer_view(o) for o in db.list_orders(["shipped", "delivered"], limit=20)]
+    return render_template("printer_dashboard.html", brand=BRAND, queue=queue,
+                           done=done, printer_key=request.args.get("key", ""))
+
+
+@app.route("/api/printer/job", methods=["POST"])
+def printer_job_action():
+    if not _printer_ok():
+        return jsonify(ok=False, error="Unauthorized"), 401
+    d = request.get_json(silent=True) or {}
+    ref, action = d.get("reference", ""), d.get("action", "")
+    order = db.get_order(ref)
+    if not order:
+        return jsonify(ok=False, error="Order not found"), 404
+
+    if action == "accept":
+        if order["status"] != "submitted":
+            return jsonify(ok=False, error=f"Can only accept a 'submitted' job (this is '{order['status']}')."), 400
+        db.set_order_status(ref, "in_production", notes="Accepted by SA print shop.")
+        return jsonify(ok=True, reference=ref, status="in_production")
+
+    if action == "ship":
+        if order["status"] not in ("in_production", "submitted"):
+            return jsonify(ok=False, error=f"Can't ship a job in '{order['status']}'."), 400
+        tracking = (d.get("tracking") or "").strip() or None
+        note = "Shipped by SA print shop." + (f" Tracking: {tracking}" if tracking else "")
+        db.set_order_status(ref, "shipped", tracking_url=tracking, notes=note)
+        # (Customer 'shipped' email intentionally left to the ops layer — no
+        #  misleading template reuse here.)
+        return jsonify(ok=True, reference=ref, status="shipped")
+
+    return jsonify(ok=False, error="Unknown action (accept|ship)."), 400
 
 
 @app.route("/resume/<token>")
