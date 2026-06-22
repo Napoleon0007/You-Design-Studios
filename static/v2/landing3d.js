@@ -29,8 +29,11 @@
   // Garment colourways + refined, airy backdrops (the stage shifts to one each cycle).
   const COLOURS = ["#f4f3ef", "#1b1b1b", "#d9c9a8", "#a9b39a", "#bcc9d8", "#c87f63", "#6f7d8c"];
   //                off-white  charcoal   sand       sage       dusty-blue terracotta slate
-  const BACKDROPS = ["#dcb6ae", "#aebfa6", "#aebfd2", "#cf9e84", "#d8c6a6", "#aeb2b0", "#c7b6cc"];
-  //                 blush      sage       sky        clay       sand       stone      lilac
+  // Richer, deeper room colourways — saturated so the garment, the white grid, and
+  // the white copy all pop. The backdrop for each garment is CHOSEN (not paired by
+  // index) to be the most DIFFERENT colour from that shirt — never a near-match.
+  const BACKDROPS = ["#a85563", "#4f7355", "#42699e", "#bb6a3e", "#caa83f", "#5f7480", "#7e5b9c"];
+  //                 rose       forest     azure      burnt-or.  gold       steel      violet
   // The cool prints that ride the ONE printed shirt in the rotation (all others blank).
   const COOL_IDS = ["skull-2.jpg", "neon.jpg", "paint-splash.jpg", "dark-surreal.jpg",
                     "the-guardian.webp", "shamaan.jpg", "green-tides.jpg"];
@@ -44,6 +47,14 @@
   const PERIOD = 6000;
   const wait = (ms) => new Promise((r) => setTimeout(r, ms));
   const setBackdrop = (hex) => document.documentElement.style.setProperty("--stage-bg", hex);
+  // Pick the backdrop most DIFFERENT from the shirt colour so a garment never blends
+  // into the background (rotating among the top-different ones for variety).
+  const _rgb = (h) => { const c = h.replace("#", ""); return [parseInt(c.slice(0, 2), 16), parseInt(c.slice(2, 4), 16), parseInt(c.slice(4, 6), 16)]; };
+  const _diff = (a, b) => { const A = _rgb(a), B = _rgb(b); return 2 * (A[0] - B[0]) ** 2 + 4 * (A[1] - B[1]) ** 2 + 3 * (A[2] - B[2]) ** 2; };
+  const pickBackdrop = (shirt, n) => {
+    const ranked = BACKDROPS.slice().sort((x, y) => _diff(shirt, y) - _diff(shirt, x));
+    return ranked.slice(0, 4)[n % 4];
+  };
 
   async function showCombo(n) {
     if (busy) return;
@@ -54,9 +65,10 @@
     // Every garment carries a print, cycling the curated cool set.
     const pool = cool.length ? cool : designs;
     const design = (!brand && pool.length) ? pool[n % pool.length] : null;
+    let chosen = design;
     const needModel = g.model !== curModel;
 
-    const bd = BACKDROPS[n % BACKDROPS.length];
+    const bd = brand ? pickBackdrop("#1b1b1b", n) : pickBackdrop(colour, n);
     setBackdrop(bd);                            // CSS fallback (poster phase / no-3D)
     if (G.setRoomTint) G.setRoomTint(bd);       // tint the 3D room to match
     stage.classList.add("swapping");           // fade the current garment out (quick)
@@ -69,13 +81,22 @@
         await G.setArt("front", BRAND_MARK);   // framed-TF mark on the chest (already transparent)
         await G.setArt("back", BRAND_WORD);    // TRUeF wordmark on the back
       } else {
-        await G.setArt("front", design ? design.url : null, { knockout: true });
+        // GUARANTEE a visible print on EVERY garment: cycle the cool set, and if a
+        // design fails to load or leaves nothing on the shirt, fall through to the next.
+        let placed = false;
+        const start = pool.length ? (n % pool.length) : 0;
+        for (let k = 0; k < pool.length; k++) {
+          const d = pool[(start + k) % pool.length];
+          const img = await G.setArt("front", d.url);            // full print (no knockout = always visible)
+          if (img && (!G.debug || G.debug().decalFront)) { chosen = d; placed = true; break; }
+        }
+        if (!placed && pool.length) { await G.setArt("front", pool[start].url); chosen = pool[start]; }
         await G.setArt("back", null);                              // clear the brand back-print on later shirts
       }
       G.setAutoSpin(true);
     } catch (e) { /* a bad swap shouldn't stop the carousel */ }
     if (capName) capName.textContent = g.name;
-    if (capArt) capArt.textContent = brand ? "TRUeF" : (design ? design.title : "Your design here");
+    if (capArt) capArt.textContent = brand ? "TRUeF" : (chosen ? chosen.title : "Your design here");
     const cap = document.querySelector(".hero-cap");
     if (cap) { cap.classList.remove("cap-pop"); void cap.offsetWidth; cap.classList.add("cap-pop"); }   // kinetic caption
     requestAnimationFrame(() => stage.classList.remove("swapping"));  // materialise IN (slow reveal)

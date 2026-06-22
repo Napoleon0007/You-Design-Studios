@@ -1,5 +1,23 @@
 # Handoff — TRUEF Studios (2026-06-22, late session)
 
+---
+## 🚨 TASTE SKILLS DROPPED — INCORPORATE NOW (2026-06-22)
+
+A full design-taste skill stack was just installed **globally** in `~/.claude/skills/` — so **this chat can invoke them directly right now** (they're not project-local; restart/relisting may be needed for them to appear). **Use them on the TRUEF re-skin from here on — do not hand-roll generic UI.**
+
+**Use on TRUEF (front-end heavy Lacoste re-skin):**
+- **`impeccable`** or **`design-taste-frontend`** or **`frontend-design`** — pick **ONE** as the base voice for any new/redesigned UI (don't stack — they overlap + bloat context). Anti-slop, non-templated.
+- **`taste`** — run `/taste <url>` on a **Lacoste reference page** → it drives a real browser and extracts concrete tokens (hex/px/spacing/radii/shadows) + the *why*. Use this to ground the re-skin in the actual reference instead of guessing.
+- **`theme-factory`** — generate/apply a cohesive theme + design tokens for the white editing space / landing.
+- **`emil-design-eng`** — for the hero motion / micro-interactions polish (the carousel, garment spin, hover states).
+- **`webapp-testing`** — Playwright toolkit: drive `:7460`, screenshot, read console logs. Pairs with Luke's **"prove before showing"** rule + the phone-feel verification still outstanding below.
+
+**Order of operations suggested:** `taste` the Lacoste ref → set tokens via `theme-factory` → build/polish with one base skill + `emil-design-eng` → verify with `webapp-testing` before showing Luke.
+
+(Full inventory + repos in Claude memory: `reference_taste_skill_installed.md`.)
+
+---
+
 > Big build session — all four asks DONE, verified (headless Chrome), **committed (`bb83be6`),
 > pushed to GitHub, and DEPLOYED + verified LIVE** on Railway. Brand = all-caps **TRUEF Studios**.
 > Live: https://you-design-studios-production.up.railway.app  (`/`, `/studio`, `/printer`).
