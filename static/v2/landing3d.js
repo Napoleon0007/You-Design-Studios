@@ -89,7 +89,7 @@
   async function boot() {
     G.init(canvas, {});
     G.lockPlacement(true);                            // drags spin; never move the print
-    if (G.setRoom) { G.setRoom(true); stage.classList.add("room-3d"); }   // 3D atmospheric space behind the garment
+    if (G.setRoom) { G.setRoom(false); }   // room off: garment floats on the single --stage-bg colour (no white/peach split)
     try {
       const r = await fetch("/api/designs");
       const d = await r.json();
