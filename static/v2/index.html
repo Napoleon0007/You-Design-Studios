@@ -36,9 +36,12 @@
          perspective floor receding to a horizon, a spotlight pool + vignette.
          Pure CSS/DOM (decoupled from the WebGL camera), rides --stage-bg. -->
     <div class="hero-room" aria-hidden="true">
+      <div class="room-lum"></div>
       <div class="room-grid room-wall"></div>
       <div class="room-grid room-floor"></div>
       <div class="room-glow"></div>
+      <div class="room-halo"></div>
+      <div class="room-haze"></div>
       <div class="room-vignette"></div>
     </div>
     <div class="hero-copy">
@@ -58,6 +61,7 @@
            cross-fades out once the live 3D garment has rendered its first frame -->
       <img class="hero-poster" src="/static/v2/hero-poster.png" alt="" aria-hidden="true" fetchpriority="high" />
       <canvas id="garment3d"></canvas>
+      <div class="garment-reflect" aria-hidden="true"></div>
       <div class="garment-shadow" aria-hidden="true"></div>
     </div>
 

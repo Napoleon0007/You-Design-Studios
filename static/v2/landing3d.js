@@ -70,6 +70,7 @@
 
     const bd = brand ? pickBackdrop("#1b1b1b", n) : pickBackdrop(colour, n);
     setBackdrop(bd);                            // CSS fallback (poster phase / no-3D)
+    document.documentElement.style.setProperty("--garment-reflect", colour);  // floor colour-bleed picks up the shirt
     if (G.setRoomTint) G.setRoomTint(bd);       // tint the 3D room to match
     stage.classList.add("swapping");           // fade the current garment out (quick)
     await wait(360);

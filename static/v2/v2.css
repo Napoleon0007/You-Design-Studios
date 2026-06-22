@@ -240,11 +240,12 @@ a { color: inherit; text-decoration: none; }
   font-size:clamp(13px,1.7vw,19px); color:rgba(255,255,255,.95); margin-top:16px; }
 .hero-blurb{ font-weight:500; font-size:clamp(12px,1.35vw,15px); color:rgba(255,255,255,.72);
   margin-top:7px; max-width:34ch; line-height:1.5; }
-/* top-left logo = the throw-up wordmark, small + clean */
+/* top-left logo = the throw-up wordmark — a touch bigger + thicker (bolder read) */
 .v2nav .navword{ font-family:'Titan One', system-ui, sans-serif; font-weight:400;
-  letter-spacing:.02em; font-size:clamp(15px,1.5vw,18px);
-  -webkit-text-stroke:.6px rgba(0,0,0,.35); }
-.v2nav .navmark{ width:20px; height:20px; }
+  letter-spacing:.02em; font-size:clamp(19px,2.1vw,25px);
+  -webkit-text-stroke:1px rgba(0,0,0,.4); }
+.v2nav .mark{ color:#fff; }                 /* full white so the bigger logo reads strong */
+.v2nav .navmark{ width:27px; height:27px; }
 /* ============================================================
  *  HERO 3D SPACE — a lit studio room BEHIND the floating garment.
  *  Back-wall grid + a perspective FLOOR whose lines recede to a
@@ -314,3 +315,81 @@ a { color: inherit; text-decoration: none; }
   filter:blur(10px);
 }
 @media (min-width:860px){ .garment-shadow{ right:10%; bottom:15%; } }
+
+/* ============================================================
+ *  HERO 3D DEPTH PASS — floor reflection, grounded shadow,
+ *  directional key + rim light, depth-of-field + atmosphere.
+ *  Pure CSS/DOM (everything below the garment, z<2), decoupled
+ *  from the WebGL camera — so it can NEVER fight a drag.
+ * ============================================================ */
+
+/* #4 — vertical luminance + atmosphere: the backdrop stops reading as a flat swatch
+   (lighter through the middle where the garment sits, deeper at the top + floor). */
+.room-lum{
+  position:absolute; inset:0; pointer-events:none;
+  background:linear-gradient(to bottom,
+    rgba(0,0,0,.20) 0%, rgba(0,0,0,.05) 17%,
+    transparent 42%, transparent 60%,
+    rgba(0,0,0,.10) 82%, rgba(0,0,0,.27) 100%);
+}
+
+/* #3 — KEY light: directional, off-axis (upper-left) instead of a centred blob */
+.room-glow{
+  background:radial-gradient(60% 70% at 36% 20%,
+    rgba(255,255,255,.22) 0%, rgba(255,255,255,.06) 40%, transparent 66%);
+}
+/* #3 — RIM / back light: a tight bright pool right behind the garment so its
+   silhouette separates from the backdrop. The garment canvas sits ON TOP of this,
+   so only the edges catch the light — instant volume. */
+.room-halo{
+  position:absolute; inset:0; pointer-events:none;
+  background:radial-gradient(21% 26% at 60% 43%,
+    rgba(255,255,255,.40) 0%, rgba(255,255,255,.11) 46%, transparent 70%);
+}
+/* #4 — soft light haze for air around the pool */
+.room-haze{
+  position:absolute; inset:0; pointer-events:none;
+  background:radial-gradient(46% 40% at 52% 32%, rgba(255,255,255,.09), transparent 70%);
+  filter:blur(8px);
+}
+
+/* #4 — depth of field: the room recedes (soft) so the floating garment is the
+   only razor-sharp plane — exactly how a camera renders depth. */
+.room-wall{ filter:blur(2px); }
+.room-floor{ filter:blur(1.4px); }
+
+/* #1 — FLOOR REFLECTION: a soft colour-bleed of the garment onto the matte floor.
+   The colour is set per-garment by landing3d.js via --garment-reflect. */
+.garment-reflect{
+  position:absolute; bottom:11%; left:50%; transform:translateX(-50%);
+  width:min(38vw,392px); height:74px; border-radius:50%;
+  background:radial-gradient(ellipse at center,
+    var(--garment-reflect, transparent) 0%, transparent 68%);
+  opacity:.32; filter:blur(17px); z-index:1; pointer-events:none;
+  transition:background 1s var(--ease), opacity 1s var(--ease);
+}
+
+/* #2 — GROUNDED contact shadow: a dark AO core right under the hem + a soft wide
+   falloff, flattened so it sits ON the floor (replaces the single detached ellipse). */
+.garment-shadow{
+  bottom:12%; width:min(40vw,408px); height:30px;
+  background:
+    radial-gradient(ellipse 42% 100% at center, rgba(0,0,0,.44) 0%, transparent 60%),
+    radial-gradient(ellipse at center, rgba(0,0,0,.30) 0%, transparent 72%);
+  filter:blur(9px);
+}
+
+@media (min-width:860px){
+  /* desktop: garment sits right-of-centre — anchor the reflection + shadow under it */
+  .garment-reflect{ left:auto; right:10%; bottom:13%; }
+  .garment-shadow{ right:10%; bottom:14%; }
+}
+@media (max-width:859px){
+  /* mobile: lighter depth-of-field for perf; centre the key + rim on the centred garment */
+  .room-wall{ filter:blur(1.3px); }
+  .room-floor{ filter:blur(1px); }
+  .room-glow{ background:radial-gradient(64% 64% at 34% 22%,
+    rgba(255,255,255,.24) 0%, rgba(255,255,255,.07) 38%, transparent 64%); }
+  .room-halo{ background:radial-gradient(26% 26% at 50% 45%,
+    rgba(255,255,255,.40) 0%, rgba(255,255,255,.12) 46%, transparent 70%); }
+}
