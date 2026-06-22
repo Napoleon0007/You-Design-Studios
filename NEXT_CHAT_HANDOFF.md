@@ -100,3 +100,16 @@ Added `artBack` to `G.debug()` (`static/js/garment3d.js`).
 ## 🛍 HERO-CHAT note (2026-06-22, latest) — DEPLOYED `8f77a39`
 Shipped (committed-only via a throwaway worktree so your uncommitted studio work was NOT included): **(1) The Collection rolodex now shows REAL 3D-rendered shirts** — all 17 `static/v2/cards/*.jpg` regenerated (engine-rendered blank tee + PIL fabric-shaded print; old flat `gen_cards.py` mockups replaced). Regen tools in `tools/` (gitignored). **(2) #5 cinematic depth** in `v2.css` (recede→step-forward on swap; spotlight/haze breathe). 
 ⚠️ **`landing3d.js` is shared + dirty:** it holds YOUR swap-gap (`wait 140`) AND my `--ground-shift` parallax line — I did NOT ship it (the #5 CSS falls back cleanly without it). When you reconcile, keep both. Also `garment3d.js` has my additive `preserveDrawingBuffer`/`antialias` init opts alongside your `setDesignMode` — both still uncommitted. **TODO for Luke:** `abstract-1` & `abstract-2` source designs are glitch images → swap them (they make bad cards). Full detail in memory `project_inkhaus_print_business`.
+
+---
+## 🏁 SESSION WRAP (2026-06-22) — for the NEW chat
+Single session now (other chats closed). **Shipped + live:** `8cf062e` bg≠shirt + every-shirt-printed · `fe18a06` studio flat-design + bigger logo + never-empty swap · `4f28841` videos −46% · `a837b51` staggered model preload (no 10MB burst).
+
+**Taste done:** `lacoste-taste/lacoste.md` + `lacoste.json` (gitignored). Editor DNA from Lacoste: full-bleed canvas, transparent top bar (BACK / undo-help-redo pill / FINISH), bottom monochrome tool-dock (active = accent), white→#e9e9ea studio gradient, font Figtree, single screen / zero scroll. Real editor screenshots = `2nd draft of printing website/14.50.33` + `14.50.49`.
+
+**🎯 #1 NEXT TASK — rebuild `/studio` editor Lacoste-style** (see `lacoste.json` rebuildBrief): mobile-first single-scroll, full-bleed canvas + transparent top bar + bottom dock of the EXISTING controls, active=TRUEF accent, studio gradient, reuse `garment3d.js setDesignMode()` lock (already shipped). **Preserve all pipeline IDs/JS** (upload→IP-gate→cart→printfile).
+
+**Open:**
+- Studio flat-design drag-to-place needs a **real-phone check** (headless raycast inconclusive).
+- **GLB compression unfinished** — `gltf-transform simplify` failed silently (CLI flag/dep); models intact, backups `/tmp/glb_orig/`. Models are 125k-vert pure geometry → simplify IS the lever; fix the CLI + verify renders.
+- Swap `abstract-1`/`abstract-2` glitch source designs.
