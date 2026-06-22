@@ -1,8 +1,9 @@
 # Handoff — TRUEF Studios (2026-06-22, late session)
 
-> Big build session — all four asks DONE + verified (headless Chrome). **Everything is LOCAL
-> (uncommitted, undeployed)** — live site still = previous build. Dev server restarted on **:7460**
-> with all changes, so Luke can view it all now. Brand = all-caps **TRUEF Studios**.
+> Big build session — all four asks DONE, verified (headless Chrome), **committed (`bb83be6`),
+> pushed to GitHub, and DEPLOYED + verified LIVE** on Railway. Brand = all-caps **TRUEF Studios**.
+> Live: https://you-design-studios-production.up.railway.app  (`/`, `/studio`, `/printer`).
+> `/printer` is gated by `PRINTER_KEY` in prod (401 without it) — Luke has the key.
 
 ## ✅ Built tonight (all verified)
 
@@ -51,8 +52,7 @@ Added `artBack` to `G.debug()` (`static/js/garment3d.js`).
 - Landing + 3D space: `http://127.0.0.1:7460/`  · Studio: `/studio`  · **SA printer dashboard: `/printer`**
 
 ## ⏭ Next / open
-- **Deploy when happy** — all local. `railway up --detach --service You-Design-Studios` + `git push` (PAT).
-  Tree is clean of other windows now, so a normal deploy is safe. Set `PRINTER_KEY` (+ `ADMIN_KEY`) before deploy.
+- ✅ DEPLOYED — `railway up` build live + verified (commit `bb83be6` pushed). `PRINTER_KEY` set on Railway.
 - Verify the hero feel on a real phone (headless can't confirm touch feel).
 - Polish: mobile opening-garment size vs. copy overlap.
 - SA printer dashboard is a scaffold — next: filter strictly to `provider:local-sa`, add a CSV/email relay to
