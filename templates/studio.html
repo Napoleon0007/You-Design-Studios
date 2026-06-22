@@ -60,6 +60,16 @@
     #rightsRow { display:none; }   /* consent now happens via the pop-up below */
     /* Anchored to the BOTTOM so the garment + the print that just landed stay
        visible above it (the reminder shouldn't hide the shirt). */
+    /* Preview-in-3D toggle (flat-design mode lives in the engine) */
+    .preview-toggle { position:absolute; top:14px; right:14px; z-index:6;
+      font:600 12px/1 "Space Grotesk",system-ui,sans-serif; letter-spacing:.02em;
+      padding:10px 14px; min-height:40px; border-radius:100px; cursor:pointer;
+      border:1px solid rgba(0,0,0,.12); background:rgba(255,255,255,.92);
+      -webkit-backdrop-filter:blur(8px); backdrop-filter:blur(8px); color:#18181a;
+      box-shadow:0 4px 16px rgba(0,0,0,.08); transition:transform .2s, background .2s; }
+    .preview-toggle:hover { transform:translateY(-1px); }
+    .preview-toggle.previewing { background:#18181a; color:#fff; border-color:#18181a; }
+    @media (max-width:760px){ .preview-toggle{ top:10px; right:10px; padding:9px 12px; font-size:11px; } }
     .ip-modal { position:fixed; inset:0; z-index:80; background:rgba(20,18,16,.38);
       display:flex; align-items:flex-end; justify-content:center; padding:20px 20px max(28px,env(safe-area-inset-bottom)); }
     .ip-modal[hidden] { display:none; }
@@ -106,6 +116,7 @@
         <button class="on" data-side="front">Front</button>
         <button data-side="back">Back</button>
       </div>
+      <button class="preview-toggle" id="previewBtn" type="button">Preview in 3D ⟳</button>
       <canvas id="garment3d"></canvas>
       <div class="stage__placeholder">
         <img id="refPhoto" src="{{ products[0].ref_image }}" alt="Product preview" />

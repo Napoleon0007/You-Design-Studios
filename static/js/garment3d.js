@@ -75,6 +75,7 @@
   let onPlacement = null;
   let _lockPlacement = false;   // landing-showcase mode: drags spin, never move the print
   let _frozen = false;          // studio design mode: hold the garment perfectly still
+  let _designMode = false;      // studio FLAT-DESIGN: face front, no spin/orbit, drag moves the print
   let _interacting = false;     // user is actively dragging the showcase garment
   // cinematic showcase state (landing only): breathing lens, parallax, lit reveal,
   // travelling key light. All gated on _cine so the studio is unaffected.
@@ -90,7 +91,9 @@
     canvasEl = canvas; stage = canvas.parentElement || canvas;
     onPlacement = opts.onPlacement || null;
 
-    renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+    renderer = new THREE.WebGLRenderer({ canvas, alpha: true,
+      antialias: opts.antialias === false ? false : true,
+      preserveDrawingBuffer: !!opts.preserveDrawingBuffer });   // capture-only opts (card render harness); defaults match live
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
     renderer.outputEncoding = THREE.sRGBEncoding;
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
@@ -610,6 +613,24 @@
     if (_frozen) { autoSpin = false; if (controls) controls.autoRotate = false;
       if (resumeTimer) { clearTimeout(resumeTimer); resumeTimer = null; } }
   };
+  // Studio FLAT-DESIGN mode: lock the garment dead-still facing the current side
+  // (no idle spin, no orbit, no zoom) so artwork can be dragged/resized like a flat
+  // tee. Toggling OFF restores free rotate + zoom for a real 3D preview.
+  G.setDesignMode = function (on) {
+    _designMode = !!on;
+    if (!controls) return;
+    if (_designMode) {
+      _frozen = true; autoSpin = false;
+      controls.autoRotate = false; controls.enableRotate = false; controls.enableZoom = false;
+      if (resumeTimer) { clearTimeout(resumeTimer); resumeTimer = null; }
+      haveAzTarget = false;
+      setCam(side, fitDist, true);          // face the current side, level + locked
+    } else {
+      _frozen = false;
+      controls.enableRotate = true; controls.enableZoom = true;
+    }
+    kick();
+  };
 
   function removeDecal(s) {
     if (decal[s]) { scene.remove(decal[s]); decal[s].geometry.dispose(); decal[s].material.dispose(); decal[s] = null; }
@@ -732,6 +753,16 @@
         _interacting = true; pauseSpin(); haveAzTarget = false;
         const up = () => { _interacting = false; scheduleResume(2500); window.removeEventListener("pointerup", up); };
         window.addEventListener("pointerup", up);
+        return;
+      }
+      if (_designMode) {
+        // Flat-design: a drag ANYWHERE moves the current side's print (no need to
+        // grab it precisely), and the locked camera means it never rotates the shirt.
+        dragging = true; pauseSpin();
+        ev.stopPropagation(); ev.preventDefault();
+        window.addEventListener("pointermove", onMove);
+        window.addEventListener("pointerup", onUp);
+        const h0 = hit(ev); if (h0) apply(h0);
         return;
       }
       const h = hit(ev); if (!h) return;

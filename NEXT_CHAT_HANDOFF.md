@@ -78,3 +78,25 @@ Added `artBack` to `G.debug()` (`static/js/garment3d.js`).
 
 ## 💬 Comments
 -
+
+---
+## 🧵 STUDIO-CHAT ADDENDUM (2026-06-22, late) — for the next chat
+> Ran ALONGSIDE the hero/landing agent above (it committed `bf94351` 3D-depth-pass + the room-lum/halo/haze/`--garment-reflect` work). My edits are STUDIO-focused but some live in shared files (`v2.css`, `landing3d.js`, `garment3d.js`) → don't blanket `git add -A`; coordinate. Full detail in Claude memory `project_inkhaus_print_business`.
+
+**DEPLOYED earlier (commit `8cf062e`):** bg always contrasts the shirt (`pickBackdrop`) + every shirt carries a print (guarantee loop, knockout dropped).
+
+**COMMITTED just now (`4f28841`):** gallery MP4s recompressed 4.7MB→2.6MB (−46%; h264 crf30, no audio, faststart). Originals backed up in `/tmp/media_orig/`. NOT deployed yet.
+
+**MY UNCOMMITTED (verify on a real device, then deploy when the repo's calm):**
+- **Studio "FLAT-DESIGN" mode** (Luke chose this from 3 options): `garment3d.js` `G.setDesignMode(on)` (face front, no spin/orbit/zoom, drag-anywhere moves the print via the `_designMode` pointerdown branch); `studio.js` `enterDesignMode()`/`togglePreview()` wired into model-load + every art-apply; `#previewBtn` "Preview in 3D ↻" + `.preview-toggle` CSS in `studio.html`. Verified: shirt locked + Preview spins + decalFront true, 0 errs — **but headless drag didn't move art (cx 0.5→0.5); CHECK ON A REAL PHONE** (likely a headless raycast artifact).
+- Nav **logo bigger + thicker** (`v2.css .navword`/`.navmark`).
+- **Swap-gap fix** so the landing is NEVER empty between shirts (`.swapping` no longer opacity:0, `wait 360→140`) — ⚠️ the hero agent also rewrote `.swapping`; reconcile.
+
+**🎯 BIG NEXT TASK (Luke): redesign the STUDIO editor like the LACOSTE editor** (ref screenshots 9–10 in `2nd draft of printing website/`): single clean white screen, garment ALWAYS visible, controls DOCKED with the shirt (mobile: you currently scroll to the sliders and lose the shirt — everything must be in ONE non-scrolling area; bottom toolbar BACK/FINISH/undo-redo/tools). Use the **`taste` skill** on the Lacoste editor URL to extract tokens, rebuild mobile-first, PRESERVE pipeline IDs/JS (upload/IP-gate/cart/printfile).
+
+**⚡ COMPRESSION still to do (next chat, verified):** the GLB models (`static/models/*.glb` ~10MB total, preloaded on the landing = the real hero-load cost) are already Draco'd; either mesh-simplify via `gltf-transform` (verify no garment deformation) and/or stop preloading all 4 on the landing (load on-demand). Left undone tonight to avoid breaking models blind.
+
+---
+## 🛍 HERO-CHAT note (2026-06-22, latest) — DEPLOYED `8f77a39`
+Shipped (committed-only via a throwaway worktree so your uncommitted studio work was NOT included): **(1) The Collection rolodex now shows REAL 3D-rendered shirts** — all 17 `static/v2/cards/*.jpg` regenerated (engine-rendered blank tee + PIL fabric-shaded print; old flat `gen_cards.py` mockups replaced). Regen tools in `tools/` (gitignored). **(2) #5 cinematic depth** in `v2.css` (recede→step-forward on swap; spotlight/haze breathe). 
+⚠️ **`landing3d.js` is shared + dirty:** it holds YOUR swap-gap (`wait 140`) AND my `--ground-shift` parallax line — I did NOT ship it (the #5 CSS falls back cleanly without it). When you reconcile, keep both. Also `garment3d.js` has my additive `preserveDrawingBuffer`/`antialias` init opts alongside your `setDesignMode` — both still uncommitted. **TODO for Luke:** `abstract-1` & `abstract-2` source designs are glitch images → swap them (they make bad cards). Full detail in memory `project_inkhaus_print_business`.

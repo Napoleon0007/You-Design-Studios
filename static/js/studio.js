@@ -10,7 +10,7 @@
   "use strict";
 
   const state = { product: null, color: null, colorCode: null, colorHex: null, size: null,
-                  sizeCode: null, side: "front", qty: 1, design: null, is3D: false,
+                  sizeCode: null, side: "front", qty: 1, design: null, is3D: false, previewing: false,
                   verdict: null, uid: null, artKey: null, designToken: null,
                   moderation: null, artFilename: null, libraryDesign: null,
                   art: { front: { key: null }, back: { key: null } } };
@@ -40,7 +40,7 @@
     addBtn: $("#addBtn"), saveBtn: $("#saveBtn"), toast: $("#toast"),
     name: $("#pName"), price: $("#pPrice"), blurb: $("#pBlurb"), sku: $("#skuLine"),
     xfField: $("#xfField"), xfSide: $("#xfSide"), xfW: $("#xfW"), xfH: $("#xfH"),
-    xfR: $("#xfR"), xfReset: $("#xfReset"),
+    xfR: $("#xfR"), xfReset: $("#xfReset"), previewBtn: $("#previewBtn"),
     designToggle: $("#designToggle"), designGrid: $("#designGrid"),
     modNote: $("#modNote"), rights: $("#rightsCheck"),
   };
@@ -82,7 +82,8 @@
       if (soon) soon.hidden = true;
       if (els.overlay) els.overlay.style.display = "none";
       window.Garment3D.load(modelFor(p))
-        .then(() => { if (state.colorHex) window.Garment3D.setColor(state.colorHex); })
+        .then(() => { if (state.colorHex) window.Garment3D.setColor(state.colorHex);
+                      if (!state.previewing) enterDesignMode(); })
         .catch((e) => console.warn("[studio] model load failed", e));
     } else {
       // No 3D model for this product yet → clean "coming soon" state. NEVER show the hero
@@ -172,7 +173,7 @@
     const localURL = URL.createObjectURL(file);
     if (state.is3D) {
       window.Garment3D.setArt(state.side, localURL);
-      if (window.Garment3D.freezeSpin) window.Garment3D.freezeSpin(true);   // stop spin the instant art lands
+      enterDesignMode();   // lock the shirt still + front-on so you can place the art
     } else { els.overlay.src = localURL; els.overlay.style.display = "block"; }
     state.design = file;
     state.art[state.side].has = true;
@@ -350,7 +351,7 @@
     p.scale = 1.0; p.scale_y = null; p.cx = 0.5; p.cy = 0.46; p.rotation = 0;
     if (state.is3D) {
       window.Garment3D.setPlacement(s, p);
-      if (window.Garment3D.freezeSpin) window.Garment3D.freezeSpin(true);   // hold still for design
+      enterDesignMode();   // hold still for design
     }
     refreshTransform();
   }
@@ -385,11 +386,33 @@
     refreshTransform();
   });
 
+  // ---- flat-design lock + 3D-preview toggle ----------------------------- //
+  // Designing = shirt locked dead-still facing you, drag anywhere to move the print,
+  // sliders to resize. "Preview in 3D" releases it to spin so you can see the result.
+  function enterDesignMode() {
+    state.previewing = false;
+    if (state.is3D && window.Garment3D.setDesignMode) window.Garment3D.setDesignMode(true);
+    else if (state.is3D && window.Garment3D.freezeSpin) window.Garment3D.freezeSpin(true);
+    if (els.previewBtn) { els.previewBtn.classList.remove("previewing"); els.previewBtn.textContent = "Preview in 3D ↻"; }
+  }
+  function togglePreview() {
+    if (!state.is3D) return;
+    state.previewing = !state.previewing;
+    if (state.previewing) {
+      if (window.Garment3D.setDesignMode) window.Garment3D.setDesignMode(false);
+      if (window.Garment3D.setAutoSpin) window.Garment3D.setAutoSpin(true);   // gentle spin to show it off
+      if (els.previewBtn) { els.previewBtn.classList.add("previewing"); els.previewBtn.textContent = "Back to design"; }
+    } else {
+      enterDesignMode();
+    }
+  }
+  if (els.previewBtn) els.previewBtn.addEventListener("click", togglePreview);
+
   // ---- ready-made design library ---------------------------------------- //
   function applyArtSuccess(side, url, d) {
     if (state.is3D) {
       window.Garment3D.setArt(side, url);
-      if (window.Garment3D.freezeSpin) window.Garment3D.freezeSpin(true);   // hold still for design
+      enterDesignMode();   // hold still for design
     } else { els.overlay.src = url; els.overlay.style.display = "block"; }
     state.verdict = d.verdict; state.artKey = d.art_key;
     state.art[side].key = d.art_key; state.art[side].has = true;

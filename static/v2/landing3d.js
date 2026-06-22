@@ -72,8 +72,8 @@
     setBackdrop(bd);                            // CSS fallback (poster phase / no-3D)
     document.documentElement.style.setProperty("--garment-reflect", colour);  // floor colour-bleed picks up the shirt
     if (G.setRoomTint) G.setRoomTint(bd);       // tint the 3D room to match
-    stage.classList.add("swapping");           // fade the current garment out (quick)
-    await wait(360);
+    stage.classList.add("swapping");           // quick DIP (never empty) while we swap colour/art
+    await wait(140);
     try {
       G.setColor(colour);                        // recolour the shared texture first (no colour flash)
       if (needModel) { await G.load(g.model); curModel = g.model; }   // instant once cached
@@ -178,6 +178,7 @@
         if (wall)  wall.style.transform  = "translateX(calc(-50% + " + (px * 14).toFixed(2) + "px)) translateY(" + (py * 9).toFixed(2) + "px)";
         if (floor) floor.style.transform = "translateX(calc(-50% + " + (px * 8).toFixed(2) + "px)) rotateX(80deg)";
         if (glow)  glow.style.transform  = "translate(" + (px * 22).toFixed(2) + "px," + (py * 16).toFixed(2) + "px)";
+        document.documentElement.style.setProperty("--ground-shift", (px * -7).toFixed(2) + "px");   // #5: ground nudges with the room
         if (Math.abs(tx - px) > 0.0005 || Math.abs(ty - py) > 0.0005) requestAnimationFrame(apply);
         else praf = false;
       };
