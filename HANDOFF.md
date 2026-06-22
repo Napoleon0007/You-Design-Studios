@@ -90,8 +90,8 @@ mobile mini-studio: upload OR browse designs → swap art → order re-held `in_
 - **Live (Railway):** https://you-design-studios-production.up.railway.app
   ✅ **DEPLOYED 2026-06-19 — live = the CURRENT build** (checkout/escrow/email, mobile cart, originality
   pop-up, colour dock, 3D recolour/spin fix, reframed+graded hero). Deploy = `railway up --detach
-  --service You-Design-Studios`. Railway vars now set: `ADMIN_KEY=mR8Jbsmz2e8U4YJoeXzre_LLDTLpxjPx`
-  (admin pages 401 without `?key=`), `PUBLIC_BASE_URL`=the Railway URL. `data/gelato_apparel.json` was
+  --service You-Design-Studios`. Railway vars set: `ADMIN_KEY` (REDACTED — never commit secrets; the value
+  lives only in Railway → Variables. Rotated 2026-06-22 after the old value leaked here), `PUBLIC_BASE_URL`=the Railway URL. `data/gelato_apparel.json` was
   un-ignored in `.gitignore` (catalog MUST ship or the store loads empty). Payment/email still DEV-mode
   (no Paystack/Resend keys on Railway yet) → the dev "simulate pay" link works on the public URL, so
   don't share widely until real keys are set. DB/uploads are on ephemeral container disk (mount a Volume

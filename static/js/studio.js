@@ -400,7 +400,15 @@
     state.previewing = !state.previewing;
     if (state.previewing) {
       if (window.Garment3D.setDesignMode) window.Garment3D.setDesignMode(false);
-      if (window.Garment3D.setAutoSpin) window.Garment3D.setAutoSpin(true);   // gentle spin to show it off
+      if (window.Garment3D.setAutoSpin) window.Garment3D.setAutoSpin(true, 2.2);   // showcase spin — a touch quicker
+      // theatrical "light show" reveal: the studio dips dark, then the lights pop on
+      // and the garment is revealed — one-shot, professional (not strobey).
+      const st = document.getElementById("stage");
+      if (st) {
+        st.classList.remove("preview-show"); void st.offsetWidth; st.classList.add("preview-show");
+        clearTimeout(togglePreview._t);
+        togglePreview._t = setTimeout(() => st.classList.remove("preview-show"), 2000);
+      }
       if (els.previewBtn) { els.previewBtn.classList.add("previewing"); els.previewBtn.textContent = "Back to design"; }
     } else {
       enterDesignMode();
@@ -471,32 +479,10 @@
   $$("#productTabs button").forEach((b) =>
     b.addEventListener("click", () => selectProduct(PRODUCTS.find((p) => p.slug === b.dataset.slug))));
 
-  // ---- stage backdrop: cycle the SAME colours as the landing hero ------- //
-  // Mirrors landing3d.js BACKDROPS so the studio shares the brand's colour-shift
-  // behind the garment. Smooth cross-fade via CSS; pauses when the tab is hidden.
-  (() => {
-    const stage = document.getElementById("stage");
-    if (!stage) return;
-    const HUES = ["#dcb6ae", "#aebfa6", "#aebfd2", "#cf9e84", "#d8c6a6", "#aeb2b0", "#c7b6cc"];
-    const PERIOD = 6000;
-    const lum = (hex) => { const h = (hex || "#888").replace("#", ""); return (0.299 * parseInt(h.slice(0,2),16) + 0.587 * parseInt(h.slice(2,4),16) + 0.114 * parseInt(h.slice(4,6),16)) / 255; };
-    const mix = (hex, t, target) => { const h = hex.replace("#", ""); const f = (i) => Math.round(parseInt(h.slice(i,i+2),16) + (target - parseInt(h.slice(i,i+2),16)) * t).toString(16).padStart(2,"0"); return "#" + f(0) + f(2) + f(4); };
-    // RULE: the background must NEVER match the shirt. Push the backdrop to the OPPOSITE
-    // lightness of the garment so a white shirt never sits on a light/white wall.
-    const contrast = (base) => {
-      const gl = lum(state.colorHex || "#888888");
-      if (gl > 0.62) return mix(base, 0.62, 26);   // light/white shirt → deep backdrop
-      if (gl < 0.30) return base;                   // dark shirt → the light pastel
-      return mix(base, 0.4, 26);                    // mid shirt → deepen for separation
-    };
-    let bi = 0, timer = null;
-    const set = () => stage.style.setProperty("--studio-bg", contrast(HUES[bi % HUES.length]));
-    const start = () => { if (!timer) timer = setInterval(() => { bi += 1; set(); }, PERIOD); };
-    const stop = () => { if (timer) { clearInterval(timer); timer = null; } };
-    repaintBackdrop = set;          // selectColor calls this when the garment colour changes
-    set(); start();
-    document.addEventListener("visibilitychange", () => document.hidden ? stop() : start());
-  })();
+  // ---- editor backdrop -------------------------------------------------- //
+  // Lacoste DNA: the EDITOR stays greyscale (a static studio gradient in CSS) so
+  // the user's own artwork colours read true — the colour-cycling lives on the
+  // LANDING only. `repaintBackdrop` stays null; its call sites are null-guarded.
 
   // ---- range filter: All / Men (unisex) / Women -------------------------- //
   (() => {
@@ -521,60 +507,60 @@
     });
   })();
 
-  // ---- mobile colour dock ----------------------------------------------- //
-  // On phones, move the colour swatches onto the bottom of the garment stage so
-  // the palette is visible WITH the garment (tap a colour → see it change). The
-  // SAME #swatches node moves, so selection/sync logic is untouched. Desktop
-  // keeps the swatches in the panel.
+  // ---- bottom tool-dock + control sheets -------------------------------- //
+  // The dock opens the existing controls as short bottom-sheets OVER the canvas
+  // (single screen, no scroll). One sheet open at a time; the active tool flips
+  // to the accent + underline. Pure presentation — touches no pipeline state.
   (() => {
-    const dock = $("#stageDock");
-    const colourField = els.swatches && els.swatches.closest(".field");
-    if (!dock || !els.swatches || !colourField) return;
-    const mq = window.matchMedia("(max-width: 900px)");
-    function place() {
-      if (mq.matches) {
-        if (els.swatches.parentNode !== dock) dock.appendChild(els.swatches);
-        dock.hidden = false;
-        colourField.style.display = "none";
-      } else {
-        if (els.swatches.parentNode !== colourField) colourField.appendChild(els.swatches);
-        dock.hidden = true;
-        colourField.style.display = "";
-      }
-    }
-    mq.addEventListener ? mq.addEventListener("change", place) : mq.addListener(place);
-    place();
-  })();
+    const dock = $("#edDock"), scrim = $("#edScrim");
+    if (!dock) return;
+    const sheets = $$(".ed-sheet");
+    const byName = (n) => sheets.find((s) => s.dataset.sheet === n);
+    let openName = null;
 
-  // ---- mobile: product picker + specs ABOVE the garment ----------------- //
-  // On phones, lift the type tabs + name/price/blurb above the shirt so you pick
-  // the garment first, then see it. Mirrors the colour-dock relocation; the SAME
-  // nodes move (IDs/handlers intact). Desktop keeps them at the top of the panel.
-  (() => {
-    const studio = document.querySelector(".studio");
-    const stage = document.getElementById("stage");
-    const panel = document.querySelector(".panel");
-    const tabsEl = document.getElementById("productTabs");
-    const infoEl = document.getElementById("pName");
-    const tabsField = tabsEl ? tabsEl.closest(".field") : null;
-    const infoBlock = infoEl ? infoEl.parentNode : null;
-    if (!studio || !stage || !panel || !tabsField || !infoBlock) return;
-    let slot = null;
-    const mq = window.matchMedia("(max-width: 900px)");
-    function place() {
-      if (mq.matches) {
-        if (!slot) { slot = document.createElement("div"); slot.className = "prodhead-mobile"; }
-        if (slot.parentNode !== studio) studio.insertBefore(slot, stage);
-        if (tabsField.parentNode !== slot) slot.appendChild(tabsField);
-        if (infoBlock.parentNode !== slot) slot.appendChild(infoBlock);
-      } else {
-        if (infoBlock.parentNode !== panel) panel.insertBefore(infoBlock, panel.firstChild);
-        if (tabsField.parentNode !== panel) panel.insertBefore(tabsField, panel.firstChild);
-        if (slot && slot.parentNode) slot.parentNode.removeChild(slot);
-      }
+    // Move sheet: show the "add a design first" hint until there's art to place
+    // (mirrors studio.js's own #xfField display toggle).
+    function syncMove() {
+      const empty = $("#moveEmpty"), xf = $("#xfField");
+      if (empty && xf) empty.style.display = (xf.style.display === "none") ? "" : "none";
     }
-    mq.addEventListener ? mq.addEventListener("change", place) : mq.addListener(place);
-    place();
+    function close() {
+      sheets.forEach((s) => { s.hidden = true; });
+      $$("#edDock .tool").forEach((t) => t.classList.remove("on"));
+      if (scrim) scrim.hidden = true;
+      openName = null;
+    }
+    function open(name, tool) {
+      if (openName === name) { close(); return; }   // tap the active tool again → close
+      close();
+      const sheet = byName(name); if (!sheet) return;
+      if (name === "move") syncMove();
+      sheet.hidden = false;
+      if (tool) tool.classList.add("on");
+      if (scrim) scrim.hidden = false;
+      openName = name;
+    }
+
+    $$("#edDock .tool").forEach((t) => {
+      const name = t.dataset.sheet;
+      if (!name) return;             // action tools (Save) keep their own handlers
+      t.addEventListener("click", () => open(name, t));
+    });
+    $$(".ed-sheet [data-close]").forEach((b) => b.addEventListener("click", close));
+    if (scrim) scrim.addEventListener("click", close);
+    document.addEventListener("keydown", (e) => { if (e.key === "Escape" && openName) close(); });
+
+    // swipe-down to dismiss (only when the sheet body is scrolled to the top)
+    sheets.forEach((sheet) => {
+      const body = sheet.querySelector(".ed-sheet__b");
+      let y0 = null;
+      sheet.addEventListener("touchstart", (e) => { y0 = e.touches[0].clientY; }, { passive: true });
+      sheet.addEventListener("touchmove", (e) => {
+        if (y0 == null) return;
+        if (e.touches[0].clientY - y0 > 70 && (!body || body.scrollTop <= 0)) { close(); y0 = null; }
+      }, { passive: true });
+      sheet.addEventListener("touchend", () => { y0 = null; });
+    });
   })();
 
   // ===================== CART + CHECKOUT ================================ //

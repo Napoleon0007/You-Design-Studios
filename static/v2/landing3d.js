@@ -29,17 +29,20 @@
   // Garment colourways + refined, airy backdrops (the stage shifts to one each cycle).
   const COLOURS = ["#f4f3ef", "#1b1b1b", "#d9c9a8", "#a9b39a", "#bcc9d8", "#c87f63", "#6f7d8c"];
   //                off-white  charcoal   sand       sage       dusty-blue terracotta slate
-  // Richer, deeper room colourways — saturated so the garment, the white grid, and
-  // the white copy all pop. The backdrop for each garment is CHOSEN (not paired by
-  // index) to be the most DIFFERENT colour from that shirt — never a near-match.
-  const BACKDROPS = ["#a85563", "#4f7355", "#42699e", "#bb6a3e", "#caa83f", "#5f7480", "#7e5b9c"];
-  //                 rose       forest     azure      burnt-or.  gold       steel      violet
+  // TAMED colour-show — one disciplined, on-brand palette: deep jewel-earth tones
+  // (greens / teal / charcoal / bronze / espresso / petrol-blue). NO rose, azure or
+  // violet. Every backdrop is dark enough that the white copy clears WCAG AA (≥7:1)
+  // on any cycle, while the white room grid + spotlight + garment still pop. The
+  // backdrop is CHOSEN (not index-paired) to be the most DIFFERENT from that shirt.
+  const BACKDROPS = ["#2f5d4a", "#1f5663", "#23262c", "#6e5427", "#46372a", "#3a4d40", "#2b4658"];
+  //                 pine       petrol-teal charcoal  bronze    espresso  slate-green petrol-blue
   // The cool prints that ride the ONE printed shirt in the rotation (all others blank).
   const COOL_IDS = ["skull-2.jpg", "neon.jpg", "paint-splash.jpg", "dark-surreal.jpg",
                     "the-guardian.webp", "shamaan.jpg", "green-tides.jpg"];
   // Opening shot: a BLACK tee branded with the framed-TF mark on the chest (front)
   // and the TRUeF wordmark on the back.
   const BRAND_MARK = "/static/v2/brand_mark.png";
+  const BRAND_MARK_DARK = "/static/v2/brand_mark_dark.png";   // dark mark for the WHITE opening tee
   const BRAND_WORD = "/static/v2/brand_word.png";
 
   let designs = [], cool = [];
@@ -59,16 +62,16 @@
   async function showCombo(n) {
     if (busy) return;
     busy = true;
-    const brand = (n === 0);                                    // opening shot: branded black tee
+    const brand = (n === 0);                                    // opening shot: a clean WHITE tee with the TRUEF mark
     const g = brand ? GARMENTS[0] : GARMENTS[Math.floor(n / 2) % GARMENTS.length];   // shape changes every other cycle
-    const colour = brand ? "#1b1b1b" : COLOURS[n % COLOURS.length];
+    const colour = brand ? "#f4f3ef" : COLOURS[n % COLOURS.length];
     // Every garment carries a print, cycling the curated cool set.
     const pool = cool.length ? cool : designs;
     const design = (!brand && pool.length) ? pool[n % pool.length] : null;
     let chosen = design;
     const needModel = g.model !== curModel;
 
-    const bd = brand ? pickBackdrop("#1b1b1b", n) : pickBackdrop(colour, n);
+    const bd = pickBackdrop(colour, n);         // backdrop most DIFFERENT from the shirt (deep colour vs the white opener)
     setBackdrop(bd);                            // CSS fallback (poster phase / no-3D)
     document.documentElement.style.setProperty("--garment-reflect", colour);  // floor colour-bleed picks up the shirt
     if (G.setRoomTint) G.setRoomTint(bd);       // tint the 3D room to match
@@ -79,8 +82,8 @@
       if (needModel) { await G.load(g.model); curModel = g.model; }   // instant once cached
       G.setSide("front");
       if (brand) {
-        await G.setArt("front", BRAND_MARK);   // framed-TF mark on the chest (already transparent)
-        await G.setArt("back", BRAND_WORD);    // TRUeF wordmark on the back
+        await G.setArt("front", BRAND_MARK_DARK);   // dark framed-TF on the white tee (reads on white)
+        await G.setArt("back", null);               // clean back — a white wordmark would vanish on a white shirt
       } else {
         // GUARANTEE a visible print on EVERY garment: cycle the cool set, and if a
         // design fails to load or leaves nothing on the shirt, fall through to the next.
@@ -112,6 +115,14 @@
     G.init(canvas, {});
     G.lockPlacement(true);                            // drags spin; never move the print
     if (G.setRoom) { G.setRoom(false); }   // room off: garment floats on the single --stage-bg colour (no white/peach split)
+
+    // cinematic "lights on" open — the room blooms up + the garment arrives, ONCE, as
+    // the page opens (on the instant poster). Removed after it plays so the scroll-
+    // parallax can own those transforms. (Must run BEFORE the first 3D frame, else it
+    // re-reveals an already-painted garment = a glitchy double-flash.)
+    requestAnimationFrame(() => stage.classList.add("intro"));
+    setTimeout(() => stage.classList.remove("intro"), 1500);
+
     try {
       const r = await fetch("/api/designs");
       const d = await r.json();
@@ -131,15 +142,24 @@
     // carousel needs it (shape changes every other 6s cycle: 2nd shape ≈12s in).
     GARMENTS.slice(1).forEach((g, k) => setTimeout(() => G.preload([g.model]), 1800 + k * 1800));
 
-    // kinetic type: staggered reveal on load + gentle parallax/fade on scroll
+    // kinetic type: staggered reveal on load + MULTI-PLANE parallax on scroll —
+    // room (far) < garment (mid, also recedes a touch) < copy (near) → 3D diorama.
     const copy = document.querySelector(".hero-copy");
+    const room = document.querySelector(".hero-room");
+    const gWrap = document.querySelector(".hero-garment");
+    const nav = document.querySelector(".v2nav");
     if (copy) requestAnimationFrame(() => copy.classList.add("reveal"));
     let stick = false;
     window.addEventListener("scroll", () => {
       if (stick) return; stick = true;
       requestAnimationFrame(() => {
         const y = window.scrollY || 0;
-        if (copy) { copy.style.transform = "translateY(" + (y * 0.18) + "px)"; copy.style.opacity = String(Math.max(0, 1 - y / 520)); }
+        if (room)  room.style.transform  = "translateY(" + (y * 0.06).toFixed(1) + "px)";
+        if (gWrap) gWrap.style.transform = "translateY(" + (y * 0.13).toFixed(1) + "px) scale(" + Math.max(0.86, 1 - y * 0.0002).toFixed(3) + ")";
+        if (copy) { copy.style.transform = "translateY(" + (y * 0.18).toFixed(1) + "px)"; copy.style.opacity = String(Math.max(0, 1 - y / 520)); }
+        // Nav adapts: white over the colour hero, ink-on-glass once it crosses into
+        // the white gallery (otherwise the white logo/menu vanish on white).
+        if (nav) nav.classList.toggle("on-light", y > stage.offsetHeight - 72);
         stick = false;
       });
     }, { passive: true });

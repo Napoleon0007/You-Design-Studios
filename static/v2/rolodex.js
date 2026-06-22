@@ -74,5 +74,26 @@
       else if (e.key === "ArrowRight") center(active + 1);
     });
     setActive(0);
+
+    // cursor tilt — each card leans toward the pointer like a physical photo print
+    // (fine-pointer / desktop only; touch keeps the clean swipe).
+    if (window.matchMedia && window.matchMedia("(pointer:fine)").matches) {
+      cards.forEach((card) => {
+        const shot = card.querySelector(".rdx-shot");
+        if (!shot) return;
+        card.addEventListener("pointermove", (e) => {
+          const r = card.getBoundingClientRect();
+          const px = (e.clientX - r.left) / r.width, py = (e.clientY - r.top) / r.height;
+          shot.style.transform = "rotateX(" + ((0.5 - py) * 12).toFixed(2) + "deg) rotateY(" + ((px - 0.5) * 16).toFixed(2) + "deg)";
+          shot.style.setProperty("--gx", (px * 100).toFixed(1) + "%");
+          shot.style.setProperty("--gy", (py * 100).toFixed(1) + "%");
+          card.classList.add("tilting");
+        });
+        card.addEventListener("pointerleave", () => {
+          shot.style.transform = "rotateX(0) rotateY(0)";
+          card.classList.remove("tilting");
+        });
+      });
+    }
   }).catch(() => { root.style.display = "none"; if (dotsEl) dotsEl.style.display = "none"; });
 })();

@@ -76,6 +76,7 @@
   let _lockPlacement = false;   // landing-showcase mode: drags spin, never move the print
   let _frozen = false;          // studio design mode: hold the garment perfectly still
   let _designMode = false;      // studio FLAT-DESIGN: face front, no spin/orbit, drag moves the print
+  let _previewLock = false;     // studio 3D-PREVIEW: drags ORBIT the camera; the print stays fixed on the fabric
   let _interacting = false;     // user is actively dragging the showcase garment
   // cinematic showcase state (landing only): breathing lens, parallax, lit reveal,
   // travelling key light. All gated on _cine so the studio is unaffected.
@@ -586,10 +587,10 @@
   G.getPlacement = function (s) { return Object.assign({}, placement[s]); };
 
   // Landing showcase helpers (no effect on the studio, which never calls them).
-  G.setAutoSpin = function (on) {
+  G.setAutoSpin = function (on, speed) {
     if (on && (_interacting || _frozen)) return;   // never re-enable spin while dragging or frozen (studio design mode)
     autoSpin = !!on;
-    if (controls) { controls.autoRotate = !!on; controls.autoRotateSpeed = 1.1; }
+    if (controls) { controls.autoRotate = !!on; controls.autoRotateSpeed = speed || 1.1; }
     if (on && resumeTimer) { clearTimeout(resumeTimer); resumeTimer = null; }
   };
   G.lockPlacement = function (on) {
@@ -618,6 +619,9 @@
   // tee. Toggling OFF restores free rotate + zoom for a real 3D preview.
   G.setDesignMode = function (on) {
     _designMode = !!on;
+    // Design mode OFF == studio 3D-preview: a drag must ORBIT the garment (camera moves)
+    // so the placed print stays LOCKED on the fabric — never dragging it again.
+    _previewLock = !_designMode;
     if (!controls) return;
     if (_designMode) {
       _frozen = true; autoSpin = false;
@@ -695,6 +699,7 @@
       minPolar: controls ? +controls.minPolarAngle.toFixed(3) : null,
       maxPolar: controls ? +controls.maxPolarAngle.toFixed(3) : null,
       zoom: !!(controls && controls.enableZoom), lockPlacement: _lockPlacement,
+      designMode: _designMode, previewLock: _previewLock,
       room: _roomOn, hasFog: !!(scene && scene.fog), hasBg: !!(scene && scene.background),
       target: controls ? controls.target.toArray().map((n) => +n.toFixed(3)) : null,
       smoke: _smoke.length, interacting: _interacting,
@@ -765,6 +770,16 @@
         const h0 = hit(ev); if (h0) apply(h0);
         return;
       }
+      if (_previewLock) {
+        // Studio 3D-preview: a drag ORBITS the garment via OrbitControls (the camera
+        // moves, not the print) so the artwork stays fixed on the shirt exactly where
+        // it was placed. Pause the idle spin while dragging; resume shortly after.
+        // No stopPropagation/preventDefault → OrbitControls receives the drag.
+        _interacting = true; pauseSpin(); haveAzTarget = false;
+        const up = () => { _interacting = false; scheduleResume(2500); window.removeEventListener("pointerup", up); };
+        window.addEventListener("pointerup", up);
+        return;
+      }
       const h = hit(ev); if (!h) return;
       const s = sideOf(h); if (!art[s]) return;
       dragging = true; pauseSpin();
@@ -774,7 +789,7 @@
       apply(h);
     }, true);
     host.addEventListener("wheel", (ev) => {
-      if (_lockPlacement) {                  // showcase: wheel = zoom (OrbitControls)
+      if (_lockPlacement || _previewLock) {  // showcase / studio-preview: wheel = zoom (OrbitControls), print untouched
         pauseSpin(); haveAzTarget = false; scheduleResume(2500); return;
       }
       const h = hit(ev); if (!h) return;

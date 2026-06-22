@@ -1,6 +1,75 @@
 # Handoff — TRUEF Studios (2026-06-22, late session)
 
 ---
+## ✅ DONE 2026-06-22 (newest) — studio preview light-show + faster spin + room depth · landing opening fixed (LOCAL, undeployed)
+- **Studio "Preview in 3D" upgrades** (`static/js/studio.js` `togglePreview`, `static/js/garment3d.js`, `templates/studio.html`,
+  `static/css/studio.css`): (a) **spin a touch quicker** — `G.setAutoSpin(on, speed)` now takes a speed; studio preview uses
+  `2.2` (landing stays `1.1`). (b) **Theatrical LIGHT-SHOW on entering preview** — `#stage` gets `.preview-show` for ~2s →
+  the studio dips dark (`.sr-flash` + garment brightness down) then the key light + softbox POP on and the garment is
+  revealed (keyframes `pvFlash`/`pvGarment`/`pvKey`/`pvBox`/`pvShaft`; pro, not strobey; reduced-motion-safe). (c) **More room
+  depth** — added `.sr-floor3d` (faint perspective floor), `.sr-lum` (vertical luminance), `perspective` on `.studio-room`,
+  deeper atmospheric vignette → feels like real space behind the garment.
+- **Landing OPENING glitch FIXED** (Luke: "white shirt, glitch, then black shirt over it"): root cause = (1) opening 3D shot
+  was a BLACK logo tee but the instant poster was a WHITE tee → jarring white→black; (2) my new `.intro` reveal was firing
+  AFTER the first 3D frame → a re-reveal double-flash. Fix in `static/v2/landing3d.js`: opening is now a **WHITE tee
+  (`#f4f3ef`) with a DARK framed-TF mark** (`brand_mark_dark.png`, generated via PIL since the existing `brand_mark.png` is
+  WHITE/invisible-on-white), back cleared; `.intro` MOVED to boot start (plays on the poster as the page opens). Poster
+  `hero-poster.png` **rebuilt** = white blank tee + the dark mark (RGBA — keep alpha! an RGB save made a black box behind the
+  shirt, fixed). Old surreal poster backed up `static/v2/hero-poster-surreal.bak.png`. Verified headless: opening = white+logo,
+  no black box, 0 console errors.
+- ⏳ Luke to eyeball on phone: the preview light-show feel + faster spin; the studio room depth.
+
+---
+## ✅ DONE 2026-06-22 (prev batch) — studio photo-studio bg + landing "more 3D" + quick fixes (LOCAL, undeployed)
+- **Quick fixes:** ADMIN_KEY ROTATED in Railway + scrubbed from HANDOFF.md (old value dead). `abstract-1`/`abstract-2`
+  glitch designs SWAPPED for clean Pixabay abstracts (ink-wave + glassy 3D render) + cards regenerated.
+- **Studio background = a real PHOTO STUDIO** (neutral/greyscale so artwork colours read true): `templates/studio.html`
+  `.studio-room` layers + `static/css/studio.css` — seamless cyclorama, key light + softbox, soft light shaft +
+  drifting dust, faint out-of-focus light-stand/C-stand gear, edge vignette. Replaced the flat gradient/grid. Verified 390+desktop.
+- **Landing "more 3D" (all 5, additive — NO engine changes):** `static/v2/v2.css` + `landing3d.js` + `rolodex.js` +
+  `index.html`. (1) garment **top key-light** (`.garment-key`) on top of the existing rim/reflection/shadow; (2) **multi-plane
+  scroll parallax** — room(far)/garment(mid, recedes)/copy(near); (3) restrained fabric sheen via the key (deeper normal-map
+  weave LEFT as an engine follow-up); (4) cinematic **"lights on" intro** (`.intro` one-shot); (5) **extruded nav wordmark**,
+  **bevelled glass CTA**, **cursor-tilt Collection cards** (pointer:fine, with glare). Verified headless 390+desktop: 0 console errors.
+- ⚠️ **Open (pre-existing, flagged):** on PHONE the hero copy overlaps the centred white garment (low contrast) — needs a
+  scrim behind the copy or push it above/below the garment. Not caused by this batch.
+- Everything LOCAL on :7460. Deploy the whole lot (studio rebuild + preview-lock + bg + landing-3D + fixes) together after
+  Luke's phone sign-off.
+
+---
+## ✅ DONE 2026-06-22 (latest) — /studio REBUILT Lacoste-style (the #1 task below)
+Single-screen editor shipped LOCAL (`:7460`, not yet deployed). 3 files:
+- **`templates/studio.html`** — restructured: transparent **top bar** (← BACK · FRONT|BACK pill · 🛒cart + **FINISH**),
+  **full-bleed stage**, **bottom tool-dock** (Garment · Colour · Size · Design · Move · Qty · Save), and one
+  **bottom-sheet per tool** that the dock opens OVER the canvas. Every pipeline `#id` preserved verbatim
+  (re-housed, not rewritten). Cart overlay + IP modal + scripts untouched.
+- **`static/css/studio.css`** — rewritten single-screen skin: Lacoste tokens, **accent = TRUEF gold `#b78a2e`**
+  (the ONE active-tool colour + underline; everything else greyscale), static **studio gradient + floor + contact
+  shadow** (editor backdrop now NEUTRAL — colour-cycling stays on the landing). Old 2-col grid / mobile-stack / colour-dock / prodhead CSS removed.
+- **`static/js/studio.js`** — added a small dock/sheet controller (open/close, single-active gold state, ✕ / scrim /
+  Esc / re-tap / swipe-down close); **removed** the two obsolete mobile-relocation IIFEs + the backdrop colour-cycler.
+  All pipeline logic (upload→IP-gate→cart→printfile, transform, design-mode lock) **unchanged**.
+
+**Verified headless (Playwright, 360/390/414 + desktop):** zero page-scroll; top bar/dock pinned; garment canvas
+above the dock; 7 dock tools each open their single sheet (gold active + scrim) and close every way; **REAL mouse
+input** proven (no overlaps); 0 console errors; screenshots in `/tmp/studio_shots/`. **Pipeline:** engine loads + is
+**locked still in design-mode**; swatch recolours the 3D shirt; size; design-library (17) → decal renders + verdict;
+Move sheet shows sliders once art is placed; **FINISH (#addBtn) fires save-design**; **upload fires the IP-gate modal**
+(proven on a fresh page); the use-design→save-design→shipping-quote round-trip returns ok:true (token, price R399, ship,
+total) via in-page fetch. *(Note: headless software-WebGL starves Playwright input + the live `.then` while the 3D loop
+runs — a TEST-ENV artifact; proven by stopping the loop and by direct/in-page fetch. Not a code issue.)*
+
+**+ PREVIEW-LOCK FIX (Luke's follow-up):** in **Preview-in-3D** a drag now **orbits the garment** (camera moves) while the
+placed print stays **locked on the fabric** — it no longer drags the artwork around. `garment3d.js`: new `_previewLock`
+flag (`= !_designMode`, set in `setDesignMode`); pointerdown gets a preview branch that lets OrbitControls handle the drag
+(no decal move, no `stopPropagation`); wheel zooms instead of resizing the print in preview; `designMode`/`previewLock`
+added to `G.debug()`. **Verified headless 9/9:** Design drag MOVES the print (cx 0.500→0.178 — also proves drag-to-place
+works); Preview drag does NOT move it (cx unchanged) + decal stays on the shirt; toggling back restores Design.
+
+**STILL OPEN:** (1) confirm the **feel** of drag-to-place + preview-spin **on a real phone** (logic now proven headless);
+(2) **deploy** (hold until Luke's phone sign-off, then `railway up` + git push); (3) the GLB compression + abstract-1/2 swap (unchanged from below).
+
+---
 ## 🚨 TASTE SKILLS DROPPED — INCORPORATE NOW (2026-06-22)
 
 A full design-taste skill stack was just installed **globally** in `~/.claude/skills/` — so **this chat can invoke them directly right now** (they're not project-local; restart/relisting may be needed for them to appear). **Use them on the TRUEF re-skin from here on — do not hand-roll generic UI.**
