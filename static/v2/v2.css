@@ -245,3 +245,12 @@ a { color: inherit; text-decoration: none; }
   letter-spacing:.02em; font-size:clamp(15px,1.5vw,18px);
   -webkit-text-stroke:.6px rgba(0,0,0,.35); }
 .v2nav .navmark{ width:20px; height:20px; }
+/* hero as ONE immersive "4D space": depth bloom around the garment falling into a dark void,
+   over the single cycling --stage-bg colour (no flat seam, no second room) */
+.hero-stage{
+  background:
+    radial-gradient(135% 115% at 60% 38%,
+      rgba(255,255,255,.15) 0%, rgba(255,255,255,0) 30%,
+      rgba(0,0,0,.10) 58%, rgba(0,0,0,.36) 100%),
+    var(--stage-bg);
+}
