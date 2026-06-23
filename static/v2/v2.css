@@ -140,11 +140,14 @@ a { color: inherit; text-decoration: none; }
 }
 
 /* ------------------------------------------------------ gallery --- */
-.gallery2 { background: #fff; color: var(--ink); padding: clamp(56px, 9vw, 120px) var(--gut); }
+.gallery2 { position: relative; overflow: hidden; background: #000; color: #fff; padding: clamp(56px, 9vw, 120px) var(--gut); }
+.gallery-bg-video { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; z-index:0; pointer-events:none; }
+.gallery2::after { content:""; position:absolute; inset:0; background:rgba(0,0,0,.52); z-index:1; pointer-events:none; }
+.gallery2 > *:not(.gallery-bg-video) { position:relative; z-index:2; }
 .gallery2-head { max-width: var(--maxw); margin: 0 auto 34px; }
 .gallery2-head h2 { font-size: clamp(30px, 5vw, 64px); font-weight: 700; letter-spacing: -.01em;
   text-transform: uppercase; }
-.gallery2-head p { margin-top: 10px; color: #8b8b82; max-width: 46ch; font-size: 15px; }
+.gallery2-head p { margin-top: 10px; color: rgba(255,255,255,.72); max-width: 46ch; font-size: 15px; }
 .tile-grid {
   max-width: var(--maxw); margin: 0 auto;
   display: grid; gap: 12px; grid-template-columns: repeat(2, 1fr);
