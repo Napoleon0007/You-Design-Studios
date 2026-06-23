@@ -17,18 +17,17 @@
   // No WebGL → keep the instant poster tee on screen (it never fades out).
   if (!G.supported) { document.body.classList.add("no3d"); return; }
 
-  const BRAND_MARK      = "/static/v2/brand_mark.png";       // white mark (for dark shirts)
-  const BRAND_MARK_DARK = "/static/v2/brand_mark_dark.png";  // dark mark (for light shirts)
+  const waitFrame = () => new Promise(r => requestAnimationFrame(r));
 
   // ── Curated showcase sequence ────────────────────────────────────────────
   // artUrl: "brand" = show the TRUEF mark; a path = that design; null = clean
   const PLAYLIST = [
-    // 0 – Black tee, white/linen backdrop — striking opener
-    { model: "/static/models/meshy_tee.glb",         colour: "#1b1b1b", artUrl: "brand",                       name: "Classic Tee",        label: "TRUEF" },
+    // 0 – Black tee + Neon — striking high-contrast opener
+    { model: "/static/models/meshy_tee.glb",         colour: "#1b1b1b", artUrl: "/designs/neon.jpg",           name: "Classic Tee",        label: "Neon" },
     // 1 – Terracotta hoodie + Ghost
     { model: "/static/models/meshy_hoodie.glb",       colour: "#c87f63", artUrl: "/designs/ghost.png",          name: "Heavyweight Hoodie", label: "Ghost" },
-    // 2 – Forest-green zip hoodie + Neon
-    { model: "/static/models/meshy_hoodie_zip.glb",   colour: "#4a7c59", artUrl: "/designs/neon.jpg",           name: "Zip Hoodie",         label: "Neon" },
+    // 2 – Forest-green zip hoodie + Green Tides
+    { model: "/static/models/meshy_hoodie_zip.glb",   colour: "#4a7c59", artUrl: "/designs/green-tides.jpg",    name: "Zip Hoodie",         label: "Green Tides" },
     // 3 – Dusty-blue premium tee + Mummy
     { model: "/static/models/meshy_tee_premium.glb",  colour: "#bcc9d8", artUrl: "/designs/mummy.png",          name: "Premium Tee",        label: "Mummy" },
     // 4 – Amber classic tee + Skull
@@ -80,11 +79,7 @@
       G.setColor(slot.colour);
       if (needModel) { await G.load(slot.model); curModel = slot.model; }
       G.setSide("front");
-      if (slot.artUrl === "brand") {
-        const darkShirt = _luma(slot.colour) < 110;
-        await G.setArt("front", darkShirt ? BRAND_MARK : BRAND_MARK_DARK);
-        await G.setArt("back", null);
-      } else if (slot.artUrl) {
+      if (slot.artUrl) {
         await G.setArt("front", slot.artUrl);
         await G.setArt("back", null);
       } else {
@@ -92,12 +87,15 @@
         await G.setArt("back", null);
       }
       G.setAutoSpin(true);
+      // Wait two frames: first lets the render loop paint the decal onto the canvas,
+      // second guarantees it's visible before we remove .swapping and start the reveal.
+      await waitFrame(); await waitFrame();
     } catch (e) { /* a bad swap shouldn't stop the carousel */ }
     if (capName) capName.textContent = slot.name;
     if (capArt)  capArt.textContent  = slot.label;
     const cap = document.querySelector(".hero-cap");
     if (cap) { cap.classList.remove("cap-pop"); void cap.offsetWidth; cap.classList.add("cap-pop"); }
-    requestAnimationFrame(() => stage.classList.remove("swapping"));
+    stage.classList.remove("swapping");
     busy = false;
   }
 
@@ -109,6 +107,12 @@
     G.init(canvas, {});
     G.lockPlacement(true);
     if (G.setRoom) G.setRoom(false);
+
+    // Preload all design images into browser cache so setArt is instant — no lag
+    // between the shirt appearing and the design appearing on it.
+    PLAYLIST.forEach(slot => {
+      if (slot.artUrl) { const img = new Image(); img.src = slot.artUrl; }
+    });
 
     // Render the opening shot immediately.
     await showCombo(0);
