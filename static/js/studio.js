@@ -112,7 +112,7 @@
       s.addEventListener("click", () => selectColor(c, s));
       els.swatches.appendChild(s);
     });
-    const defaultColor = p.colors.find(c => isLightColor(c.hex)) || p.colors[0];
+    const defaultColor = p.colors.find(c => !isLightColor(c.hex)) || p.colors[0];
     selectColor(defaultColor);
 
     els.sizes.innerHTML = "";

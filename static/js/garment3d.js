@@ -66,7 +66,7 @@
 
   let THREE, renderer, scene, camera, controls, raycaster, pointer;
   let mesh = null, mat = null, texCanvas, tex, fitDist = 1.2;
-  let garmentColor = "#d7dade";
+  let garmentColor = "#1b1b1b";
   let side = "front";
   let stage, canvasEl, ro, io;
   let running = false, autoSpin = false, dragging = false, rafId = null;
@@ -317,7 +317,7 @@
     if (tex) tex.needsUpdate = true;
     kick();
   }
-  G.setColor = function (hex) { garmentColor = hex || "#d7dade"; redraw(); };
+  G.setColor = function (hex) { garmentColor = hex || "#1b1b1b"; redraw(); };
 
   // ----------------------------------------------------- atmospheric room -- //
   // Landing showcase ONLY: a foggy 3D space behind the garment — a floor that

@@ -122,6 +122,22 @@
       }
     }).catch(() => {});
 
+    // Background video enforcement — autoplay is blocked on iOS Low Power Mode even
+    // with the `muted` attribute. Retry on first touch and on tab-switch-back.
+    (function () {
+      function tryPlay(v) { if (!v) return; v.muted = true; var p = v.play(); if (p && p.catch) p.catch(function () {}); }
+      var heroV   = document.querySelector('.hero-bg-video');
+      var galleryV = document.querySelector('.gallery-bg-video');
+      tryPlay(heroV);
+      document.addEventListener('touchstart', function () { tryPlay(heroV); tryPlay(galleryV); }, { once: true });
+      document.addEventListener('visibilitychange', function () { if (!document.hidden) { tryPlay(heroV); tryPlay(galleryV); } });
+      // Gallery bg video: play when it scrolls into view (offscreen autoplay may silently fail on iOS)
+      if ('IntersectionObserver' in window && galleryV) {
+        var gIO = new IntersectionObserver(function (es) { if (es[0].isIntersecting) { tryPlay(galleryV); gIO.disconnect(); } }, { threshold: 0.05 });
+        gIO.observe(galleryV.parentElement);
+      }
+    }());
+
     // Gallery: load + play each clip only when it scrolls into view (poster shows
     // instantly, video bytes fetched lazily); pause when it leaves.
     (function () {
