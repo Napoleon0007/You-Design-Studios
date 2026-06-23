@@ -265,6 +265,10 @@ a { color: inherit; text-decoration: none; }
   object-fit:contain; z-index:0; pointer-events:none;
   display:block;
 }
+@media (max-width:859px){
+  /* landscape video (752×400) would letterbox badly on portrait phones — crop to fill instead */
+  .hero-bg-video{ object-fit:cover; }
+}
 
 .hero-room{
   position:absolute; inset:0; z-index:0; overflow:hidden; pointer-events:none;
