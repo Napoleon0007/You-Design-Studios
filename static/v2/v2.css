@@ -3,7 +3,7 @@
  *  a floating interactive 3D garment, colour-shifting stage.
  *  Mobile-first.
  * ============================================================= */
-@import url('https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=Anton&display=swap');
 
 :root {
   --stage-bg: #2f5d4a;          /* on-brand deep pine — first paint; shifts per garment (landing3d.js) */
@@ -487,23 +487,26 @@ a { color: inherit; text-decoration: none; }
  *  nav flip to ink once it crosses onto the white gallery.
  * ============================================================ */
 
-/* — hero statement: a real display headline (was a small eyebrow tag) — */
+/* — hero statement — Anton = bold condensed graffiti headline — */
 .hero-copy .hero-tag{
-  margin-top:0; max-width:13ch;
-  font-weight:800; text-transform:uppercase;
-  font-size:clamp(34px, 7.6vw, 74px); line-height:.96; letter-spacing:0;
+  margin-top:0; max-width:14ch;
+  font-family:'Anton', system-ui, sans-serif;
+  font-weight:400; text-transform:uppercase;
+  font-size:clamp(54px, 10vw, 110px); line-height:.95; letter-spacing:.02em;
   color:#fff; text-wrap:balance;
-  text-shadow:0 2px 26px rgba(0,0,0,.34), 0 1px 3px rgba(0,0,0,.30);
+  text-shadow:0 3px 32px rgba(0,0,0,.55), 0 1px 4px rgba(0,0,0,.40);
 }
 .hero-copy .hero-blurb{
-  margin-top:16px; max-width:38ch;
-  font-size:clamp(13px, 1.4vw, 16px); line-height:1.55;
-  color:rgba(255,255,255,.88);
-  text-shadow:0 1px 12px rgba(0,0,0,.34);
+  margin-top:18px; max-width:36ch;
+  font-family:'Anton', system-ui, sans-serif;
+  font-weight:400; text-transform:uppercase; letter-spacing:.04em;
+  font-size:clamp(14px, 1.6vw, 20px); line-height:1.45;
+  color:#fff;
+  text-shadow:0 1px 14px rgba(0,0,0,.50);
 }
-.hero-sub a{ opacity:.92; }
+.hero-sub a{ opacity:.92; color:#fff; font-weight:700; }
 .hero-sub a.on, .hero-sub a:hover{ opacity:1; }
-.hero-cap{ color:rgba(255,255,255,.80); }
+.hero-cap{ color:rgba(255,255,255,.85); }
 .hero-cap b{ color:#fff; }
 
 /* — entrance: a SELF-RUNNING CSS animation (never gated on a JS class) so the copy
@@ -534,7 +537,7 @@ a { color: inherit; text-decoration: none; }
     padding-top:0; align-self:end;
     padding-bottom:calc(5vh + env(safe-area-inset-bottom));
   }
-  .hero-copy .hero-tag{ font-size:clamp(34px, 9vw, 52px); }
+  .hero-copy .hero-tag{ font-size:clamp(48px, 12vw, 72px); }
   .hero-copy .hero-blurb{ max-width:30ch; }
   /* fade bottom of the garment into dark so copy is never white-on-white */
   .hero-garment::after{
@@ -563,14 +566,12 @@ a { color: inherit; text-decoration: none; }
 .tile:nth-child(8n+4){--t:#e4ddd0} .tile:nth-child(8n+5){--t:#e8e3d6} .tile:nth-child(8n+6){--t:#dcdcd5}
 .tile:nth-child(8n+7){--t:#e1ddd4} .tile:nth-child(8n+8){--t:#d9d6cd}
 
-/* — ADAPTIVE STAGE: dark shirts get a light warm-neutral backdrop.
- *   On mobile, the ::after scrim already makes the white copy legible.
- *   On desktop, copy sits against the backdrop → flip it dark. — */
+/* — Video bg is always dark → keep hero copy white regardless of light-stage — */
 @media (min-width:860px){
-  .hero-stage.light-stage .hero-copy { color: #18181a; text-shadow: none; }
+  .hero-stage.light-stage .hero-copy { color: #fff; text-shadow: 0 2px 20px rgba(0,0,0,.5); }
   .hero-stage.light-stage .hero-copy .hero-tag,
   .hero-stage.light-stage .hero-copy .hero-blurb,
-  .hero-stage.light-stage .hero-copy .word { color: #18181a; }
-  .hero-stage.light-stage .hero-copy .hero-sub { color: #44433e; }
+  .hero-stage.light-stage .hero-copy .word { color: #fff; }
+  .hero-stage.light-stage .hero-copy .hero-sub { color: rgba(255,255,255,.9); }
   .hero-stage.light-stage .hero-cap { color: rgba(0,0,0,.55); }
 }
