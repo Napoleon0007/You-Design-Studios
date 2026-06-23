@@ -42,13 +42,14 @@
     "#3a6a8a", // teal-blue
     "#6f7d8c", // slate
   ];
-  // TAMED colour-show — one disciplined, on-brand palette: deep jewel-earth tones
-  // (greens / teal / charcoal / bronze / espresso / petrol-blue). NO rose, azure or
-  // violet. Every backdrop is dark enough that the white copy clears WCAG AA (≥7:1)
-  // on any cycle, while the white room grid + spotlight + garment still pop. The
-  // backdrop is CHOSEN (not index-paired) to be the most DIFFERENT from that shirt.
-  const BACKDROPS = ["#2f5d4a", "#1f5663", "#23262c", "#6e5427", "#46372a", "#3a4d40", "#2b4658"];
-  //                 pine       petrol-teal charcoal  bronze    espresso  slate-green petrol-blue
+  // Backdrop system — two pools: DARK jewel-earths (for light shirts) and
+  // LIGHT warm neutrals (for dark shirts). A per-cycle luma check routes to the
+  // right pool so the garment silhouette always contrasts the stage.
+  // The mobile ::after scrim already protects the white copy on light stages.
+  const DARK_BACKDROPS  = ["#2f5d4a", "#1f5663", "#23262c", "#6e5427", "#46372a", "#3a4d40", "#2b4658"];
+  //                        pine       petrol     charcoal  bronze    espresso   slate-gr  petrol-bl
+  const LIGHT_BACKDROPS = ["#f0ece4", "#e8edf0", "#ede8df", "#eaeee8", "#f2ede6"];
+  //                        warm-linen  cool-grey  sand     sage-cream ivory
   // The cool prints that ride the ONE printed shirt in the rotation (all others blank).
   const COOL_IDS = ["skull-2.jpg", "neon.jpg", "paint-splash.jpg", "dark-surreal.jpg",
                     "the-guardian.webp", "shamaan.jpg", "green-tides.jpg"];
@@ -65,10 +66,14 @@
   const setBackdrop = (hex) => document.documentElement.style.setProperty("--stage-bg", hex);
   // Pick the backdrop most DIFFERENT from the shirt colour so a garment never blends
   // into the background (rotating among the top-different ones for variety).
-  const _rgb = (h) => { const c = h.replace("#", ""); return [parseInt(c.slice(0, 2), 16), parseInt(c.slice(2, 4), 16), parseInt(c.slice(4, 6), 16)]; };
-  const _diff = (a, b) => { const A = _rgb(a), B = _rgb(b); return 2 * (A[0] - B[0]) ** 2 + 4 * (A[1] - B[1]) ** 2 + 3 * (A[2] - B[2]) ** 2; };
+  const _rgb  = (h) => { const c = h.replace("#", ""); return [parseInt(c.slice(0, 2), 16), parseInt(c.slice(2, 4), 16), parseInt(c.slice(4, 6), 16)]; };
+  const _luma = (h) => { const [r,g,b] = _rgb(h); return 0.299*r + 0.587*g + 0.114*b; };
+  const _diff = (a, b) => { const A = _rgb(a), B = _rgb(b); return 2*(A[0]-B[0])**2 + 4*(A[1]-B[1])**2 + 3*(A[2]-B[2])**2; };
   const pickBackdrop = (shirt, n) => {
-    const ranked = BACKDROPS.slice().sort((x, y) => _diff(shirt, y) - _diff(shirt, x));
+    const dark = _luma(shirt) < 110;   // dark shirt → need a LIGHT stage so the silhouette reads
+    const pool = dark ? LIGHT_BACKDROPS : DARK_BACKDROPS;
+    if (dark) return pool[n % pool.length];
+    const ranked = pool.slice().sort((x, y) => _diff(shirt, y) - _diff(shirt, x));
     return ranked.slice(0, 4)[n % 4];
   };
 
@@ -85,11 +90,15 @@
     const needModel = g.model !== curModel;
 
     const bd = pickBackdrop(colour, n);         // backdrop most DIFFERENT from the shirt (deep colour vs the white opener)
+    const lightStage = _luma(bd) > 140;         // light backdrop → flip copy to dark on desktop
     setBackdrop(bd);                            // CSS fallback (poster phase / no-3D)
+    stage.classList.toggle("light-stage", lightStage);
     document.documentElement.style.setProperty("--garment-reflect", colour);  // floor colour-bleed picks up the shirt
     if (G.setRoomTint) G.setRoomTint(bd);       // tint the 3D room to match
-    stage.classList.add("swapping");           // quick DIP (never empty) while we swap colour/art
-    await wait(140);
+    if (n !== 0) {
+      stage.classList.add("swapping");         // gentle dip only on actual cycles, never on first render
+      await wait(80);
+    }
     try {
       G.setColor(colour);                        // recolour the shared texture first (no colour flash)
       if (needModel) { await G.load(g.model); curModel = g.model; }   // instant once cached
@@ -127,28 +136,27 @@
   async function boot() {
     G.init(canvas, {});
     G.lockPlacement(true);                            // drags spin; never move the print
-    if (G.setRoom) { G.setRoom(false); }   // room off: garment floats on the single --stage-bg colour (no white/peach split)
+    if (G.setRoom) { G.setRoom(false); }   // room off: garment floats on the single --stage-bg colour
 
-    // cinematic "lights on" open — the room blooms up + the garment arrives, ONCE, as
-    // the page opens (on the instant poster). Removed after it plays so the scroll-
-    // parallax can own those transforms. (Must run BEFORE the first 3D frame, else it
-    // re-reveals an already-painted garment = a glitchy double-flash.)
-    requestAnimationFrame(() => stage.classList.add("intro"));
-    setTimeout(() => stage.classList.remove("intro"), 1500);
+    // Fetch designs in parallel — don't block 3D from rendering on the API round-trip.
+    const designsReady = fetch("/api/designs")
+      .then(r => r.json())
+      .then(d => {
+        if (d.ok && Array.isArray(d.designs)) {
+          designs = d.designs.map((x) => ({ url: x.url, title: x.title, id: x.id }));
+          cool = designs.filter((x) => COOL_IDS.indexOf(x.id) !== -1);
+          if (!cool.length) cool = designs.slice(0, 6);
+        }
+      })
+      .catch(() => {});
 
-    try {
-      const r = await fetch("/api/designs");
-      const d = await r.json();
-      if (d.ok && Array.isArray(d.designs)) {
-        designs = d.designs.map((x) => ({ url: x.url, title: x.title, id: x.id }));
-        cool = designs.filter((x) => COOL_IDS.indexOf(x.id) !== -1);
-        if (!cool.length) cool = designs.slice(0, 6);   // fallback: first few designs
-      }
-    } catch (e) { /* no library → garments still cycle, all blank */ }
-
+    // Render the first garment immediately — no waiting for designs.
     await showCombo(0);
-    // first garment frame is up → cross-fade the instant poster out (2 rAFs = painted)
+    // First 3D frame is painted → cross-fade the poster out smoothly.
     requestAnimationFrame(() => requestAnimationFrame(() => stage.classList.add("hero-ready")));
+
+    // Don't start cycling until designs are actually loaded — no blank shirts.
+    await designsReady;
     startTimer();
     // Warm the OTHER models AFTER first paint, STAGGERED — so the landing's initial
     // load isn't a ~10MB burst of all 4 GLBs at once. Each is cached well before the

@@ -111,22 +111,18 @@ a { color: inherit; text-decoration: none; }
 .hero-poster {
   position: absolute; left: 50%; top: 49%; transform: translate(-50%, -50%);
   height: 62%; width: auto; max-width: 88%; object-fit: contain; z-index: 3;
-  pointer-events: none; opacity: 1; transition: opacity .8s var(--ease);
+  pointer-events: none; opacity: 1; transition: opacity .45s var(--ease);
   filter: drop-shadow(0 26px 38px rgba(0,0,0,.16));
 }
-.hero-stage.hero-ready .hero-poster { opacity: 0; }
-/* Seamless swap: the garment only DIPS (never to empty) while the next colour +
-   print apply instantly (models are cached/preloaded), then settles. The landing
-   is never blank between shirts — one flows straight into the next. */
-.hero-stage #garment3d { transition: opacity .7s var(--ease), transform .7s var(--ease), filter .7s var(--ease); }
+.hero-stage.hero-ready .hero-poster { opacity: 0; pointer-events: none; }
+/* Seamless swap: the garment fades very slightly while the next colour + print apply,
+   then settles. No scale/translate — movement looks like a glitch on a looped carousel. */
+.hero-stage #garment3d { transition: opacity .6s var(--ease); }
 .hero-stage.swapping #garment3d {
-  opacity: .9; transform: translateY(10px) scale(.9);
-  filter: brightness(.7);   /* #5: recede + dim INTO the room's depth, then step FORWARD into the light */
-  transition: opacity .22s ease, transform .22s ease, filter .22s ease;
+  opacity: .78;
+  transition: opacity .16s ease;
 }
-/* with the 3D room on, don't blur/smear the whole scene on swap — just a gentle dip;
-   and drop the flat CSS shadow (the room renders its own grounded contact shadow). */
-.hero-stage.room-3d.swapping #garment3d { opacity: .82; transform: none; filter: none; transition: opacity .3s ease; }
+.hero-stage.room-3d.swapping #garment3d { opacity: .80; transition: opacity .16s ease; }
 .hero-stage.room-3d .garment-shadow { display: none; }
 
 /* hide the studio-only injected hint/reset on the landing */
@@ -466,14 +462,12 @@ a { color: inherit; text-decoration: none; }
   mix-blend-mode:screen; filter:blur(6px); }
 @media (min-width:860px){ .garment-key{ left:auto; right:18%; } }
 
-/* — cinematic "lights on" open: the room blooms up + the garment arrives once — */
-.hero-stage.intro .hero-room{ animation:roomOn 1.4s var(--ease) both; }
-.hero-stage.intro .hero-garment{ animation:garmentIn 1.3s var(--ease) both; }
+/* room gently blooms in on load — garment wrapper is NOT animated (poster lives there) */
+.hero-stage.intro .hero-room{ animation:roomOn 1.2s var(--ease) both; }
 @keyframes roomOn{ 0%{ opacity:0; } 100%{ opacity:1; } }
-@keyframes garmentIn{ 0%{ opacity:0; transform:translateY(14px) scale(.955); } 60%{ opacity:1; } 100%{ transform:none; } }
 
 @media (prefers-reduced-motion: reduce){
-  .hero-stage.intro .hero-room, .hero-stage.intro .hero-garment{ animation:none; }
+  .hero-stage.intro .hero-room{ animation:none; }
 }
 
 /* ============================================================
@@ -561,3 +555,15 @@ a { color: inherit; text-decoration: none; }
 .tile:nth-child(8n+1){--t:#e6e3da} .tile:nth-child(8n+2){--t:#dfe4d8} .tile:nth-child(8n+3){--t:#dde2da}
 .tile:nth-child(8n+4){--t:#e4ddd0} .tile:nth-child(8n+5){--t:#e8e3d6} .tile:nth-child(8n+6){--t:#dcdcd5}
 .tile:nth-child(8n+7){--t:#e1ddd4} .tile:nth-child(8n+8){--t:#d9d6cd}
+
+/* — ADAPTIVE STAGE: dark shirts get a light warm-neutral backdrop.
+ *   On mobile, the ::after scrim already makes the white copy legible.
+ *   On desktop, copy sits against the backdrop → flip it dark. — */
+@media (min-width:860px){
+  .hero-stage.light-stage .hero-copy { color: #18181a; text-shadow: none; }
+  .hero-stage.light-stage .hero-copy .hero-tag,
+  .hero-stage.light-stage .hero-copy .hero-blurb,
+  .hero-stage.light-stage .hero-copy .word { color: #18181a; }
+  .hero-stage.light-stage .hero-copy .hero-sub { color: #44433e; }
+  .hero-stage.light-stage .hero-cap { color: rgba(0,0,0,.55); }
+}

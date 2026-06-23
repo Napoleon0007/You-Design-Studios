@@ -9,6 +9,7 @@ storefront is fully functional now and goes live the moment real keys land.
 """
 from __future__ import annotations
 
+import csv
 import io
 import json
 import os
@@ -730,14 +731,18 @@ def _printer_ok() -> bool:
     return bool(given) and given == key
 
 
-def _printer_view(order: dict) -> dict:
-    """Shape one order for the print shop: address + line items + print files."""
+def _printer_view(order: dict) -> dict | None:
+    """Shape one order for the print shop: address + line items + print files.
+    Returns None if the order has no local-SA items (skip in dashboard)."""
     try:
         addr = json.loads(order.get("shipping_json") or "{}") or {}
     except (ValueError, TypeError):
         addr = {}
     items, units = [], 0
     for it in order.get("items", []):
+        prov = (it.get("provider") or "local-sa").lower()
+        if prov != "local-sa":
+            continue
         qty = it.get("quantity") or 1
         units += qty
         items.append({
@@ -745,11 +750,13 @@ def _printer_view(order: dict) -> dict:
             "colour": it.get("color") or "—",
             "size": it.get("size") or "—",
             "qty": qty,
-            "provider": it.get("provider") or "gelato",
+            "provider": prov,
             "front": it.get("printfile_front_url"),
             "back": it.get("printfile_back_url"),
             "preview": it.get("preview_url"),
         })
+    if not items:
+        return None
     return {
         "reference": order["reference"],
         "status": order["status"],
@@ -766,8 +773,8 @@ def _printer_view(order: dict) -> dict:
 def printer_dashboard():
     if not _printer_ok():
         return ("Unauthorized — append ?key=YOUR_PRINTER_KEY", 401)
-    queue = [_printer_view(o) for o in db.list_orders(["submitted", "in_production"], limit=100)]
-    done = [_printer_view(o) for o in db.list_orders(["shipped", "delivered"], limit=20)]
+    queue = [v for v in (_printer_view(o) for o in db.list_orders(["submitted", "in_production"], limit=100)) if v]
+    done = [v for v in (_printer_view(o) for o in db.list_orders(["shipped", "delivered"], limit=20)) if v]
     return render_template("printer_dashboard.html", brand=BRAND, queue=queue,
                            done=done, printer_key=request.args.get("key", ""))
 
@@ -794,11 +801,43 @@ def printer_job_action():
         tracking = (d.get("tracking") or "").strip() or None
         note = "Shipped by SA print shop." + (f" Tracking: {tracking}" if tracking else "")
         db.set_order_status(ref, "shipped", tracking_url=tracking, notes=note)
-        # (Customer 'shipped' email intentionally left to the ops layer — no
-        #  misleading template reuse here.)
+        customer_email = order.get("email") or ""
+        if customer_email:
+            full_order = db.get_order(ref)
+            if full_order:
+                subj, html_body, text = mailer.order_shipped(full_order, tracking_url=tracking or "")
+                mailer.send(customer_email, subj, html_body, text)
         return jsonify(ok=True, reference=ref, status="shipped")
 
     return jsonify(ok=False, error="Unknown action (accept|ship)."), 400
+
+
+@app.route("/printer/job/<reference>.csv")
+def printer_job_csv(reference: str):
+    """Download a job's print spec as a CSV — one row per line item."""
+    if not _printer_ok():
+        return ("Unauthorized", 401)
+    order = db.get_order(reference)
+    if not order:
+        return ("Order not found", 404)
+    v = _printer_view(order)
+    if not v:
+        return ("No local-SA items in this order", 404)
+    addr = v["address"]
+    addr_str = ", ".join(filter(None, [
+        addr.get("line1"), addr.get("line2"), addr.get("city"),
+        addr.get("province"), addr.get("postal_code"),
+    ]))
+    out = io.StringIO()
+    w = csv.writer(out)
+    w.writerow(["Reference", "Customer", "Address", "Product", "Colour", "Size", "Qty",
+                "Front print file", "Back print file"])
+    for it in v["items"]:
+        w.writerow([reference, v["name"], addr_str, it["product"], it["colour"],
+                    it["size"], it["qty"], it.get("front") or "", it.get("back") or ""])
+    from flask import Response
+    return Response(out.getvalue(), mimetype="text/csv",
+                    headers={"Content-Disposition": f'attachment; filename="job-{reference}.csv"'})
 
 
 @app.route("/resume/<token>")

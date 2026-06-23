@@ -68,7 +68,7 @@
       <div class="items">
         {% for it in o['items'] %}
         <div class="it {{ 'review' if (it.moderation_reason or it.moderation_status != 'approved') else '' }}">
-          <div class="th" style="background-image:url('{{ it.preview_url or ('/files/' ~ it.art_key) if it.art_key else '' }}')"></div>
+          <div class="th" style="background-image:url('{{ it.preview_url or ('/files/' ~ it.art_key.replace('/files/','').lstrip('/')) if it.art_key else '' }}')"></div>
           <div>
             <div class="nm">{{ it.product_name }} <span class="ms">×{{ it.quantity }}</span></div>
             <div class="ms">{{ it.color or '' }} {{ it.size or '' }}{% if it.provider %} · {{ it.provider }}{% endif %}</div>

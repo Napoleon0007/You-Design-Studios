@@ -292,3 +292,21 @@ def order_released(order: dict, currency: str = "R") -> tuple:
                        footer=f"Order {_html.escape(ref)} · {BRAND_NAME}")
     return (f"In production — {ref}", html_body,
             f"Order {ref} is in production.")
+
+
+def order_shipped(order: dict, tracking_url: str = "", currency: str = "R") -> tuple:
+    ref = order.get("reference", "")
+    title = "Your order is on its way"
+    if tracking_url:
+        intro = (f"Order <b>{_html.escape(ref)}</b> has been shipped and is heading your way. "
+                 "Tap below to track your parcel.")
+    else:
+        intro = (f"Order <b>{_html.escape(ref)}</b> has been shipped and is heading your way. "
+                 "You'll receive it within the next few business days.")
+    cta = ("Track my parcel", tracking_url) if tracking_url else None
+    html_body = _shell(title, intro, rows_html=_items_table(order, currency), cta=cta,
+                       footer=f"Order {_html.escape(ref)} · {BRAND_NAME}")
+    text = f"Your TRUEF Studios order {ref} has been shipped!"
+    if tracking_url:
+        text += f" Track it here: {tracking_url}"
+    return (f"Shipped — {ref}", html_body, text)

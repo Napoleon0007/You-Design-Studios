@@ -103,6 +103,8 @@
     <span data-brand>STUDIOS</span> — custom print-on-demand · South Africa
   </footer>
 
+  <!-- Preload the first garment model so it's in cache when the engine asks for it -->
+  <link rel="preload" as="fetch" crossorigin href="/static/models/meshy_tee.glb" />
   <!-- Three.js (r128 UMD) + loaders + the shared studio engine -->
   <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>

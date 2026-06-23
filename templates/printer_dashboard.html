@@ -71,6 +71,13 @@
     .msg{ font-size:12.5px; margin-left:auto; }
     .msg.err{ color:#c0392b; } .msg.ok{ color:var(--ok); }
 
+    .job__tools{ display:flex; gap:8px; flex-wrap:wrap; margin-top:10px; }
+    .tool-link{ display:inline-flex; align-items:center; gap:5px; font-size:12px; font-weight:700;
+      letter-spacing:.04em; padding:7px 11px; border-radius:8px; border:1px solid var(--line);
+      background:#fafaf8; color:var(--ink); text-decoration:none; cursor:pointer; min-height:36px; }
+    .tool-link:hover{ border-color:#b0afa9; background:#fff; }
+    .tool-link.copied{ color:var(--ok); border-color:var(--ok); }
+
     .done .job{ opacity:.72; }
     footer{ margin-top:40px; color:var(--muted); font-size:12px; text-align:center; }
   </style>
@@ -136,6 +143,20 @@
 {% if a.phone %}☎ {{ a.phone }}{% endif %}</div>
           </div>
         </div>
+        <div class="job__tools">
+          <a class="tool-link" href="/printer/job/{{ o.reference }}.csv{{ '?key=' + printer_key if printer_key else '' }}" download>
+            ↓ CSV
+          </a>
+          <button class="tool-link wa-copy"
+            data-ref="{{ o.reference }}"
+            data-name="{{ o.name }}"
+            data-addr="{{ [o.address.line1, o.address.city, o.address.postal_code, o.address.province] | select | join(', ') }}"
+            data-items="{% for it in o['items'] %}{{ it.qty }}× {{ it.product }} ({{ it.colour }}, {{ it.size }}){% if not loop.last %} | {% endif %}{% endfor %}"
+            data-front="{% for it in o['items'] %}{% if it.front %}{{ it.front }}{% endif %}{% endfor %}"
+          >
+            WhatsApp
+          </button>
+        </div>
         <div class="job__actions">
           {% if o.status == 'submitted' %}
             <button class="btn primary" data-act="accept">Accept job</button>
@@ -169,6 +190,7 @@
 
   <script>
     var KEY = {{ printer_key|tojson }};
+
     document.querySelectorAll(".job__actions").forEach(function (bar) {
       var card = bar.closest(".job"), ref = card.getAttribute("data-ref");
       var msg = bar.querySelector(".msg");
@@ -186,6 +208,25 @@
               setTimeout(function () { location.reload(); }, 700); }
             else { msg.className = "msg err"; msg.textContent = d.error || "Failed"; btn.disabled = false; }
           }).catch(function () { msg.className = "msg err"; msg.textContent = "Network error"; btn.disabled = false; });
+        });
+      });
+    });
+
+    document.querySelectorAll(".wa-copy").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        var ref = btn.dataset.ref, name = btn.dataset.name,
+            addr = btn.dataset.addr, items = btn.dataset.items,
+            front = btn.dataset.front;
+        var msg = "Hi, new print job from TRUEF Studios.\n\n"
+          + "Ref: " + ref + "\n"
+          + "Customer: " + name + "\n"
+          + (addr ? "Ship to: " + addr + "\n" : "")
+          + "\nItems:\n" + items.split("|").map(function(s){ return "  " + s.trim(); }).join("\n")
+          + (front ? "\n\nPrint file(s):\n" + front : "")
+          + "\n\nPlease confirm receipt.";
+        navigator.clipboard.writeText(msg).then(function () {
+          btn.textContent = "Copied!"; btn.classList.add("copied");
+          setTimeout(function () { btn.textContent = "WhatsApp"; btn.classList.remove("copied"); }, 2000);
         });
       });
     });
