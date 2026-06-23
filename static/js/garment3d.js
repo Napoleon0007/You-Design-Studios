@@ -210,12 +210,12 @@
   };
 
   // Draco decoder — our GLBs are Draco-compressed for mobile (~1–3MB vs 13–37MB).
-  // Needs DRACOLoader.js loaded in the page; decoder is fetched from the CDN once.
+  // Self-hosted from Railway so there's no gstatic.com round-trip on first load.
   let _draco = null;
   function getDraco() {
     if (!_draco && THREE.DRACOLoader) {
       _draco = new THREE.DRACOLoader();
-      _draco.setDecoderPath("https://www.gstatic.com/draco/v1/decoders/");
+      _draco.setDecoderPath("/static/js/threejs/draco/");
     }
     return _draco;
   }

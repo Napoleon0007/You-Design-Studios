@@ -642,8 +642,22 @@ a { color: inherit; text-decoration: none; }
 .collection-band .rolodex,
 .collection-band .rdx-dots{ position:relative; z-index:2; }
 
-/* Hide the white-tee poster on mobile — garment box is small, blank is better than a wrong tee */
+/* On mobile, add a purple shimmer behind the canvas so the garment box is never a blank hole.
+   Scoped to mobile only — on desktop the box fills the whole hero; not needed there.
+   Canvas is alpha:true so this gradient shows through the transparent pixels until hoodie renders. */
 @media (max-width:859px){
+  .hero-garment::before{
+    content:'';
+    position:absolute; inset:0;
+    background:linear-gradient(150deg, #6247a8 0%, #3a236e 60%, #201540 100%);
+    border-radius:14px;
+    z-index:0;
+    pointer-events:none;
+    transition:opacity 0.7s ease;
+  }
+  .hero-stage.hero-ready .hero-garment::before{ opacity:0; }
+
+  /* Hide the white-tee poster on mobile — purple shimmer is the placeholder */
   .hero-poster{ display:none; }
 }
 

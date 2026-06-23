@@ -7,9 +7,11 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Titan+One&display=swap" rel="stylesheet" />
-  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
-  <link rel="preconnect" href="https://www.gstatic.com" crossorigin />
-  <link rel="preload" as="image" href="/static/v2/hero-poster.png" fetchpriority="high" />
+  <!-- Three.js is self-hosted so scripts serve from same Railway origin — no CDN DNS
+       lookup, no gstatic round-trip. Preload hints fire as early as possible. -->
+  <link rel="preload" as="script" href="/static/js/threejs/three.min.js" />
+  <link rel="preload" as="script" href="/static/js/threejs/GLTFLoader.js" />
+  <link rel="preload" as="script" href="/static/js/threejs/DRACOLoader.js" />
   <link rel="preload" as="fetch" crossorigin href="/static/models/meshy_hoodie.glb" />
   <link rel="icon" type="image/svg+xml" href="/static/v2/favicon.svg" />
   <link rel="stylesheet" href="/static/v2/v2.css" />
@@ -129,14 +131,12 @@
     </div>
   </footer>
 
-  <!-- Preload the first garment model so it's in cache when the engine asks for it -->
-  <link rel="preload" as="fetch" crossorigin href="/static/models/meshy_hoodie.glb" />
-  <!-- Three.js (r128 UMD) + loaders + the shared studio engine -->
-  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/DRACOLoader.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/geometries/DecalGeometry.js"></script>
+  <!-- Three.js (r128 UMD) + loaders — self-hosted, same origin as Railway app -->
+  <script src="/static/js/threejs/three.min.js"></script>
+  <script src="/static/js/threejs/GLTFLoader.js"></script>
+  <script src="/static/js/threejs/DRACOLoader.js"></script>
+  <script src="/static/js/threejs/OrbitControls.js"></script>
+  <script src="/static/js/threejs/DecalGeometry.js"></script>
   <script src="/static/js/garment3d.js"></script>
   <script src="/static/v2/landing3d.js"></script>
   <script src="/static/v2/rolodex.js"></script>
