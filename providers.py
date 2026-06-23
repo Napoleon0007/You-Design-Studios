@@ -27,7 +27,8 @@ import printful
 GELATO = "gelato"
 PRINTFUL = "printful"
 GOOTEN = "gooten"
-SUPPORTED = (GELATO, PRINTFUL, GOOTEN)
+LOCAL_SA = "local-sa"
+SUPPORTED = (GELATO, PRINTFUL, GOOTEN, LOCAL_SA)
 
 # Grammar fingerprints — deliberately non-overlapping.
 _GELATO_UID = re.compile(r"^[a-z][a-z0-9]*_product_gca_[a-z0-9_-]+$")
@@ -84,6 +85,10 @@ def verify(provider: str, uid: str, expected_category: str | None = None) -> tup
         return False, f"Unknown provider '{provider}'"
     if not uid:
         return False, "Missing product UID"
+    if provider == LOCAL_SA:
+        # Fulfilled via the SA printer dashboard — no live API check needed.
+        # The structural catalogue guard (verify_item) has already passed.
+        return True, "local-sa"
     # Gooten SKUs are free-form strings (no unique regex), so the provider tag is
     # authoritative and we verify the SKU live against Gooten's catalog. A
     # mislabeled UID (e.g. a Gelato UID tagged 'gooten') fails this live check.

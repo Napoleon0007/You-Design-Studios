@@ -194,15 +194,68 @@ def _items_table(order: dict, currency: str = "R") -> str:
 
 
 # ----------------------------------------------------------------- emails --- #
-def order_confirmation(order: dict, currency: str = "R") -> tuple:
+def order_confirmation(order: dict, currency: str = "R", status_url: str = "") -> tuple:
     ref = order.get("reference", "")
     title = "Thanks — we've got your order"
     intro = (f"Payment received. We're preparing your custom order "
              f"<b>{_html.escape(ref)}</b>. We'll email you the moment it's sent to print.")
+    cta = ("Track my order", status_url) if status_url else None
     html_body = _shell(title, intro, rows_html=_items_table(order, currency),
-                       footer=f"Order {_html.escape(ref)} · {BRAND_NAME}")
-    return (f"Order confirmed — {ref}", html_body,
-            f"Payment received for order {ref}. Total {_money(order.get('total', 0), currency)}.")
+                       cta=cta, footer=f"Order {_html.escape(ref)} · {BRAND_NAME}")
+    text = f"Payment received for order {ref}. Total {_money(order.get('total', 0), currency)}."
+    if status_url:
+        text += f" Track your order: {status_url}"
+    return (f"Order confirmed — {ref}", html_body, text)
+
+
+def printer_job_notification(order: dict, dashboard_url: str, currency: str = "R") -> tuple:
+    """Alert the SA print shop that a new job is ready to print."""
+    ref = order.get("reference", "")
+    name = order.get("name") or "Customer"
+    try:
+        addr = json.loads(order.get("shipping_json") or "{}") or {}
+    except (ValueError, TypeError):
+        addr = {}
+
+    items_html = ""
+    for it in order.get("items", []):
+        product = _html.escape(str(it.get("product_name") or it.get("product_slug") or "Item"))
+        colour = _html.escape(str(it.get("color") or "—"))
+        size = _html.escape(str(it.get("size") or "—"))
+        qty = int(it.get("quantity", 1))
+        front = it.get("printfile_front_url") or ""
+        back = it.get("printfile_back_url") or ""
+        items_html += (f'<tr><td style="padding:8px 0;border-bottom:1px solid #eee">'
+                       f'<b>{product}</b><br>'
+                       f'<span style="color:#666;font-size:13px">{colour} · {size} · Qty {qty}</span>')
+        if front:
+            items_html += (f'<br><a href="{_html.escape(front)}" '
+                           f'style="color:#0066cc;font-size:13px">⬇ Front print file</a>')
+        if back:
+            items_html += (f' &nbsp;<a href="{_html.escape(back)}" '
+                           f'style="color:#0066cc;font-size:13px">⬇ Back print file</a>')
+        items_html += '</td></tr>'
+
+    addr_parts = [addr.get("line1", ""), addr.get("line2", ""), addr.get("city", ""),
+                  addr.get("province", ""), addr.get("postal_code", "")]
+    addr_str = ", ".join(p for p in addr_parts if p)
+
+    rows_html = (f'<table role="presentation" width="100%" cellpadding="0" cellspacing="0">'
+                 f'{items_html}'
+                 f'<tr><td style="padding:10px 0 4px;font:400 14px/1.5 -apple-system,sans-serif">'
+                 f'<b>Ship to:</b> {_html.escape(name)}'
+                 f'{(" — " + _html.escape(addr_str)) if addr_str else ""}'
+                 f'</td></tr></table>')
+
+    title = f"New print job — {ref}"
+    intro = ("A new order is ready to print. Accept the job in the dashboard, "
+             "produce it, then mark it shipped with a tracking number.")
+    html_body = _shell(title, intro, rows_html=rows_html,
+                       cta=("Open Dashboard → Accept Job", dashboard_url),
+                       footer=f"Job {_html.escape(ref)} · TRUEF Studios printer portal")
+    text = (f"New print job {ref}.\nOpen the dashboard: {dashboard_url}\n"
+            f"Ship to: {name}{(', ' + addr_str) if addr_str else ''}")
+    return (f"New print job — {ref}", html_body, text)
 
 
 def design_redo(order: dict, resume_url: str, reason: str = "", currency: str = "R") -> tuple:

@@ -70,9 +70,12 @@ def _ref_image(base: dict) -> str:
 
 # --------------------------------------------------------------- compat ----- #
 def provider_of(slug: str) -> str:
-    """Which fulfilment system makes this product. Single source of truth."""
+    """Which fulfilment system makes this product. All SA orders route through
+    the local printer dashboard — Gelato UIDs are still used for print-file
+    grammar but are never sent to Gelato directly."""
     b = _BY_SLUG.get(slug)
-    return (b or {}).get("provider", "gelato")
+    p = (b or {}).get("provider", "gelato")
+    return "local-sa" if p == "gelato" else p
 
 
 def _compat_product(b: dict) -> dict:

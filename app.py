@@ -455,7 +455,9 @@ def _settle_payment(order: dict) -> str:
     db.set_order_status(order["reference"], new_status, notes=note)
     fresh = db.get_order(order["reference"])
     if fresh and fresh.get("email"):
-        subj, html_body, text = mailer.order_confirmation(_enrich_for_email(fresh))
+        status_url = _abs_url(f"/order/{fresh['reference']}")
+        subj, html_body, text = mailer.order_confirmation(
+            _enrich_for_email(fresh), status_url=status_url)
         mailer.send(fresh["email"], subj, html_body, text)
     return new_status
 
@@ -692,16 +694,22 @@ def admin_order_action():
 
 
 def _release_to_providers(order: dict) -> list[str]:
-    """Submit each provider's lines to its factory. Gooten can be driven from
-    here (submit_order exists); Gelato order submission lands next — until then
-    those lines are marked released and flagged for the operator."""
+    """Submit each provider's lines to its factory. local-sa jobs are fulfilled
+    via the printer dashboard — notify the shop by email when one lands."""
     by_provider: dict[str, int] = {}
     for it in order["items"]:
-        p = it.get("provider") or "gelato"
+        p = it.get("provider") or "local-sa"
         by_provider[p] = by_provider.get(p, 0) + 1
     out = []
     for prov, n in by_provider.items():
-        out.append(f"{prov}×{n} (queued)")
+        out.append(f"{prov}×{n}")
+        if prov == "local-sa":
+            printer_email = os.environ.get("PRINTER_EMAIL", "").strip()
+            notify_to = printer_email or BRAND["email"]
+            dashboard_url = _abs_url("/printer")
+            subj, html_body, text = mailer.printer_job_notification(
+                _enrich_for_email(order), dashboard_url)
+            mailer.send(notify_to, subj, html_body, text)
     return out
 
 
@@ -805,6 +813,24 @@ def resume(token: str):
         it["product_name"] = _product_name(it.get("product_slug"))
     held = _held_designs(order)
     return render_template("resume.html", brand=BRAND, order=order, token=token, held=held)
+
+
+@app.route("/order/<reference>")
+def order_status(reference: str):
+    """Public order-tracking page. Linked from the confirmation email."""
+    order = db.get_order(reference)
+    if not order:
+        return render_template("order_status.html", brand=BRAND, order=None,
+                               reference=reference, step=0), 404
+    for it in order["items"]:
+        it["product_name"] = _product_name(it.get("product_slug"))
+    # Map order status to a 0-based progress step (0=unknown shown as received)
+    _steps = {"created": 0, "paid": 1, "in_review": 1, "awaiting_redo": 1,
+              "submitted": 2, "in_production": 3, "shipped": 4, "delivered": 5}
+    step = _steps.get(order["status"], 0)
+    terminal = order["status"] in ("cancelled", "refunded", "rejected", "failed")
+    return render_template("order_status.html", brand=BRAND, order=order,
+                           reference=reference, step=step, terminal=terminal)
 
 
 @app.route("/api/resume/<token>/swap", methods=["POST"])
