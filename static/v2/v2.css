@@ -547,22 +547,36 @@ a { color: inherit; text-decoration: none; }
   /* Hero section a bit shorter on phone */
   .hero-stage{ min-height:88vh; min-height:88svh; }
 
+  /* Garment: contained box bottom-right so the video fills the rest of the hero */
+  .hero-garment{
+    top:auto; left:auto; right:0; bottom:0;
+    width:44vw; aspect-ratio:2/3;
+  }
+  /* Garment gradient was full-bleed — replace with a stage-level scrim behind the text */
+  .hero-garment::after{ display:none; }
+
+  /* Bottom scrim across the full-width stage to keep the left-side text legible over video */
+  .hero-stage::before{
+    content:""; position:absolute; bottom:0; left:0; right:0; height:55%;
+    background:linear-gradient(to top, rgba(0,0,0,.60) 0%, rgba(0,0,0,.28) 44%, transparent 82%);
+    z-index:1; pointer-events:none;
+  }
+
+  /* Hero copy: left side, bottom-left; padding-right keeps it clear of the garment */
   .hero-copy{
     padding-top:0; align-self:end;
+    text-align:left;
+    padding-left:var(--gut);
+    padding-right:46vw;
     padding-bottom:calc(4vh + env(safe-area-inset-bottom));
-    text-align:right;
-    padding-left:calc(var(--gut) * 2.2);
   }
-  .hero-copy .hero-tag{ font-size:clamp(26px, 7.5vw, 42px); }
-  .hero-copy .hero-blurb{ max-width:26ch; margin-left:auto; }
-  .hero-line{ margin-left:auto; max-width:180px; }
-  .hero-sub{ justify-content:flex-end; }
-  /* fade bottom of the garment into dark so copy is never white-on-white */
-  .hero-garment::after{
-    content:""; position:absolute; bottom:0; left:0; right:0; height:420px;
-    pointer-events:none;
-    background:linear-gradient(to top, rgba(0,0,0,.72) 0%, rgba(0,0,0,.45) 30%, rgba(0,0,0,.18) 60%, transparent 88%);
-  }
+  .hero-copy .hero-tag{ font-size:clamp(22px, 6.5vw, 38px); }
+  .hero-copy .hero-blurb{ max-width:22ch; margin-left:0; }
+  .hero-line{ margin-left:0; margin-right:auto; max-width:160px; }
+  .hero-sub{ justify-content:flex-start; }
+
+  /* Scroll cue hidden on mobile — layout doesn't need it */
+  .scroll-cue{ display:none; }
 
   /* Gallery: lighter overlay so the bg video actually reads */
   .gallery2::after{ background:rgba(0,0,0,.30); }
@@ -598,4 +612,26 @@ a { color: inherit; text-decoration: none; }
   .hero-stage.light-stage .hero-copy .word { color: #fff; }
   .hero-stage.light-stage .hero-copy .hero-sub { color: rgba(255,255,255,.9); }
   .hero-stage.light-stage .hero-cap { color: rgba(0,0,0,.55); }
+}
+
+/* ─── ROLODEX NEON REDESIGN ──────────────────────────────────────────────────
+ *  Raw design art (no shirt) on cycling neon backgrounds.
+ *  Tiny padding so the art fills the card. Each swipe position gets its own
+ *  colour: cyan → magenta → electric-violet → orange → mint → yellow → pink → sky.
+ * ─────────────────────────────────────────────────────────────────────────── */
+.rdx-shot{ background:#111; border-radius:14px; }
+.rdx-shot img.raw{ object-fit:contain; padding:5%; background:transparent; }
+
+.rdx-track .rdx-card:nth-child(8n+1) .rdx-shot{ background:#00d4ff; }
+.rdx-track .rdx-card:nth-child(8n+2) .rdx-shot{ background:#ff006a; }
+.rdx-track .rdx-card:nth-child(8n+3) .rdx-shot{ background:#7b00ff; }
+.rdx-track .rdx-card:nth-child(8n+4) .rdx-shot{ background:#ff6600; }
+.rdx-track .rdx-card:nth-child(8n+5) .rdx-shot{ background:#00ff88; }
+.rdx-track .rdx-card:nth-child(8n+6) .rdx-shot{ background:#ffe600; }
+.rdx-track .rdx-card:nth-child(8n+7) .rdx-shot{ background:#ee00cc; }
+.rdx-track .rdx-card:nth-child(8n+8) .rdx-shot{ background:#00b4ff; }
+
+/* Active card: neon glow ring + slight lift */
+.rdx-card.on .rdx-shot{
+  box-shadow: 0 0 0 2px rgba(255,255,255,.7), 0 22px 48px -20px rgba(0,0,0,.6);
 }

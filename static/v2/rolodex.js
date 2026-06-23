@@ -24,9 +24,8 @@
       const a = document.createElement("a");
       a.className = "rdx-card"; a.href = "/studio"; a.dataset.i = i;
       a.innerHTML =
-        `<div class="rdx-shot"><img loading="lazy" alt="${g.title}"` +
-        ` src="/static/v2/cards/${stem(g.id)}.jpg"` +
-        ` onerror="this.onerror=null;this.src='${g.url}';this.classList.add('raw')"></div>` +
+        `<div class="rdx-shot"><img loading="lazy" alt="${g.title}" class="raw"` +
+        ` src="${g.url}"></div>` +
         `<div class="rdx-cap"><b>${g.title}</b><span>Make it yours &rarr;</span></div>`;
       track.appendChild(a);
       const dot = document.createElement("button");
