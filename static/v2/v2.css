@@ -171,14 +171,15 @@ a { color: inherit; text-decoration: none; }
 
 /* ---- rolodex: 2D shirts that have been done ---- */
 .rolodex { position: relative; max-width: var(--maxw); margin: 8px auto 0; display: flex; align-items: center; }
-.rdx-track { display: flex; gap: 18px; overflow-x: auto; scroll-snap-type: x mandatory;
-  -webkit-overflow-scrolling: touch; scrollbar-width: none; padding: 14px calc(50% - 170px); width: 100%; }
+.rdx-track { display: flex; gap: 14px; overflow-x: auto; scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch; scrollbar-width: none; padding: 14px calc(50% - 90px); width: 100%; }
 .rdx-track::-webkit-scrollbar { display: none; }
-.rdx-card { flex: 0 0 340px; scroll-snap-align: center; color: var(--ink);
+.rdx-card { flex: 0 0 180px; scroll-snap-align: center; color: var(--ink);
+  border-radius: 16px; overflow: hidden;
   opacity: .45; transform: scale(.9); transition: transform .4s var(--ease), opacity .4s var(--ease); }
 .rdx-card.on { opacity: 1; transform: scale(1); }
-.rdx-shot { border-radius: 16px; overflow: hidden; background: #f1f0ec; aspect-ratio: 4 / 5;
-  box-shadow: 0 18px 40px -22px rgba(0,0,0,.35); }
+.rdx-shot { border-radius: 0; overflow: hidden; background: transparent; aspect-ratio: 4 / 5;
+  box-shadow: none; }
 .rdx-shot img { width: 100%; height: 100%; object-fit: cover; }
 .rdx-shot img.raw { object-fit: contain; padding: 12%; background: #f1f0ec; }
 .rdx-cap { display: flex; justify-content: space-between; align-items: baseline; padding: 13px 4px 0; }
@@ -200,8 +201,8 @@ a { color: inherit; text-decoration: none; }
 .motion-head span { color: #8b8b82; font-size: 13px; letter-spacing: .04em; }
 
 @media (max-width: 720px) {
-  .rdx-card { flex-basis: 76vw; }
-  .rdx-track { padding: 14px calc(50% - 38vw); }
+  .rdx-card { flex-basis: 52vw; }
+  .rdx-track { padding: 14px calc(50% - 26vw); }
   .rdx-arrow { display: none; }   /* swipe on phones */
 }
 
@@ -212,8 +213,20 @@ a { color: inherit; text-decoration: none; }
 .btn-pill:hover { transform: translateY(-2px); }
 
 /* ------------------------------------------------------- footer --- */
-.v2foot { background: #18181a; color: rgba(255,255,255,.6); padding: 40px var(--gut);
-  text-align: center; font-size: 13px; letter-spacing: .04em; }
+.v2foot { background: #18181a; color: #fff; padding: 56px var(--gut) 40px; text-align: center; }
+.foot-inner { display:flex; flex-direction:column; align-items:center; gap:18px; }
+.foot-brand { display:flex; align-items:center; gap:10px; }
+.foot-mark { width:30px; height:30px; border-radius:7px; flex:none; }
+.foot-wordmark { font-family:'Titan One',system-ui,sans-serif; font-size:15px;
+  letter-spacing:.1em; color:#fff; text-transform:uppercase; }
+.foot-tagline { font-size:12px; color:rgba(255,255,255,.45); letter-spacing:.05em;
+  text-transform:uppercase; margin:0; }
+.foot-socials { display:flex; gap:22px; align-items:center; margin-top:4px; }
+.foot-social { color:rgba(255,255,255,.55); transition:color .2s, opacity .2s;
+  display:flex; align-items:center; }
+.foot-social:hover { color:#fff; }
+.foot-copy { font-size:11px; color:rgba(255,255,255,.28); letter-spacing:.03em;
+  margin:6px 0 0; }
 
 
 /* TRUEF throw-up logo — hero wordmark (designed logo) */
@@ -437,10 +450,9 @@ a { color: inherit; text-decoration: none; }
 
 /* — nav wordmark: a small 3D extrude so even the logo has depth — */
 .v2nav .navword{
-  color:#fff;
-  text-shadow:
-    0 1px 0 rgba(0,0,0,.55), 0 2px 0 rgba(0,0,0,.42),
-    0 3px 0 rgba(0,0,0,.30), 0 4px 7px rgba(0,0,0,.32);
+  color:rgba(255,255,255,.82);
+  text-shadow: 0 1px 8px rgba(0,0,0,.45);
+  -webkit-text-stroke: 0;
 }
 
 /* — CTA pill: bevel + lift, presses in on tap — */
@@ -461,7 +473,7 @@ a { color: inherit; text-decoration: none; }
 .rdx-shot{ position:relative; will-change:transform;
   transform:rotateX(0) rotateY(0);
   transition:transform .25s var(--ease), box-shadow .3s var(--ease); }
-.rdx-card.on .rdx-shot{ box-shadow:0 26px 54px -24px rgba(0,0,0,.5); }
+.rdx-card.on .rdx-shot{ box-shadow:none; }
 .rdx-shot::after{        /* soft glare that tracks the tilt (--gx/--gy from JS) */
   content:""; position:absolute; inset:0; border-radius:inherit; pointer-events:none;
   background:radial-gradient(42% 60% at var(--gx,50%) var(--gy,0%), rgba(255,255,255,.30), transparent 60%);
@@ -640,21 +652,24 @@ a { color: inherit; text-decoration: none; }
  *  Tiny padding so the art fills the card. Each swipe position gets its own
  *  colour: cyan → magenta → electric-violet → orange → mint → yellow → pink → sky.
  * ─────────────────────────────────────────────────────────────────────────── */
-.rdx-shot{ background:#111; border-radius:14px; }
-/* Show the shirt image contained (not cropped) so the neon bg shows around it */
+/* Neon bg fills the whole card — image sits on top with padding so color peeks around it */
+.rdx-shot{ background:transparent; }
 .rdx-shot img:not(.raw){ object-fit:contain; padding:4%; }
 .rdx-shot img.raw{ object-fit:contain; padding:5%; background:transparent; }
 
-.rdx-track .rdx-card:nth-child(8n+1) .rdx-shot{ background:#00d4ff; }
-.rdx-track .rdx-card:nth-child(8n+2) .rdx-shot{ background:#ff006a; }
-.rdx-track .rdx-card:nth-child(8n+3) .rdx-shot{ background:#7b00ff; }
-.rdx-track .rdx-card:nth-child(8n+4) .rdx-shot{ background:#ff6600; }
-.rdx-track .rdx-card:nth-child(8n+5) .rdx-shot{ background:#00ff88; }
-.rdx-track .rdx-card:nth-child(8n+6) .rdx-shot{ background:#ffe600; }
-.rdx-track .rdx-card:nth-child(8n+7) .rdx-shot{ background:#ee00cc; }
-.rdx-track .rdx-card:nth-child(8n+8) .rdx-shot{ background:#00b4ff; }
+.rdx-track .rdx-card:nth-child(8n+1){ background:#00d4ff; }
+.rdx-track .rdx-card:nth-child(8n+2){ background:#ff006a; }
+.rdx-track .rdx-card:nth-child(8n+3){ background:#7b00ff; }
+.rdx-track .rdx-card:nth-child(8n+4){ background:#ff6600; }
+.rdx-track .rdx-card:nth-child(8n+5){ background:#00ff88; }
+.rdx-track .rdx-card:nth-child(8n+6){ background:#ffe600; }
+.rdx-track .rdx-card:nth-child(8n+7){ background:#ee00cc; }
+.rdx-track .rdx-card:nth-child(8n+8){ background:#00b4ff; }
 
-/* Active card: neon glow ring + slight lift */
-.rdx-card.on .rdx-shot{
-  box-shadow: 0 0 0 2px rgba(255,255,255,.7), 0 22px 48px -20px rgba(0,0,0,.6);
+/* Active card: neon glow ring on the card itself (overflow:hidden clips inner shadows) */
+.rdx-card.on{
+  box-shadow: 0 0 0 2px rgba(255,255,255,.75), 0 0 28px 4px rgba(255,255,255,.25), 0 22px 48px -20px rgba(0,0,0,.6);
 }
+/* Caption text always white on neon */
+.collection-band .rdx-cap b{ color:#fff; }
+.collection-band .rdx-cap span{ color:rgba(255,255,255,.75); }
