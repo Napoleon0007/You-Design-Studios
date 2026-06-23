@@ -26,9 +26,22 @@
     { model: "/static/models/meshy_hoodie.glb",      name: "Heavyweight Hoodie" },
     { model: "/static/models/meshy_hoodie_zip.glb",  name: "Zip Hoodie" },
   ];
-  // Garment colourways + refined, airy backdrops (the stage shifts to one each cycle).
-  const COLOURS = ["#f4f3ef", "#1b1b1b", "#d9c9a8", "#a9b39a", "#bcc9d8", "#c87f63", "#6f7d8c"];
-  //                off-white  charcoal   sand       sage       dusty-blue terracotta slate
+  // Garment colourways — wide palette so every cycle looks fresh, every shade
+  // contrasts the dark jewel-earth backdrop picked by pickBackdrop().
+  const COLOURS = [
+    "#f4f3ef", // off-white   (brand opener)
+    "#1b1b1b", // charcoal
+    "#c87f63", // terracotta
+    "#a9b39a", // sage
+    "#d9c9a8", // sand
+    "#bcc9d8", // dusty-blue
+    "#8b3a3a", // deep-red
+    "#4a7c59", // mid-green
+    "#d4a843", // amber
+    "#5c4a8b", // plum
+    "#3a6a8a", // teal-blue
+    "#6f7d8c", // slate
+  ];
   // TAMED colour-show — one disciplined, on-brand palette: deep jewel-earth tones
   // (greens / teal / charcoal / bronze / espresso / petrol-blue). NO rose, azure or
   // violet. Every backdrop is dark enough that the white copy clears WCAG AA (≥7:1)
@@ -47,7 +60,7 @@
 
   let designs = [], cool = [];
   let i = 0, timer = null, busy = false, curModel = null, userActive = false;
-  const PERIOD = 6000;
+  const PERIOD = 5000;
   const wait = (ms) => new Promise((r) => setTimeout(r, ms));
   const setBackdrop = (hex) => document.documentElement.style.setProperty("--stage-bg", hex);
   // Pick the backdrop most DIFFERENT from the shirt colour so a garment never blends
@@ -63,7 +76,7 @@
     if (busy) return;
     busy = true;
     const brand = (n === 0);                                    // opening shot: a clean WHITE tee with the TRUEF mark
-    const g = brand ? GARMENTS[0] : GARMENTS[Math.floor(n / 2) % GARMENTS.length];   // shape changes every other cycle
+    const g = brand ? GARMENTS[0] : GARMENTS[n % GARMENTS.length];   // garment shape changes every cycle
     const colour = brand ? "#f4f3ef" : COLOURS[n % COLOURS.length];
     // Every garment carries a print, cycling the curated cool set.
     const pool = cool.length ? cool : designs;

@@ -82,8 +82,7 @@
       if (soon) soon.hidden = true;
       if (els.overlay) els.overlay.style.display = "none";
       window.Garment3D.load(modelFor(p))
-        .then(() => { if (state.colorHex) window.Garment3D.setColor(state.colorHex);
-                      if (!state.previewing) enterDesignMode(); })
+        .then(() => { if (state.colorHex) window.Garment3D.setColor(state.colorHex); })
         .catch((e) => console.warn("[studio] model load failed", e));
     } else {
       // No 3D model for this product yet → clean "coming soon" state. NEVER show the hero
@@ -529,6 +528,8 @@
       $$("#edDock .tool").forEach((t) => t.classList.remove("on"));
       if (scrim) scrim.hidden = true;
       openName = null;
+      // release design lock — free orbit when no sheet is active
+      if (window.Garment3D && window.Garment3D.setDesignMode) window.Garment3D.setDesignMode(false);
     }
     function open(name, tool) {
       if (openName === name) { close(); return; }   // tap the active tool again → close
@@ -539,6 +540,8 @@
       if (tool) tool.classList.add("on");
       if (scrim) scrim.hidden = false;
       openName = name;
+      // Design sheet: snap to front, lock still so art can be placed precisely
+      if (name === "design") enterDesignMode();
     }
 
     $$("#edDock .tool").forEach((t) => {

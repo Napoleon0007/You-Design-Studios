@@ -65,13 +65,13 @@
       padding:26px 22px max(22px,env(safe-area-inset-bottom)); text-align:center;
       box-shadow:0 20px 60px rgba(0,0,0,.3); animation:ipIn .2s ease; }
     @keyframes ipIn { from { transform:translateY(14px) scale(.98); opacity:.6 } to { transform:none; opacity:1 } }
-    .ip-ico { font-size:38px; line-height:1; margin-bottom:6px; }
-    .ip-card h3 { font:700 19px/1.2 "Space Grotesk",sans-serif; margin:6px 0 8px; color:#111; }
-    .ip-card p { font-size:14.5px; line-height:1.55; color:#444; margin:0 0 18px; }
+    .ip-mark { width:44px; height:44px; color:#111; margin-bottom:10px; }
+    .ip-card h3 { font:700 19px/1.2 "Space Grotesk",sans-serif; margin:4px 0 8px; color:#111; }
+    .ip-card p { font-size:14px; line-height:1.6; color:#555; margin:0 0 20px; }
     .ip-card p b { color:#111; }
     #ipAgree { width:100%; justify-content:center; padding:15px; font-size:15px; }
-    .ip-cancel { display:block; width:100%; background:none; border:0; color:#888;
-      font-size:13px; margin-top:10px; padding:8px; cursor:pointer; }
+    .ip-cancel { display:block; width:100%; background:none; border:0; color:#999;
+      font-size:13px; margin-top:10px; padding:8px; cursor:pointer; letter-spacing:.03em; }
   </style>
 </head>
 <body class="theme-light ed">
@@ -226,9 +226,14 @@
       <header class="ed-sheet__h"><span>Your design</span><button class="ed-sheet__x" type="button" data-close aria-label="Close">✕</button></header>
       <div class="ed-sheet__b">
         <div class="dropzone" id="dropzone">
-          <div class="ico">⬆</div>
-          <p>Drop your artwork here, or <u>browse</u></p>
-          <small>PNG, JPG or WEBP · we check quality instantly · <b>must be your own image — no copyrighted, brand or celebrity art</b></small>
+          <svg class="dz-mark" viewBox="0 0 100 100" fill="none" aria-hidden="true">
+            <rect x="9" y="9" width="82" height="82" rx="22" stroke="currentColor" stroke-width="7"/>
+            <rect x="30" y="31" width="40" height="10.5" rx="2" fill="currentColor"/>
+            <rect x="44.75" y="31" width="10.5" height="40" rx="2" fill="currentColor"/>
+            <rect x="55" y="46" width="15.5" height="9.5" rx="2" fill="currentColor"/>
+          </svg>
+          <p>Upload your artwork · or <u>browse</u></p>
+          <small>PNG, JPG or WEBP &nbsp;·&nbsp; Original work only — no copyrighted, brand or celebrity images</small>
         </div>
         <input type="file" id="fileInput" accept="image/png,image/jpeg,image/webp" hidden />
         <div class="validation" id="validation"></div>
@@ -327,11 +332,15 @@
   <!-- Originality reminder pop-up (shown once when art is added) -->
   <div class="ip-modal" id="ipModal" hidden>
     <div class="ip-card">
-      <div class="ip-ico">✋</div>
-      <h3>Just a quick reminder</h3>
-      <p>Your design must be your <b>own original work</b>. Please don't use copyrighted images,
-      well-known brands or logos. By continuing you confirm you have the rights to print this artwork.</p>
-      <button class="btn pop" id="ipAgree">Got it — it's my own work</button>
+      <svg class="ip-mark" viewBox="0 0 100 100" fill="none" aria-hidden="true">
+        <rect x="9" y="9" width="82" height="82" rx="22" stroke="currentColor" stroke-width="7"/>
+        <rect x="30" y="31" width="40" height="10.5" rx="2" fill="currentColor"/>
+        <rect x="44.75" y="31" width="10.5" height="40" rx="2" fill="currentColor"/>
+        <rect x="55" y="46" width="15.5" height="9.5" rx="2" fill="currentColor"/>
+      </svg>
+      <h3>Original work only</h3>
+      <p>Your design must be <b>your own</b>. No copyrighted images, brand logos or celebrity likeness. By continuing you confirm you have the rights to print this.</p>
+      <button class="btn pop" id="ipAgree">Confirmed — it's my own work</button>
       <button class="ip-cancel" id="ipCancel">Use a different image</button>
     </div>
   </div>
