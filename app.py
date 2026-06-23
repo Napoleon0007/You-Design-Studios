@@ -103,7 +103,7 @@ def _area(side):
 # --------------------------------------------------------------------------- #
 @app.route("/")
 def index():
-    return app.send_static_file("v3/index.html")
+    return app.send_static_file("v2/index.html")
 
 
 @app.route("/v2")
