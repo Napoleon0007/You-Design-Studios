@@ -22,12 +22,12 @@
   // ── Curated showcase sequence ────────────────────────────────────────────
   // artUrl: "brand" = show the TRUEF mark; a path = that design; null = clean
   const PLAYLIST = [
-    // 0 – Plum zip hoodie + Paint Splash — the opener
-    { model: "/static/models/meshy_hoodie_zip.glb",   colour: "#5c4a8b", artUrl: "/designs/paint-splash.jpg",   name: "Zip Hoodie",         label: "Paint Splash" },
-    // 1 – Black hoodie + Ghost
-    { model: "/static/models/meshy_hoodie.glb",       colour: "#1b1b1b", artUrl: "/designs/ghost.png",          name: "Heavyweight Hoodie", label: "Ghost" },
-    // 2 – White hoodie + Mummy
+    // 0 – Plum hoodie + Paint Splash — opener (regular model = 737KB vs 1.4MB zip, loads 2× faster)
+    { model: "/static/models/meshy_hoodie.glb",        colour: "#5c4a8b", artUrl: "/designs/paint-splash.jpg",   name: "Heavyweight Hoodie", label: "Paint Splash" },
+    // 1 – White hoodie + Mummy
     { model: "/static/models/meshy_hoodie.glb",       colour: "#f4f3ef", artUrl: "/designs/mummy.png",          name: "Heavyweight Hoodie", label: "Mummy" },
+    // 2 – Black hoodie + Ghost (ghost.png is white art — reads on black)
+    { model: "/static/models/meshy_hoodie.glb",       colour: "#1b1b1b", artUrl: "/designs/ghost.png",          name: "Heavyweight Hoodie", label: "Ghost" },
     // 3 – Terracotta tee + Neon
     { model: "/static/models/meshy_tee.glb",          colour: "#c87f63", artUrl: "/designs/neon.jpg",           name: "Classic Tee",        label: "Neon" },
     // 4 – Dusty-blue tee + Skull

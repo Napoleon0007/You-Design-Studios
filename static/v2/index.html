@@ -10,7 +10,7 @@
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
   <link rel="preconnect" href="https://www.gstatic.com" crossorigin />
   <link rel="preload" as="image" href="/static/v2/hero-poster.png" fetchpriority="high" />
-  <link rel="preload" as="fetch" crossorigin href="/static/models/meshy_hoodie_zip.glb" />
+  <link rel="preload" as="fetch" crossorigin href="/static/models/meshy_hoodie.glb" />
   <link rel="icon" type="image/svg+xml" href="/static/v2/favicon.svg" />
   <link rel="stylesheet" href="/static/v2/v2.css" />
 </head>
@@ -80,13 +80,19 @@
       <p>Shirts we've already brought to life — flip through, then make your own.</p>
     </div>
 
-    <!-- ROLODEX — 2D shirts that have been done (cards built from /api/designs) -->
-    <div class="rolodex" id="rolodex" aria-roledescription="carousel" aria-label="Designs">
-      <button class="rdx-arrow prev" id="rdxPrev" type="button" aria-label="Previous">&lsaquo;</button>
-      <div class="rdx-track" id="rdxTrack"></div>
-      <button class="rdx-arrow next" id="rdxNext" type="button" aria-label="Next">&rsaquo;</button>
+    <!-- COLLECTION BAND — rolodex on its own looping video background -->
+    <div class="collection-band">
+      <video class="collection-bg-video" autoplay loop muted playsinline disablepictureinpicture preload="auto">
+        <!-- swap src for a dedicated collection video when available -->
+        <source src="/static/media/gallery_bg.mp4" type="video/mp4">
+      </video>
+      <div class="rolodex" id="rolodex" aria-roledescription="carousel" aria-label="Designs">
+        <button class="rdx-arrow prev" id="rdxPrev" type="button" aria-label="Previous">&lsaquo;</button>
+        <div class="rdx-track" id="rdxTrack"></div>
+        <button class="rdx-arrow next" id="rdxNext" type="button" aria-label="Next">&rsaquo;</button>
+      </div>
+      <div class="rdx-dots" id="rdxDots"></div>
     </div>
-    <div class="rdx-dots" id="rdxDots"></div>
 
     <!-- the 3D clips keep their own cards -->
     <div class="motion-head"><h3>In motion</h3><span>the studio, spinning</span></div>
@@ -103,7 +109,7 @@
   </footer>
 
   <!-- Preload the first garment model so it's in cache when the engine asks for it -->
-  <link rel="preload" as="fetch" crossorigin href="/static/models/meshy_hoodie_zip.glb" />
+  <link rel="preload" as="fetch" crossorigin href="/static/models/meshy_hoodie.glb" />
   <!-- Three.js (r128 UMD) + loaders + the shared studio engine -->
   <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
@@ -126,16 +132,18 @@
     // with the `muted` attribute. Retry on first touch and on tab-switch-back.
     (function () {
       function tryPlay(v) { if (!v) return; v.muted = true; var p = v.play(); if (p && p.catch) p.catch(function () {}); }
-      var heroV   = document.querySelector('.hero-bg-video');
-      var galleryV = document.querySelector('.gallery-bg-video');
+      var heroV       = document.querySelector('.hero-bg-video');
+      var galleryV    = document.querySelector('.gallery-bg-video');
+      var collectionV = document.querySelector('.collection-bg-video');
       tryPlay(heroV);
-      document.addEventListener('touchstart', function () { tryPlay(heroV); tryPlay(galleryV); }, { once: true });
-      document.addEventListener('visibilitychange', function () { if (!document.hidden) { tryPlay(heroV); tryPlay(galleryV); } });
-      // Gallery bg video: play when it scrolls into view (offscreen autoplay may silently fail on iOS)
-      if ('IntersectionObserver' in window && galleryV) {
-        var gIO = new IntersectionObserver(function (es) { if (es[0].isIntersecting) { tryPlay(galleryV); gIO.disconnect(); } }, { threshold: 0.05 });
-        gIO.observe(galleryV.parentElement);
-      }
+      document.addEventListener('touchstart', function () { tryPlay(heroV); tryPlay(galleryV); tryPlay(collectionV); }, { once: true });
+      document.addEventListener('visibilitychange', function () { if (!document.hidden) { tryPlay(heroV); tryPlay(galleryV); tryPlay(collectionV); } });
+      // Below-fold videos: play when they scroll into view
+      [galleryV, collectionV].forEach(function (v) {
+        if (!v || !('IntersectionObserver' in window)) { tryPlay(v); return; }
+        var io = new IntersectionObserver(function (es) { if (es[0].isIntersecting) { tryPlay(v); io.disconnect(); } }, { threshold: 0.05 });
+        io.observe(v.parentElement);
+      });
     }());
 
     // Gallery: load + play each clip only when it scrolls into view (poster shows

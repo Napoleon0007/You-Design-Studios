@@ -570,7 +570,7 @@ a { color: inherit; text-decoration: none; }
     padding-right:46vw;
     padding-bottom:calc(4vh + env(safe-area-inset-bottom));
   }
-  .hero-copy .hero-tag{ font-size:clamp(34px, 9.5vw, 54px); }
+  .hero-copy .hero-tag{ font-size:clamp(40px, 11vw, 60px); }
   .hero-copy .hero-blurb{ max-width:22ch; margin-left:0; font-size:clamp(13px,3.5vw,17px); }
   .hero-line{ margin-left:0; margin-right:auto; max-width:160px; }
   .hero-sub{ justify-content:flex-start; font-size:14px; }
@@ -614,12 +614,35 @@ a { color: inherit; text-decoration: none; }
   .hero-stage.light-stage .hero-cap { color: rgba(0,0,0,.55); }
 }
 
+/* ─── COLLECTION BAND — rolodex on its own bg video ─────────────────────── */
+.collection-band{
+  position:relative; overflow:hidden;
+  padding: 0 0 clamp(24px, 4vw, 48px);
+}
+.collection-bg-video{
+  position:absolute; inset:0; width:100%; height:100%;
+  object-fit:cover; z-index:0; pointer-events:none;
+}
+.collection-band::after{
+  content:""; position:absolute; inset:0;
+  background:rgba(0,0,0,.48); z-index:1; pointer-events:none;
+}
+.collection-band .rolodex,
+.collection-band .rdx-dots{ position:relative; z-index:2; }
+
+/* Hide the white-tee poster on mobile — garment box is small, blank is better than a wrong tee */
+@media (max-width:859px){
+  .hero-poster{ display:none; }
+}
+
 /* ─── ROLODEX NEON REDESIGN ──────────────────────────────────────────────────
  *  Raw design art (no shirt) on cycling neon backgrounds.
  *  Tiny padding so the art fills the card. Each swipe position gets its own
  *  colour: cyan → magenta → electric-violet → orange → mint → yellow → pink → sky.
  * ─────────────────────────────────────────────────────────────────────────── */
 .rdx-shot{ background:#111; border-radius:14px; }
+/* Show the shirt image contained (not cropped) so the neon bg shows around it */
+.rdx-shot img:not(.raw){ object-fit:contain; padding:4%; }
 .rdx-shot img.raw{ object-fit:contain; padding:5%; background:transparent; }
 
 .rdx-track .rdx-card:nth-child(8n+1) .rdx-shot{ background:#00d4ff; }
