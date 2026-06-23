@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Your art on premium tees &amp; hoodies — printed in South Africa.">
+  <title>TRUEF Studios</title>
+  <link rel="icon" href="/static/v2/favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;600;800;900&display=swap">
+  <link rel="stylesheet" href="/static/v3/v3.css">
+</head>
+<body>
+
+  <!-- ── NAV ───────────────────────────────────────────────────── -->
+  <nav class="nav" id="nav">
+    <a class="nav-brand" href="/">TRUEF</a>
+    <a class="nav-create" href="/studio">Create →</a>
+  </nav>
+
+  <!-- ── HERO ──────────────────────────────────────────────────── -->
+  <header class="hero">
+    <video class="hero-vid" autoplay muted loop playsinline
+           poster="/static/media/poster_astro.jpg"
+           src="/static/media/look_astro.mp4"></video>
+    <div class="hero-scrim"></div>
+    <div class="hero-body">
+      <h1 class="hero-h1">Be your<br>own brand.</h1>
+      <p class="hero-p">Your art on premium tees &amp; hoodies —<br>printed in South Africa.</p>
+      <a class="btn" href="/studio">Create yours</a>
+    </div>
+    <a class="scroll-hint" href="#collection" aria-label="Scroll down">↓</a>
+  </header>
+
+  <!-- ── COLLECTION ────────────────────────────────────────────── -->
+  <section class="collection" id="collection">
+    <div class="sec-head">
+      <h2>The Collection</h2>
+      <p>Designs we've brought to life. Flip through, then make your own.</p>
+    </div>
+    <div class="rolodex" id="rolodex" aria-roledescription="carousel" aria-label="Shirt designs">
+      <button class="rdx-arrow prev" id="rdxPrev" type="button" aria-label="Previous">‹</button>
+      <div class="rdx-track" id="rdxTrack"></div>
+      <button class="rdx-arrow next" id="rdxNext" type="button" aria-label="Next">›</button>
+    </div>
+    <div class="rdx-dots" id="rdxDots"></div>
+  </section>
+
+  <!-- ── IN MOTION ─────────────────────────────────────────────── -->
+  <section class="motion" id="motion">
+    <div class="sec-head">
+      <h2>In motion</h2>
+      <p>The studio, spinning.</p>
+    </div>
+    <div class="motion-grid">
+      <div class="mtile">
+        <video preload="none" muted loop playsinline
+               poster="/static/media/poster_swae.jpg"
+               src="/static/media/spin_swae.mp4"></video>
+      </div>
+      <div class="mtile">
+        <video preload="none" muted loop playsinline
+               poster="/static/media/poster_astro.jpg"
+               src="/static/media/look_astro.mp4"></video>
+      </div>
+      <div class="mtile">
+        <video preload="none" muted loop playsinline
+               poster="/static/media/poster_throne.jpg"
+               src="/static/media/look_throne.mp4"></video>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── CTA STRIP ──────────────────────────────────────────────── -->
+  <section class="cta-strip">
+    <h2>Your design.<br>Your shirt.</h2>
+    <a class="btn btn-inv" href="/studio">Start designing</a>
+  </section>
+
+  <!-- ── FOOTER ─────────────────────────────────────────────────── -->
+  <footer class="footer">
+    <span class="footer-brand">TRUEF Studios</span>
+    <span class="footer-note">Printed in South Africa · No minimums · Made to order</span>
+  </footer>
+
+  <script src="/static/v2/rolodex.js"></script>
+  <script>
+    // Nav: transparent over hero, solid once scrolled past
+    (function () {
+      var nav = document.getElementById("nav");
+      var hero = document.querySelector(".hero");
+      function tick() {
+        nav.classList.toggle("solid", window.scrollY > hero.offsetHeight * 0.7);
+      }
+      window.addEventListener("scroll", tick, { passive: true });
+      tick();
+    })();
+
+    // Motion tiles: play on scroll into view, pause out
+    (function () {
+      var io = new IntersectionObserver(function (entries) {
+        entries.forEach(function (e) {
+          e.isIntersecting ? e.target.play() : e.target.pause();
+        });
+      }, { threshold: 0.2 });
+      document.querySelectorAll(".mtile video").forEach(function (v) { io.observe(v); });
+    })();
+  </script>
+</body>
+</html>

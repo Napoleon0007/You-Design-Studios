@@ -103,9 +103,11 @@ def _area(side):
 # --------------------------------------------------------------------------- #
 @app.route("/")
 def index():
-    # The TRUeF (v2) landing is the public homepage — a static page that reuses
-    # the live APIs (/healthz, /api/designs, /studio). The previous dark landing
-    # is preserved at /classic.
+    return app.send_static_file("v3/index.html")
+
+
+@app.route("/v2")
+def landing_v2():
     return app.send_static_file("v2/index.html")
 
 
