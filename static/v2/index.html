@@ -32,6 +32,10 @@
 
   <!-- ───────────────────────── hero ──────────────────────── -->
   <header class="hero-stage" id="hero">
+    <!-- Background video — loops immediately, no audio, no scaling up -->
+    <video class="hero-bg-video" autoplay loop muted playsinline disablepictureinpicture preload="auto">
+      <source src="/static/media/hero_bg.mp4" type="video/mp4">
+    </video>
     <!-- 3D SPACE: a lit studio room behind the garment — back-wall grid, a
          perspective floor receding to a horizon, a spotlight pool + vignette.
          Pure CSS/DOM (decoupled from the WebGL camera), rides --stage-bg. -->
