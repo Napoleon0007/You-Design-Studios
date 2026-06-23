@@ -22,22 +22,22 @@
   // ── Curated showcase sequence ────────────────────────────────────────────
   // artUrl: "brand" = show the TRUEF mark; a path = that design; null = clean
   const PLAYLIST = [
-    // 0 – Black hoodie + Ghost — the opener
-    { model: "/static/models/meshy_hoodie.glb",       colour: "#1b1b1b", artUrl: "/designs/ghost.png",          name: "Heavyweight Hoodie", label: "Ghost" },
-    // 1 – White hoodie + Mummy
-    { model: "/static/models/meshy_hoodie.glb",       colour: "#f4f3ef", artUrl: "/designs/mummy.png",          name: "Heavyweight Hoodie", label: "Mummy" },
-    // 2 – Terracotta tee + Neon
-    { model: "/static/models/meshy_tee.glb",          colour: "#c87f63", artUrl: "/designs/neon.jpg",           name: "Classic Tee",        label: "Neon" },
-    // 3 – Dusty-blue tee + Skull
-    { model: "/static/models/meshy_tee_premium.glb",  colour: "#bcc9d8", artUrl: "/designs/skull-2.jpg",        name: "Premium Tee",        label: "Skull" },
-    // 4 – Amber tee + Dark Surreal
-    { model: "/static/models/meshy_tee.glb",          colour: "#d4a843", artUrl: "/designs/dark-surreal.jpg",   name: "Classic Tee",        label: "Dark Surreal" },
-    // 5 – Forest zip hoodie + Green Tides
-    { model: "/static/models/meshy_hoodie_zip.glb",   colour: "#4a7c59", artUrl: "/designs/green-tides.jpg",    name: "Zip Hoodie",         label: "Green Tides" },
-    // 6 – Sage tee + Shamaan
-    { model: "/static/models/meshy_tee.glb",          colour: "#a9b39a", artUrl: "/designs/shamaan.jpg",        name: "Classic Tee",        label: "Shamaan" },
-    // 7 – Plum zip hoodie + Paint Splash
+    // 0 – Plum zip hoodie + Paint Splash — the opener
     { model: "/static/models/meshy_hoodie_zip.glb",   colour: "#5c4a8b", artUrl: "/designs/paint-splash.jpg",   name: "Zip Hoodie",         label: "Paint Splash" },
+    // 1 – Black hoodie + Ghost
+    { model: "/static/models/meshy_hoodie.glb",       colour: "#1b1b1b", artUrl: "/designs/ghost.png",          name: "Heavyweight Hoodie", label: "Ghost" },
+    // 2 – White hoodie + Mummy
+    { model: "/static/models/meshy_hoodie.glb",       colour: "#f4f3ef", artUrl: "/designs/mummy.png",          name: "Heavyweight Hoodie", label: "Mummy" },
+    // 3 – Terracotta tee + Neon
+    { model: "/static/models/meshy_tee.glb",          colour: "#c87f63", artUrl: "/designs/neon.jpg",           name: "Classic Tee",        label: "Neon" },
+    // 4 – Dusty-blue tee + Skull
+    { model: "/static/models/meshy_tee_premium.glb",  colour: "#bcc9d8", artUrl: "/designs/skull-2.jpg",        name: "Premium Tee",        label: "Skull" },
+    // 5 – Amber tee + Dark Surreal
+    { model: "/static/models/meshy_tee.glb",          colour: "#d4a843", artUrl: "/designs/dark-surreal.jpg",   name: "Classic Tee",        label: "Dark Surreal" },
+    // 6 – Forest zip hoodie + Green Tides
+    { model: "/static/models/meshy_hoodie_zip.glb",   colour: "#4a7c59", artUrl: "/designs/green-tides.jpg",    name: "Zip Hoodie",         label: "Green Tides" },
+    // 7 – Sage tee + Shamaan
+    { model: "/static/models/meshy_tee.glb",          colour: "#a9b39a", artUrl: "/designs/shamaan.jpg",        name: "Classic Tee",        label: "Shamaan" },
   ];
   // ────────────────────────────────────────────────────────────────────────
 
