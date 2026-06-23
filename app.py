@@ -879,34 +879,6 @@ def resume_swap(token: str):
     return jsonify(ok=True, reference=order["reference"], status="in_review")
 
 
-@app.route("/api/webhooks/gooten", methods=["POST"])
-def gooten_webhook():
-    """Receive Gooten order-status changes and feed them into our order state
-    machine. Configure this URL in Gooten Admin -> Settings -> API tab. We set
-    Gooten's SourceId to OUR order reference on submit, so the callback maps
-    straight back. Optional shared secret via ?token= (GOOTEN_WEBHOOK_SECRET)."""
-    secret = os.environ.get("GOOTEN_WEBHOOK_SECRET")
-    if secret and request.args.get("token") != secret:
-        return ("", 403)
-    d = request.get_json(silent=True) or {}
-    ref = d.get("SourceId") or d.get("sourceId") or d.get("PartnerOrderId")
-    gooten_id = str(d.get("Id") or d.get("OrderId") or d.get("id") or "") or None
-    raw_status = d.get("Status") or d.get("OrderStatus") or d.get("status") or ""
-
-    order = db.get_order(ref) if ref else None
-    if not order and gooten_id:
-        order = db.get_order_by_provider_id(gooten_id)
-    if not order:
-        return jsonify(ok=False, error="Order not found for webhook"), 404
-
-    mapped = providers.map_gooten_status(raw_status)
-    if mapped:
-        db.set_order_status(order["reference"], mapped,
-                            gelato_order_id=gooten_id,
-                            notes=f"gooten:{raw_status}")
-    return jsonify(ok=True, reference=order["reference"],
-                   status=mapped or order["status"], gooten_status=raw_status)
-
 
 @app.route("/api/track/<reference>")
 def track(reference: str):
