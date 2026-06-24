@@ -245,13 +245,17 @@ a { color: inherit; text-decoration: none; }
   margin:6px 0 0; }
 
 
-/* hero headline — clean Archivo display weight */
+/* TRUEF throw-up logo — hero wordmark (designed logo) */
 .word{
-  font-family:'Archivo',system-ui,sans-serif; font-weight:800;
-  text-transform:uppercase; line-height:.92; letter-spacing:.01em;
-  font-size:clamp(40px,11.5vw,132px); max-width:12ch;
-  color:#fff; -webkit-text-stroke:0; paint-order:fill;
-  text-shadow: 0 2px 30px rgba(0,0,0,.12);
+  font-family:'Titan One',system-ui,sans-serif; font-weight:400;
+  text-transform:uppercase; line-height:.9; letter-spacing:.005em;
+  font-size:clamp(46px,12.5vw,150px); max-width:12ch;
+  color:#faf7f2; -webkit-text-stroke:3px #15151a; paint-order:stroke fill;
+  text-shadow:
+    .018em .018em 0 #15151a,.036em .036em 0 #15151a,.054em .054em 0 #15151a,
+    .072em .072em 0 #15151a,.09em .09em 0 #15151a,.108em .108em 0 #15151a,
+    .126em .126em 0 #15151a,.144em .144em 0 #15151a,
+    .17em .21em .12em rgba(0,0,0,.32);
 }
 
 /* logo to top-left, beside the hamburger menu */
