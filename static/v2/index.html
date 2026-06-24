@@ -80,19 +80,21 @@
     <a class="scroll-cue" href="#gallery" aria-label="Scroll to gallery"></a>
   </header>
 
-  <!-- ── Studio section (page 2) — Lacoste-style: solid colour stage, garment centred ── -->
+  <!-- ── Studio section (page 2) — Lacoste-style: colour-cycling stage, perspective room, garment centred ── -->
   <section class="studio-hero" id="studio">
-    <div class="studio-stage" aria-hidden="true">
-      <div class="studio-glow"></div>
-      <div class="studio-vignette"></div>
+    <!-- colour-cycling tint overlay sits between the photo and the room grid -->
+    <div class="studio-tint" aria-hidden="true"></div>
+    <!-- colour-cycling room atmosphere — same grid/perspective as the hero -->
+    <div class="studio-room" aria-hidden="true">
+      <div class="studio-room-glow"></div>
+      <div class="room-vignette"></div>
     </div>
     <div class="studio-garment" aria-hidden="true">
       <canvas id="gallery3d"></canvas>
       <div class="studio-shadow"></div>
     </div>
     <div class="hero-copy studio-copy">
-      <h2 class="word">Design<br>your own.</h2>
-      <p class="hero-blurb">Upload your art. Pick your garment.<br>Printed once — just for you.</p>
+      <p class="hero-blurb studio-headline">Enter our design studio and start creating...</p>
       <div class="hero-line"></div>
       <nav class="hero-sub">
         <a href="/studio" class="on">Open studio</a>

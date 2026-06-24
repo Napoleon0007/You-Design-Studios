@@ -139,26 +139,50 @@ a { color: inherit; text-decoration: none; }
   .garment-shadow { left: auto; right: 12%; }
 }
 
-/* ── Studio page (page 2) — Lacoste-style: solid colour stage, garment centred ── */
+/* ── Studio page (page 2) — photography studio background + dark overlay ── */
 .studio-hero {
   position: relative; min-height: 100vh; min-height: 100svh;
-  background: #1a1a1a; color: #fff;
+  background: url('/static/media/studio_bg.jpg') center 30% / cover no-repeat;
+  color: #fff;
   display: grid; grid-template-columns: 1fr; align-items: center;
   overflow: hidden;
 }
 .studio-hero > * { position: relative; z-index: 2; }
 
-/* subtle spotlight behind the floating garment */
-.studio-stage { position: absolute; inset: 0; z-index: 0; pointer-events: none; }
-.studio-glow {
-  position: absolute; left: 50%; top: 44%;
-  transform: translate(-50%, -50%);
-  width: 80vw; height: 80vw; max-width: 700px; max-height: 700px;
-  background: radial-gradient(ellipse, rgba(255,255,255,.07) 0%, transparent 68%);
+/* colour-cycling dark overlay — sits on top of the photo, under the grid */
+.studio-tint {
+  position: absolute; inset: 0; z-index: 0; pointer-events: none;
+  background: var(--studio-bg, rgba(0,0,0,.62));
+  transition: background 1.4s var(--ease);
 }
-.studio-vignette {
+
+/* perspective room behind the garment — same grid as the hero */
+.studio-room {
+  position: absolute; inset: 0; z-index: 0; overflow: hidden; pointer-events: none;
+  perspective: 760px; perspective-origin: 50% 46%;
+}
+/* wall + floor grid re-use .room-grid from the hero rules */
+.studio-room .room-wall  { opacity: .82; }
+.studio-room .room-floor { opacity: .92; }
+
+/* soft centred spotlight behind the garment — left side on desktop (garment is left) */
+.studio-room-glow {
   position: absolute; inset: 0;
-  background: radial-gradient(ellipse 110% 100% at 50% 50%, transparent 38%, rgba(0,0,0,.55) 100%);
+  background: radial-gradient(54% 46% at 28% 44%,
+    rgba(255,255,255,.18) 0%, rgba(255,255,255,.05) 36%, transparent 66%);
+}
+@media (max-width: 859px) {
+  .studio-room-glow { background: radial-gradient(64% 44% at 50% 44%,
+    rgba(255,255,255,.22) 0%, rgba(255,255,255,.07) 34%, transparent 64%); }
+}
+
+/* headline — Titan One (same family as "The Collection" on page 3) */
+.studio-headline {
+  font-family: 'Titan One', system-ui, sans-serif !important;
+  font-weight: 400;
+  font-size: clamp(22px, 3.2vw, 38px) !important;
+  line-height: 1.2; max-width: 22ch; color: #fff;
+  text-transform: uppercase;
 }
 
 /* garment: centred, takes up most of the stage height */
@@ -168,8 +192,9 @@ a { color: inherit; text-decoration: none; }
 }
 #gallery3d {
   width: min(54vw, 520px); height: min(80vw, 760px);
-  display: block; flex: none;
+  display: block; flex: none; cursor: grab; pointer-events: auto;
 }
+#gallery3d:active { cursor: grabbing; }
 .studio-shadow {
   position: absolute; bottom: 10%; left: 50%; transform: translateX(-50%);
   width: min(28vw, 260px); height: 18px; border-radius: 50%;
@@ -177,20 +202,47 @@ a { color: inherit; text-decoration: none; }
   filter: blur(7px);
 }
 
-/* copy: left-aligned, vertically centred — sits over the stage */
-.studio-copy { padding: 0 var(--gut); pointer-events: auto; }
+/* copy: right-aligned on desktop (garment is left), full-width on mobile */
+.studio-copy { padding: 0 var(--gut); pointer-events: auto; align-self: start; }
 
 @media (min-width: 860px) {
-  .studio-copy { max-width: 46%; }
+  /* garment LEFT, copy RIGHT — reversed from landing; text anchored to top of section */
+  .studio-copy { max-width: 46%; margin-left: auto; padding-top: clamp(90px, 13vh, 150px); }
   #gallery3d { width: min(42vw, 480px); height: min(62vw, 700px); }
-  .studio-garment { justify-content: flex-end; padding-right: var(--gut); }
-  .studio-shadow { right: calc(var(--gut) + 8%); left: auto; transform: none; }
+  .studio-garment { justify-content: flex-start; padding-left: var(--gut); }
+  .studio-shadow { left: calc(var(--gut) + 8%); right: auto; transform: none; }
 }
 
 @media (max-width: 859px) {
-  .studio-copy { padding-top: 62vw; }
-  #gallery3d { width: 64vw; height: 88vw; }
-  .studio-garment { align-items: flex-start; padding-top: 14vh; }
+  /* higher-specificity overrides — beats the base .hero-copy padding-top: 26vh */
+  .studio-hero .studio-copy {
+    position: absolute !important;
+    top: 0 !important; right: 0 !important; bottom: 0 !important; left: 0 !important;
+    padding: 7vw var(--gut) 10vw !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: flex-start;
+    max-width: none !important;
+    pointer-events: none;
+    z-index: 3;
+  }
+  .studio-hero .studio-copy .studio-headline {
+    font-size: clamp(26px, 7vw, 36px) !important;
+    line-height: 1.2 !important;
+    max-width: none;
+    margin: 0 !important; padding: 0 !important;
+    pointer-events: auto;
+  }
+  .studio-hero .studio-copy .hero-line { display: none !important; }
+  .studio-hero .studio-copy .hero-sub {
+    margin-top: auto !important;
+    opacity: 1 !important; transform: none !important;
+    pointer-events: auto;
+  }
+  /* garment: slightly above centre — big hero presence */
+  .studio-garment { align-items: flex-start; justify-content: center; padding-top: max(22vh, 170px); padding-left: 0; }
+  .studio-shadow { left: 50%; transform: translateX(-50%); right: auto; }
+  #gallery3d { width: 88vw; height: 120vw; }
 }
 
 /* ── The Collection (gallery2, page 3) ── */
