@@ -117,12 +117,12 @@ a { color: inherit; text-decoration: none; }
 .hero-stage.hero-ready .hero-poster { opacity: 0; pointer-events: none; }
 /* Seamless swap: the garment fades very slightly while the next colour + print apply,
    then settles. No scale/translate — movement looks like a glitch on a looped carousel. */
-.hero-stage #garment3d { transition: opacity .6s var(--ease); }
+.hero-stage #garment3d { transition: opacity .45s var(--ease); }
 .hero-stage.swapping #garment3d {
-  opacity: .78;
-  transition: opacity .16s ease;
+  opacity: 0;
+  transition: opacity .12s ease;
 }
-.hero-stage.room-3d.swapping #garment3d { opacity: .80; transition: opacity .16s ease; }
+.hero-stage.room-3d.swapping #garment3d { opacity: 0; transition: opacity .12s ease; }
 .hero-stage.room-3d .garment-shadow { display: none; }
 
 /* hide the studio-only injected hint/reset on the landing */
@@ -176,13 +176,12 @@ a { color: inherit; text-decoration: none; }
     rgba(255,255,255,.22) 0%, rgba(255,255,255,.07) 34%, transparent 64%); }
 }
 
-/* headline — Titan One (same family as "The Collection" on page 3) */
+/* headline — Titan One base; size + position controlled by .studio-copy .studio-headline */
 .studio-headline {
   font-family: 'Titan One', system-ui, sans-serif !important;
   font-weight: 400;
-  font-size: clamp(22px, 3.2vw, 38px) !important;
-  line-height: 1.2; max-width: 22ch; color: #fff;
-  text-transform: uppercase;
+  text-transform: uppercase; color: #fff;
+  margin-left: auto; margin-right: auto;
 }
 
 /* garment: centred, takes up most of the stage height */
@@ -202,47 +201,44 @@ a { color: inherit; text-decoration: none; }
   filter: blur(7px);
 }
 
-/* copy: right-aligned on desktop (garment is left), full-width on mobile */
-.studio-copy { padding: 0 var(--gut); pointer-events: auto; align-self: start; }
+/* studio copy: full-section overlay, children pinned independently */
+.studio-copy {
+  position: absolute; inset: 0; z-index: 3; pointer-events: none;
+}
+
+/* headline: pinned near the top */
+.studio-copy .studio-headline {
+  position: absolute;
+  top: clamp(28px, 3.5vh, 52px); left: var(--gut); right: var(--gut);
+  text-align: center;
+  font-size: clamp(44px, 9.5vw, 96px);
+  line-height: 1.0;
+  color: #fff;
+  pointer-events: auto;
+}
+
+.studio-copy .hero-line { display: none; }
+
+/* nav: pinned to the bottom */
+.studio-copy .hero-sub {
+  position: absolute;
+  bottom: clamp(28px, 5vh, 56px); left: 0; right: 0;
+  display: flex; justify-content: center; gap: 16px;
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  pointer-events: auto;
+}
 
 @media (min-width: 860px) {
-  /* garment LEFT, copy TOP-LEFT — text anchored to top-left of section */
-  .studio-copy { max-width: 46%; margin-left: 0; padding-top: clamp(90px, 13vh, 150px); }
   #gallery3d { width: min(42vw, 480px); height: min(62vw, 700px); }
-  .studio-garment { justify-content: flex-start; padding-left: var(--gut); }
-  .studio-shadow { left: calc(var(--gut) + 8%); right: auto; transform: none; }
+  .studio-garment { justify-content: center; padding-left: 0; }
+  .studio-shadow { left: 50%; transform: translateX(-50%); right: auto; }
 }
 
 @media (max-width: 859px) {
-  /* higher-specificity overrides — beats the base .hero-copy padding-top: 26vh */
-  .studio-hero .studio-copy {
-    position: absolute !important;
-    top: 0 !important; right: 0 !important; bottom: 0 !important; left: 0 !important;
-    padding: 7vw var(--gut) 10vw !important;
-    display: flex !important;
-    flex-direction: column !important;
-    align-items: flex-start;
-    max-width: none !important;
-    pointer-events: none;
-    z-index: 3;
-  }
-  .studio-hero .studio-copy .studio-headline {
-    font-size: clamp(26px, 7vw, 36px) !important;
-    line-height: 1.2 !important;
-    max-width: none;
-    margin: 0 !important; padding: 0 !important;
-    pointer-events: auto;
-  }
-  .studio-hero .studio-copy .hero-line { display: none !important; }
-  .studio-hero .studio-copy .hero-sub {
-    margin-top: 20px !important;
-    opacity: 1 !important; transform: none !important;
-    pointer-events: auto;
-  }
-  /* garment: slightly above centre — big hero presence */
-  .studio-garment { align-items: flex-start; justify-content: center; padding-top: max(22vh, 170px); padding-left: 0; }
+  .studio-copy .studio-headline { font-size: clamp(36px, 11vw, 58px); }
+  .studio-garment { align-items: flex-start; justify-content: center; padding-top: max(14vh, 110px); padding-left: 0; }
   .studio-shadow { left: 50%; transform: translateX(-50%); right: auto; }
-  #gallery3d { width: 88vw; height: 120vw; }
+  #gallery3d { width: 88vw; height: 120vw; touch-action: pan-y; }
 }
 
 /* ── Studio smoke — gentle puffs rising from the floor ── */

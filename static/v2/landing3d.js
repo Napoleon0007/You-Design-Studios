@@ -22,22 +22,24 @@
   // ── Curated showcase sequence ────────────────────────────────────────────
   // artUrl: "brand" = show the TRUEF mark; a path = that design; null = clean
   const PLAYLIST = [
-    // 0 – Plum hoodie + Paint Splash — opener (regular model = 737KB vs 1.4MB zip, loads 2× faster)
-    { model: "/static/models/meshy_hoodie.glb",        colour: "#5c4a8b", artUrl: "/designs/paint-splash.jpg",   name: "Heavyweight Hoodie", label: "Paint Splash" },
-    // 1 – White hoodie + Mummy
-    { model: "/static/models/meshy_hoodie.glb",       colour: "#f4f3ef", artUrl: "/designs/mummy.png",          name: "Heavyweight Hoodie", label: "Mummy" },
-    // 2 – Black hoodie + Ghost (ghost.png is white art — reads on black)
-    { model: "/static/models/meshy_hoodie.glb",       colour: "#1b1b1b", artUrl: "/designs/ghost.png",          name: "Heavyweight Hoodie", label: "Ghost" },
-    // 3 – Terracotta tee + Neon
-    { model: "/static/models/meshy_tee.glb",          colour: "#c87f63", artUrl: "/designs/neon.jpg",           name: "Classic Tee",        label: "Neon" },
-    // 4 – Dusty-blue tee + Skull
-    { model: "/static/models/meshy_tee_premium.glb",  colour: "#bcc9d8", artUrl: "/designs/skull-2.jpg",        name: "Premium Tee",        label: "Skull" },
-    // 5 – Amber tee + Dark Surreal
-    { model: "/static/models/meshy_tee.glb",          colour: "#d4a843", artUrl: "/designs/dark-surreal.jpg",   name: "Classic Tee",        label: "Dark Surreal" },
-    // 6 – Forest zip hoodie + Green Tides
-    { model: "/static/models/meshy_hoodie_zip.glb",   colour: "#4a7c59", artUrl: "/designs/green-tides.jpg",    name: "Zip Hoodie",         label: "Green Tides" },
-    // 7 – Sage tee + Shamaan
-    { model: "/static/models/meshy_tee.glb",          colour: "#a9b39a", artUrl: "/designs/shamaan.jpg",        name: "Classic Tee",        label: "Shamaan" },
+    { model: "/static/models/meshy_hoodie.glb",      colour: "#5c4a8b", artUrl: "/designs/indian-warrior.jpeg",    name: "Heavyweight Hoodie", label: "Indian Warrior" },
+    { model: "/static/models/meshy_hoodie.glb",      colour: "#1b1b1b", artUrl: "/designs/wolf-art.jpeg",           name: "Heavyweight Hoodie", label: "Wolf Art" },
+    { model: "/static/models/meshy_tee.glb",          colour: "#c87f63", artUrl: "/designs/rider.jpeg",              name: "Classic Tee",        label: "Rider" },
+    { model: "/static/models/meshy_hoodie.glb",      colour: "#f4f3ef", artUrl: "/designs/skull-shaman.jpeg",       name: "Heavyweight Hoodie", label: "Skull Shaman" },
+    { model: "/static/models/meshy_tee_premium.glb", colour: "#bcc9d8", artUrl: "/designs/eagle-spirit.jpeg",       name: "Premium Tee",        label: "Eagle Spirit" },
+    { model: "/static/models/meshy_hoodie.glb",      colour: "#2b2136", artUrl: "/designs/skully.png",              name: "Heavyweight Hoodie", label: "Skully" },
+    { model: "/static/models/meshy_tee.glb",          colour: "#d4a843", artUrl: "/designs/pirate.jpg",              name: "Classic Tee",        label: "Pirate" },
+    { model: "/static/models/meshy_hoodie_zip.glb",  colour: "#3a3a3a", artUrl: "/designs/transformer.webp",        name: "Zip Hoodie",         label: "Transformer" },
+    { model: "/static/models/meshy_tee.glb",          colour: "#6e7e8c", artUrl: "/designs/einstein.jpeg",           name: "Classic Tee",        label: "Einstein" },
+    { model: "/static/models/meshy_tee.glb",          colour: "#e8e0d4", artUrl: "/designs/crest-imperial-eagle.jpg", name: "Classic Tee",      label: "Crest Imperial Eagle" },
+    { model: "/static/models/meshy_hoodie_zip.glb",  colour: "#4a7c59", artUrl: "/designs/neon-animal.jpeg",        name: "Zip Hoodie",         label: "Neon Animal" },
+    { model: "/static/models/meshy_tee.glb",          colour: "#7c3a4a", artUrl: "/designs/my-my.jpeg",              name: "Classic Tee",        label: "My My" },
+    { model: "/static/models/meshy_tee_premium.glb", colour: "#1a3a5c", artUrl: "/designs/angel-statue.jpg",        name: "Premium Tee",        label: "Angel Statue" },
+    { model: "/static/models/meshy_tee.glb",          colour: "#d9c8a8", artUrl: "/designs/art-lines.jpeg",          name: "Classic Tee",        label: "Art Lines" },
+    { model: "/static/models/meshy_hoodie.glb",      colour: "#1e1e1e", artUrl: "/designs/uncle.jpeg",              name: "Heavyweight Hoodie", label: "Uncle" },
+    { model: "/static/models/meshy_tee.glb",          colour: "#c4855a", artUrl: "/designs/spirits.jpeg",            name: "Classic Tee",        label: "Spirits" },
+    { model: "/static/models/meshy_hoodie_zip.glb",  colour: "#1e1535", artUrl: "/designs/spirits.jpeg",            name: "Zip Hoodie",         label: "Spirits" },
+    { model: "/static/models/meshy_tee.glb",          colour: "#3d6e5a", artUrl: "/designs/sun-island.jpeg",         name: "Classic Tee",        label: "Sun Island" },
   ];
   // ────────────────────────────────────────────────────────────────────────
 
@@ -46,7 +48,8 @@
   const LIGHT_BACKDROPS = ["#f0ece4", "#e8edf0", "#ede8df", "#eaeee8", "#f2ede6"];
 
   let i = 0, timer = null, busy = false, curModel = null, userActive = false;
-  const PERIOD = 6000;
+  const SPIN_SPEED = 8;          // autoRotateSpeed — one full revolution ≈ 7.5 s
+  const PERIOD = 7500;           // advance every one full rotation at SPIN_SPEED
   const wait = (ms) => new Promise((r) => setTimeout(r, ms));
   const setBackdrop = (hex) => document.documentElement.style.setProperty("--stage-bg", hex);
 
@@ -86,7 +89,7 @@
         await G.setArt("front", null);
         await G.setArt("back", null);
       }
-      G.setAutoSpin(true);
+      G.setAutoSpin(true, SPIN_SPEED);
       // Wait two frames: first lets the render loop paint the decal onto the canvas,
       // second guarantees it's visible before we remove .swapping and start the reveal.
       await waitFrame(); await waitFrame();
