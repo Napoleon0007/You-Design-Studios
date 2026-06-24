@@ -139,35 +139,29 @@ a { color: inherit; text-decoration: none; }
   .garment-shadow { left: auto; right: 12%; }
 }
 
-/* ------------------------------------------------------ gallery --- */
-.gallery2 { position: relative; overflow: hidden; background: #000; color: #fff; padding: clamp(56px, 9vw, 120px) var(--gut); }
+/* ── Second hero (gallery2) — mirrors the landing hero layout ── */
+.gallery2 {
+  position: relative; overflow: hidden; background: #000; color: #fff;
+  min-height: 100vh; min-height: 100svh;
+  display: grid; align-items: center;
+  padding: 0 var(--gut);
+}
 .gallery-bg-video { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; z-index:0; pointer-events:none; }
-.gallery2::after { content:""; position:absolute; inset:0; background:rgba(0,0,0,.52); z-index:1; pointer-events:none; }
+.gallery2::after { content:""; position:absolute; inset:0; background:rgba(0,0,0,.55); z-index:1; pointer-events:none; }
 .gallery2 > *:not(.gallery-bg-video) { position:relative; z-index:2; }
-.gallery2-head { max-width: var(--maxw); margin: 0 auto 34px; }
-.gallery2-head h2 { font-size: clamp(30px, 5vw, 64px); font-weight: 700; letter-spacing: -.01em;
-  text-transform: uppercase; }
-.gallery2-head p { margin-top: 10px; color: rgba(255,255,255,.72); max-width: 46ch; font-size: 15px; }
-.tile-grid {
-  max-width: var(--maxw); margin: 0 auto;
-  display: grid; gap: 12px; grid-template-columns: repeat(2, 1fr);
+.gallery2-copy { padding-top: 24vh; }
+@media (min-width: 860px) {
+  .gallery2-copy { padding-top: 0; max-width: 52%; }
 }
-.tile {
-  position: relative; aspect-ratio: 3 / 4; border-radius: 14px; overflow: hidden;
-  background: var(--t, #ececec);
+
+/* ── Collection section — rolodex below the second hero ── */
+.collection-section {
+  background: #0a0a0a;
+  padding: clamp(48px, 7vw, 96px) var(--gut);
 }
-.tile video { position: absolute; inset: 0; width: 100%; height: 100%;
-  object-fit: cover; transition: transform .6s var(--ease); }
-.tile:hover video { transform: scale(1.05); }
-.tile .likes { position: absolute; left: 12px; bottom: 11px; z-index: 2;
-  color: #fff; font-size: 12px; letter-spacing: .04em;
-  text-shadow: 0 1px 8px rgba(0,0,0,.5); }
-/* soft tile tints — same refined family as the hero colour-cycle (only seen before the video loads) */
-.tile:nth-child(8n+1){--t:#e6c9c3} .tile:nth-child(8n+2){--t:#c6d2bf} .tile:nth-child(8n+3){--t:#c6d4e2}
-.tile:nth-child(8n+4){--t:#ddb8a6} .tile:nth-child(8n+5){--t:#e3d5bd} .tile:nth-child(8n+6){--t:#cfd2d0}
-.tile:nth-child(8n+7){--t:#d8cbdc} .tile:nth-child(8n+8){--t:#d4d6d2}
-@media (min-width: 720px)  { .tile-grid { grid-template-columns: repeat(3, 1fr); gap: 16px; } }
-@media (min-width: 1080px) { .tile-grid { grid-template-columns: repeat(4, 1fr); } }
+.collection-section .cta-row {
+  max-width: var(--maxw); margin: 40px auto 0; display: flex; justify-content: center;
+}
 
 /* ---- rolodex: 2D shirts that have been done ---- */
 .rolodex { position: relative; max-width: var(--maxw); margin: 8px auto 0; display: flex; align-items: center; }
@@ -552,25 +546,23 @@ a { color: inherit; text-decoration: none; }
  *   (room-lum deepens the floor) so the white copy never sits on the white
  *   shirt — this kills the flagged low-contrast overlap. — */
 @media (max-width:859px){
-  /* Fix scroll: OrbitControls sets touch-action:none on the canvas, blocking page scroll.
-     Auto-carousel still runs (JS drives it); user drag not needed on landing. */
+  /* Fix scroll: OrbitControls sets touch-action:none on the canvas, blocking page scroll. */
   .hero-garment, #garment3d { pointer-events: none; }
 
-  /* Hero section a bit shorter on phone */
-  .hero-stage{ min-height:88vh; min-height:88svh; }
+  /* Hero background fills the full screen */
+  .hero-stage{ min-height:100vh; min-height:100svh; }
 
-  /* Garment: contained box bottom-right so the video fills the rest of the hero */
+  /* Garment: contained box bottom-right */
   .hero-garment{
     top:auto; left:auto; right:0; bottom:0;
-    width:44vw; aspect-ratio:2/3;
+    width:44vw; height:66vw;
   }
-  /* Garment gradient was full-bleed — replace with a stage-level scrim behind the text */
   .hero-garment::after{ display:none; }
 
-  /* Bottom scrim across the full-width stage to keep the left-side text legible over video */
+  /* Bottom scrim to keep text legible over the 3D canvas */
   .hero-stage::before{
-    content:""; position:absolute; bottom:0; left:0; right:0; height:55%;
-    background:linear-gradient(to top, rgba(0,0,0,.60) 0%, rgba(0,0,0,.28) 44%, transparent 82%);
+    content:""; position:absolute; bottom:0; left:0; right:0; height:60%;
+    background:linear-gradient(to top, rgba(0,0,0,.70) 0%, rgba(0,0,0,.32) 48%, transparent 84%);
     z-index:1; pointer-events:none;
   }
 
@@ -587,7 +579,7 @@ a { color: inherit; text-decoration: none; }
   .hero-line{ margin-left:0; margin-right:auto; max-width:160px; }
   .hero-sub{ justify-content:flex-start; font-size:14px; }
 
-  /* Scroll cue hidden on mobile — layout doesn't need it */
+  /* Scroll cue hidden on mobile */
   .scroll-cue{ display:none; }
 
   /* Gallery: lighter overlay so the bg video actually reads */
@@ -642,10 +634,9 @@ a { color: inherit; text-decoration: none; }
 .collection-band .rolodex,
 .collection-band .rdx-dots{ position:relative; z-index:2; }
 
-/* On mobile show the poster dimly so the garment box is never blank while 3D loads.
-   Cross-fades out automatically when the purple hoodie renders (hero-ready). */
+/* On mobile: hide the ghost poster so only the live 3D shows. */
 @media (max-width:859px){
-  .hero-poster{ display:block; filter:brightness(0.15) saturate(0); opacity:0.55; }
+  .hero-poster{ display:none; }
 }
 
 /* ─── ROLODEX — frosted glass cards, video shows through ─────────────────────
@@ -672,6 +663,27 @@ a { color: inherit; text-decoration: none; }
 /* Caption text white on dark video backdrop */
 .collection-band .rdx-cap b{ color:#fff; }
 .collection-band .rdx-cap span{ color:rgba(255,255,255,.75); }
+
+/* ─── Cards: semi-transparent so the section video shows through ─────── */
+.rdx-track .rdx-card{
+  background: rgba(255,255,255,0.08);
+  -webkit-backdrop-filter: blur(2px);
+          backdrop-filter: blur(2px);
+  border: 1px solid rgba(255,255,255,0.15);
+}
+.rdx-card.on{
+  box-shadow: 0 0 0 2px rgba(255,255,255,.55), 0 22px 48px -20px rgba(0,0,0,.4);
+  background: rgba(255,255,255,0.10);
+}
+.collection-band .rdx-cap b{ color: #fff; }
+.collection-band .rdx-cap span{ color: rgba(255,255,255,.75); }
+
+/* Mobile: restore original gallery overlay + text alignment */
+@media (max-width:859px){
+  .gallery2::after{ background: rgba(0,0,0,.30); }
+  .gallery2-head{ text-align: right; }
+  .gallery2-head p{ margin-left: auto; }
+}
 
 /* ─── Hero headline — no border, just bigger ─────────────────────────────── */
 .hero-copy .word{

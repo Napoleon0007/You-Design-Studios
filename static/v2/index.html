@@ -80,19 +80,27 @@
     <a class="scroll-cue" href="#gallery" aria-label="Scroll to gallery"></a>
   </header>
 
-  <!-- ─────────────────────── gallery ─────────────────────── -->
+  <!-- ── Second hero — same layout as landing, hero_v1 background ── -->
   <section class="gallery2" id="gallery">
-    <video class="gallery-bg-video" autoplay loop muted playsinline disablepictureinpicture preload="auto">
-      <source src="/static/media/collection_bg.mp4" type="video/mp4">
+    <video class="gallery-bg-video" autoplay loop muted playsinline disablepictureinpicture preload="none" poster="/static/media/hero_v1_poster.jpg">
+      <source src="/static/media/hero_v1.mp4" type="video/mp4">
     </video>
-    <div class="gallery2-head">
-      <h2>The Collection</h2>
-      <p>Shirts we've already brought to life — flip through, then make your own.</p>
+    <div class="gallery2-copy">
+      <h2 class="word">The Collection.</h2>
+      <p class="hero-blurb">Shirts we've already brought to life — pick one and make it yours.</p>
+      <div class="hero-line"></div>
+      <nav class="hero-sub">
+        <a href="/studio" class="on">Create</a>
+        <span class="sep">/</span>
+        <a href="#collection">Browse</a>
+      </nav>
     </div>
+  </section>
 
-    <!-- COLLECTION BAND — rolodex on its own looping video background -->
+  <!-- ── Collection — rolodex below the second hero ── -->
+  <section class="collection-section" id="collection">
     <div class="collection-band">
-      <video class="collection-bg-video" autoplay loop muted playsinline disablepictureinpicture preload="auto">
+      <video class="collection-bg-video" autoplay loop muted playsinline disablepictureinpicture preload="none">
         <source src="/static/media/collection_bg.mp4" type="video/mp4">
       </video>
       <div class="rolodex" id="rolodex" aria-roledescription="carousel" aria-label="Designs">
@@ -101,14 +109,6 @@
         <button class="rdx-arrow next" id="rdxNext" type="button" aria-label="Next">&rsaquo;</button>
       </div>
       <div class="rdx-dots" id="rdxDots"></div>
-    </div>
-
-    <!-- the 3D clips keep their own cards -->
-    <div class="motion-head"><h3>In motion</h3><span>the studio, spinning</span></div>
-    <div class="tile-grid">
-      <div class="tile"><video preload="none" muted loop playsinline poster="/static/media/poster_swae.jpg" src="/static/media/spin_swae.mp4"></video><span class="likes">175 likes</span></div>
-      <div class="tile"><video preload="none" muted loop playsinline poster="/static/media/poster_astro.jpg" src="/static/media/look_astro.mp4"></video><span class="likes">231 likes</span></div>
-      <div class="tile"><video preload="none" muted loop playsinline poster="/static/media/poster_throne.jpg" src="/static/media/look_throne.mp4"></video><span class="likes">163 likes</span></div>
     </div>
     <div class="cta-row"><a class="btn-pill" href="/studio">Create yours +</a></div>
   </section>
