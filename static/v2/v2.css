@@ -235,7 +235,7 @@ a { color: inherit; text-decoration: none; }
   }
   .studio-hero .studio-copy .hero-line { display: none !important; }
   .studio-hero .studio-copy .hero-sub {
-    margin-top: auto !important;
+    margin-top: 20px !important;
     opacity: 1 !important; transform: none !important;
     pointer-events: auto;
   }
