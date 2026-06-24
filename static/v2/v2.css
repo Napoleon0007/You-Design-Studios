@@ -158,6 +158,20 @@ a { color: inherit; text-decoration: none; }
   .gallery2-copy { padding-top: 0; max-width: 52%; }
 }
 
+/* second-hero garment — floats right like the landing */
+.gallery2-garment {
+  position: absolute; inset: 0; z-index: 2; pointer-events: none;
+  display: grid; place-items: center;
+}
+#gallery3d {
+  position: absolute; right: 0; top: 0; bottom: 0;
+  width: 52%; height: 100%;
+  display: block;
+}
+@media (max-width: 860px) {
+  .gallery2-garment { display: none; }
+}
+
 /* arrow + CTA row on second hero */
 .g2-cta-row { display: flex; align-items: center; gap: 16px; margin-top: 28px; flex-wrap: wrap; }
 .g2-arrow { height: 22px; width: auto; flex: none; }
