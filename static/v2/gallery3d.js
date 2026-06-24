@@ -172,6 +172,17 @@
     renderer.render(scene, camera);
   }
 
+  // Reveal studio copy when it scrolls into view
+  const studioCopy = document.querySelector('.studio-copy');
+  if (studioCopy && typeof IntersectionObserver !== "undefined") {
+    const copyIO = new IntersectionObserver((entries) => {
+      if (entries[0].isIntersecting) { studioCopy.classList.add('reveal'); copyIO.disconnect(); }
+    }, { threshold: 0.15 });
+    copyIO.observe(studioCopy);
+  } else if (studioCopy) {
+    studioCopy.classList.add('reveal');
+  }
+
   if (typeof IntersectionObserver !== "undefined") {
     const io = new IntersectionObserver((entries) => {
       entries.forEach(e => {

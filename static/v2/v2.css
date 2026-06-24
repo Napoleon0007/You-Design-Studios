@@ -139,11 +139,68 @@ a { color: inherit; text-decoration: none; }
   .garment-shadow { left: auto; right: 12%; }
 }
 
-/* ── Second hero (gallery2) — mirrors the landing hero layout ── */
+/* ── Studio hero (page 2) — same layout as the first landing hero ── */
+.studio-hero {
+  position: relative; min-height: 100vh; min-height: 100svh;
+  background: #0d1008; color: #fff;
+  display: grid; grid-template-columns: 1fr; align-items: center;
+  overflow: hidden;
+}
+.studio-bg-video {
+  position: absolute; inset: 0; width: 100%; height: 100%;
+  object-fit: cover; z-index: 0; pointer-events: none;
+}
+.studio-hero::after {
+  content: ""; position: absolute; inset: 0;
+  background: rgba(0,0,0,.52); z-index: 1; pointer-events: none;
+}
+.studio-hero > *:not(.studio-bg-video) { position: relative; z-index: 2; }
+.studio-copy { padding-top: 26vh; }
+
+/* garment — absolute right side, same as landing hero */
+.studio-garment {
+  position: absolute; inset: 0; z-index: 2; pointer-events: none;
+}
+#gallery3d {
+  position: absolute; right: 0; top: 0; bottom: 0;
+  width: 52%; height: 100%; display: block;
+}
+.studio-hero .garment-reflect {
+  position: absolute; bottom: 0; right: 0; width: 52%; height: 40%;
+  background: radial-gradient(ellipse 60% 50% at 50% 100%, var(--garment-reflect, rgba(255,255,255,.08)), transparent 70%);
+  pointer-events: none; z-index: 1;
+}
+.studio-hero .garment-shadow {
+  position: absolute; bottom: 11%; right: 12%;
+  left: auto; width: min(26vw, 280px); height: 22px; transform: none;
+}
+
+@media (min-width: 860px) {
+  .studio-hero { align-content: center; }
+  .studio-copy { padding-top: 0; max-width: 52%; align-self: center; }
+}
+
+/* mobile: garment pinned bottom-right corner (same as landing hero on phone) */
+@media (max-width: 859px) {
+  .studio-garment {
+    top: auto; left: auto;
+    right: 0; bottom: 0;
+    width: 44vw; height: 66vw;
+    opacity: 0.65;
+  }
+  .studio-hero #gallery3d {
+    right: auto; left: 0; top: 0; bottom: 0;
+    width: 100%; height: 100%;
+  }
+  .studio-hero .garment-reflect,
+  .studio-hero .garment-shadow { display: none; }
+}
+
+/* ── The Collection (gallery2, page 3) ── */
 .gallery2 {
   position: relative; overflow: hidden; background: #000; color: #fff;
   aspect-ratio: 47 / 25;
-  min-height: 60vw; /* keeps it visible even when aspect-ratio isn't supported */
+  min-height: 60vw;
   display: grid; align-items: center;
   padding: 0 var(--gut);
 }
@@ -156,20 +213,6 @@ a { color: inherit; text-decoration: none; }
 .gallery2-copy { padding-top: 24vh; }
 @media (min-width: 860px) {
   .gallery2-copy { padding-top: 0; max-width: 52%; }
-}
-
-/* second-hero garment — floats right like the landing */
-.gallery2-garment {
-  position: absolute; inset: 0; z-index: 2; pointer-events: none;
-  display: grid; place-items: center;
-}
-#gallery3d {
-  position: absolute; right: 0; top: 0; bottom: 0;
-  width: 52%; height: 100%;
-  display: block;
-}
-@media (max-width: 860px) {
-  .gallery2-garment { display: none; }
 }
 
 /* arrow + CTA row on second hero */

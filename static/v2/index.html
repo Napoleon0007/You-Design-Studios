@@ -80,14 +80,39 @@
     <a class="scroll-cue" href="#gallery" aria-label="Scroll to gallery"></a>
   </header>
 
-  <!-- ── Second hero — same layout as landing, hero_v1 background ── -->
+  <!-- ── Studio hero (page 2) — same look as landing, about the design studio ── -->
+  <section class="studio-hero" id="studio">
+    <video class="studio-bg-video" autoplay loop muted playsinline disablepictureinpicture preload="none">
+      <source src="/static/media/hero_bg.mp4" type="video/mp4">
+    </video>
+    <div class="hero-room" aria-hidden="true">
+      <div class="room-lum"></div>
+      <div class="room-grid room-wall"></div>
+      <div class="room-grid room-floor"></div>
+      <div class="room-vignette"></div>
+    </div>
+    <div class="studio-garment" aria-hidden="true">
+      <canvas id="gallery3d"></canvas>
+      <div class="garment-reflect" aria-hidden="true"></div>
+      <div class="garment-shadow" aria-hidden="true"></div>
+    </div>
+    <div class="hero-copy studio-copy">
+      <h2 class="word">Design<br>your own.</h2>
+      <p class="hero-blurb">Upload your art. Pick your garment.<br>Printed once — just for you.</p>
+      <div class="hero-line"></div>
+      <nav class="hero-sub">
+        <a href="/studio" class="on">Open studio</a>
+        <span class="sep">/</span>
+        <a href="#collection">Browse</a>
+      </nav>
+    </div>
+  </section>
+
+  <!-- ── The Collection (page 3) ── -->
   <section class="gallery2" id="gallery">
     <video class="gallery-bg-video" autoplay muted playsinline disablepictureinpicture preload="none" poster="/static/media/hero_poster.jpg" id="galleryVid">
       <source src="/static/media/hero_bg1.mp4" type="video/mp4">
     </video>
-    <div class="gallery2-garment" aria-hidden="true">
-      <canvas id="gallery3d"></canvas>
-    </div>
     <div class="gallery2-copy">
       <h2 class="word">The Collection.</h2>
       <p class="hero-blurb">Enter the design studio.</p>
