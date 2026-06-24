@@ -82,7 +82,7 @@
 
   <!-- ── Second hero — same layout as landing, hero_v1 background ── -->
   <section class="gallery2" id="gallery">
-    <video class="gallery-bg-video" autoplay loop muted playsinline disablepictureinpicture preload="none" poster="/static/media/hero_poster.jpg">
+    <video class="gallery-bg-video" autoplay muted playsinline disablepictureinpicture preload="none" poster="/static/media/hero_poster.jpg" id="galleryVid">
       <source src="/static/media/hero_bg1.mp4" type="video/mp4">
     </video>
     <div class="gallery2-garment" aria-hidden="true">
@@ -169,7 +169,7 @@
     (function () {
       function tryPlay(v) { if (!v) return; v.muted = true; var p = v.play(); if (p && p.catch) p.catch(function () {}); }
       var heroV       = document.querySelector('.hero-bg-video');
-      var galleryV    = document.querySelector('.gallery-bg-video');
+      var galleryV    = document.getElementById('galleryVid');
       var collectionV = document.querySelector('.collection-bg-video');
       tryPlay(heroV);
       document.addEventListener('touchstart', function () { tryPlay(heroV); tryPlay(galleryV); tryPlay(collectionV); }, { once: true });
@@ -180,6 +180,18 @@
         var io = new IntersectionObserver(function (es) { if (es[0].isIntersecting) { tryPlay(v); io.disconnect(); } }, { threshold: 0.05 });
         io.observe(v.parentElement);
       });
+
+      // Gallery background: alternate between hero_bg1 and hero_bg2 on each end
+      var galSrcs = ['/static/media/hero_bg1.mp4', '/static/media/hero_bg2.mp4'];
+      var galIdx  = 0;
+      if (galleryV) {
+        galleryV.addEventListener('ended', function () {
+          galIdx = (galIdx + 1) % galSrcs.length;
+          galleryV.src = galSrcs[galIdx];
+          galleryV.load();
+          tryPlay(galleryV);
+        });
+      }
     }());
 
     // Gallery: load + play each clip only when it scrolls into view (poster shows
