@@ -245,6 +245,31 @@ a { color: inherit; text-decoration: none; }
   #gallery3d { width: 88vw; height: 120vw; }
 }
 
+/* ── Studio smoke — gentle puffs rising from the floor ── */
+.studio-smoke {
+  position: absolute; inset: 0; z-index: 0;
+  overflow: hidden; pointer-events: none;
+}
+.sp {
+  position: absolute; border-radius: 50%;
+  background: radial-gradient(circle at 38% 35%, rgba(210,215,225,.16) 0%, transparent 62%);
+  filter: blur(48px); opacity: 0;
+  will-change: transform, opacity;
+}
+@keyframes smokeRise {
+  0%   { opacity: 0;    transform: translateY(0)     translateX(0)            scale(.65); }
+  18%  { opacity: 1; }
+  72%  { opacity: .40; }
+  100% { opacity: 0;    transform: translateY(-110px) translateX(var(--sdx,0)) scale(2.1); }
+}
+.sp1 { width:340px; height:340px; left: 4%;  bottom:14%; --sdx:-14px; animation:smokeRise 17s ease-in-out 0s   infinite; }
+.sp2 { width:420px; height:420px; left:22%;  bottom: 4%; --sdx: 24px; animation:smokeRise 21s ease-in-out 4.5s infinite; }
+.sp3 { width:280px; height:280px; left:52%;  bottom:20%; --sdx:-18px; animation:smokeRise 15s ease-in-out 8s   infinite; }
+.sp4 { width:370px; height:370px; left:38%;  bottom: 6%; --sdx: 20px; animation:smokeRise 19s ease-in-out 2s   infinite; }
+.sp5 { width:300px; height:300px; left:68%;  bottom:16%; --sdx: -8px; animation:smokeRise 16s ease-in-out 11s  infinite; }
+.sp6 { width:250px; height:250px; left:14%;  bottom:30%; --sdx: 16px; animation:smokeRise 13s ease-in-out 6s   infinite; }
+@media (prefers-reduced-motion: reduce) { .sp { animation: none !important; } }
+
 /* ── The Collection (gallery2, page 3) ── */
 .gallery2 {
   position: relative; overflow: hidden; background: #000; color: #fff;
