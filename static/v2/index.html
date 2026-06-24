@@ -16,10 +16,11 @@
   <link rel="preload" as="script" href="/static/js/threejs/DecalGeometry.js" />
   <link rel="preload" as="script" href="/static/js/garment3d.js" />
   <link rel="preload" as="script" href="/static/v2/landing3d.js" />
-  <!-- Draco WASM decoder — fetched lazily by default (kills 2-3s); preload it now -->
-  <link rel="preload" as="fetch" crossorigin href="/static/js/threejs/draco/draco_decoder.wasm" />
+  <!-- Draco WASM decoder — fetched lazily by default (kills 2-3s); preload it now.
+       No crossorigin: Three.js fetches same-origin without CORS mode; mismatched mode = cache miss. -->
+  <link rel="preload" as="fetch" href="/static/js/threejs/draco/draco_decoder.wasm" />
   <!-- First garment model — in cache before the engine even asks for it -->
-  <link rel="preload" as="fetch" crossorigin href="/static/models/meshy_hoodie.glb" />
+  <link rel="preload" as="fetch" href="/static/models/meshy_hoodie.glb" />
   <link rel="icon" type="image/svg+xml" href="/static/v2/favicon.svg" />
   <link rel="stylesheet" href="/static/v2/v2.css" />
 </head>
@@ -55,7 +56,7 @@
       <div class="room-vignette"></div>
     </div>
     <div class="hero-copy">
-      <h1 class="word">Be unique, design your own.</h1>
+      <h1 class="word">Be unique, design your own. 1 of 1!</h1>
       <p class="hero-blurb">Printed once. For you. Never repeated.</p>
       <div class="hero-line"></div>
       <nav class="hero-sub">
