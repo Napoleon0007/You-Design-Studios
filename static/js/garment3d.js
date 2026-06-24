@@ -162,7 +162,17 @@
     running = true;
     return true;
   }
-  G.init = function (canvas, opts) { const ok = _init(canvas, opts); if (ok) loop(); return ok; };
+  G.init = function (canvas, opts) {
+    const ok = _init(canvas, opts);
+    if (ok) {
+      loop();
+      // Pre-warm the Draco decoder immediately so the WASM is ready
+      // before G.load() is called — eliminates the lazy-fetch delay.
+      const d = getDraco();
+      if (d && d.preload) d.preload();
+    }
+    return ok;
+  };
 
   G.resize = function () {
     if (!renderer) return;
