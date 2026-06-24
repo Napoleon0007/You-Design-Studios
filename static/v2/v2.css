@@ -642,9 +642,10 @@ a { color: inherit; text-decoration: none; }
 .collection-band .rolodex,
 .collection-band .rdx-dots{ position:relative; z-index:2; }
 
-/* Hide the white-tee poster on mobile — wrong garment type, dark bg makes it jarring */
+/* On mobile show the poster dimly so the garment box is never blank while 3D loads.
+   Cross-fades out automatically when the purple hoodie renders (hero-ready). */
 @media (max-width:859px){
-  .hero-poster{ display:none; }
+  .hero-poster{ display:block; filter:brightness(0.15) saturate(0); opacity:0.55; }
 }
 
 /* ─── ROLODEX NEON REDESIGN ──────────────────────────────────────────────────
@@ -673,3 +674,15 @@ a { color: inherit; text-decoration: none; }
 /* Caption text always white on neon */
 .collection-band .rdx-cap b{ color:#fff; }
 .collection-band .rdx-cap span{ color:rgba(255,255,255,.75); }
+
+/* ─── Hero headline red border badge ─────────────────────────────────────── */
+.hero-copy .word{
+  display: inline-block;
+  border: 4px solid #e8001d;
+  border-radius: 20px;
+  padding: clamp(12px, 2vw, 22px) clamp(16px, 3vw, 36px);
+  box-shadow:
+    0 0 0 1px rgba(232,0,29,.25),
+    0 0 32px 4px rgba(232,0,29,.30),
+    inset 0 0 32px 0 rgba(232,0,29,.06);
+}
