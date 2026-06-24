@@ -648,30 +648,28 @@ a { color: inherit; text-decoration: none; }
   .hero-poster{ display:block; filter:brightness(0.15) saturate(0); opacity:0.55; }
 }
 
-/* ─── ROLODEX NEON REDESIGN ──────────────────────────────────────────────────
- *  Raw design art (no shirt) on cycling neon backgrounds.
- *  Tiny padding so the art fills the card. Each swipe position gets its own
- *  colour: cyan → magenta → electric-violet → orange → mint → yellow → pink → sky.
+/* ─── ROLODEX — frosted glass cards, video shows through ─────────────────────
+ *  Semi-transparent background + backdrop-filter blur so the collection video
+ *  is visible behind each card. No neon colors — clean and premium.
  * ─────────────────────────────────────────────────────────────────────────── */
-/* Neon bg fills the whole card — image sits on top with padding so color peeks around it */
 .rdx-shot{ background:transparent; }
 .rdx-shot img:not(.raw){ object-fit:contain; padding:4%; }
 .rdx-shot img.raw{ object-fit:contain; padding:5%; background:transparent; }
 
-.rdx-track .rdx-card:nth-child(8n+1){ background:#00d4ff; }
-.rdx-track .rdx-card:nth-child(8n+2){ background:#ff006a; }
-.rdx-track .rdx-card:nth-child(8n+3){ background:#7b00ff; }
-.rdx-track .rdx-card:nth-child(8n+4){ background:#ff6600; }
-.rdx-track .rdx-card:nth-child(8n+5){ background:#00ff88; }
-.rdx-track .rdx-card:nth-child(8n+6){ background:#ffe600; }
-.rdx-track .rdx-card:nth-child(8n+7){ background:#ee00cc; }
-.rdx-track .rdx-card:nth-child(8n+8){ background:#00b4ff; }
-
-/* Active card: neon glow ring on the card itself (overflow:hidden clips inner shadows) */
-.rdx-card.on{
-  box-shadow: 0 0 0 2px rgba(255,255,255,.75), 0 0 28px 4px rgba(255,255,255,.25), 0 22px 48px -20px rgba(0,0,0,.6);
+/* All cards: frosted glass — video bleeds through */
+.rdx-track .rdx-card{
+  background: rgba(255,255,255,0.10);
+  -webkit-backdrop-filter: blur(10px) saturate(1.4);
+          backdrop-filter: blur(10px) saturate(1.4);
+  border: 1px solid rgba(255,255,255,0.18);
 }
-/* Caption text always white on neon */
+
+/* Active card: subtle white glow ring */
+.rdx-card.on{
+  box-shadow: 0 0 0 2px rgba(255,255,255,.65), 0 22px 48px -20px rgba(0,0,0,.5);
+  background: rgba(255,255,255,0.16);
+}
+/* Caption text white on dark video backdrop */
 .collection-band .rdx-cap b{ color:#fff; }
 .collection-band .rdx-cap span{ color:rgba(255,255,255,.75); }
 
