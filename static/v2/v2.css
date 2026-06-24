@@ -206,8 +206,8 @@ a { color: inherit; text-decoration: none; }
 .studio-copy { padding: 0 var(--gut); pointer-events: auto; align-self: start; }
 
 @media (min-width: 860px) {
-  /* garment LEFT, copy RIGHT — reversed from landing; text anchored to top of section */
-  .studio-copy { max-width: 46%; margin-left: auto; padding-top: clamp(90px, 13vh, 150px); }
+  /* garment LEFT, copy TOP-LEFT — text anchored to top-left of section */
+  .studio-copy { max-width: 46%; margin-left: 0; padding-top: clamp(90px, 13vh, 150px); }
   #gallery3d { width: min(42vw, 480px); height: min(62vw, 700px); }
   .studio-garment { justify-content: flex-start; padding-left: var(--gut); }
   .studio-shadow { left: calc(var(--gut) + 8%); right: auto; transform: none; }
