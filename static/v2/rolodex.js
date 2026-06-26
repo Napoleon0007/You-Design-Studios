@@ -20,9 +20,35 @@
     if (!designs.length) { root.style.display = "none"; if (dotsEl) dotsEl.style.display = "none"; return; }
 
     track.innerHTML = "";
-    designs.forEach((g, i) => {
+
+    // ── Video card (first slot — Truef model reel) ───────────────────────────
+    (function () {
       const a = document.createElement("a");
-      a.className = "rdx-card"; a.href = "/studio"; a.dataset.i = i;
+      a.className = "rdx-card rdx-video-card"; a.href = "/studio"; a.dataset.i = 0;
+      a.innerHTML =
+        `<div class="rdx-shot">` +
+        `<video class="rdx-video" muted loop playsinline preload="none" src="/static/media/truef-model.mp4"></video>` +
+        `</div>` +
+        `<div class="rdx-cap"><b>TRUEF Model</b><span>Make it yours &rarr;</span></div>`;
+      track.appendChild(a);
+      // Lazy-play: start only when scrolled into view
+      const vid = a.querySelector("video");
+      if (typeof IntersectionObserver !== "undefined") {
+        new IntersectionObserver((entries) => {
+          entries[0].isIntersecting ? vid.play().catch(() => {}) : vid.pause();
+        }, { threshold: 0.3 }).observe(a);
+      }
+      const dot = document.createElement("button");
+      dot.className = "rdx-dot"; dot.type = "button";
+      dot.setAttribute("aria-label", "Show TRUEF Model");
+      dot.addEventListener("click", () => center(0));
+      dotsEl.appendChild(dot);
+    })();
+
+    designs.forEach((g, i) => {
+      const i2 = i + 1; // offset by the video card
+      const a = document.createElement("a");
+      a.className = "rdx-card"; a.href = "/studio"; a.dataset.i = i2;
       a.innerHTML =
         `<div class="rdx-shot"><img loading="lazy" alt="${g.title}"` +
         ` src="/static/v2/cards/${stem(g.id)}.jpg"` +
@@ -32,7 +58,7 @@
       const dot = document.createElement("button");
       dot.className = "rdx-dot"; dot.type = "button";
       dot.setAttribute("aria-label", "Show " + g.title);
-      dot.addEventListener("click", () => center(i));
+      dot.addEventListener("click", () => center(i2));
       dotsEl.appendChild(dot);
     });
 

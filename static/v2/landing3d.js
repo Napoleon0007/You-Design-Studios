@@ -48,7 +48,7 @@
   const LIGHT_BACKDROPS = ["#f0ece4", "#e8edf0", "#ede8df", "#eaeee8", "#f2ede6"];
 
   let i = 0, timer = null, busy = false, curModel = null, userActive = false;
-  const SPIN_SPEED = 8;          // autoRotateSpeed — one full revolution ≈ 7.5 s
+  const SPIN_SPEED = 0.4;        // autoRotateSpeed — very slow, almost imperceptible
   const PERIOD = 7500;           // advance every one full rotation at SPIN_SPEED
   const wait = (ms) => new Promise((r) => setTimeout(r, ms));
   const setBackdrop = (hex) => document.documentElement.style.setProperty("--stage-bg", hex);

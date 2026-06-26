@@ -16,7 +16,11 @@
   const BASE = cfg.base || "/static/media/hero_seq/";
   const PREFIX = cfg.prefix || "f_";
   const EXT = cfg.ext || ".jpg";
-  const VIDEO = cfg.video || null;   // when set, the hero is a looping video, not the frame scrub
+  // When set, the hero is a looping video, not the frame scrub. A separate
+  // cfg.videoMobile lets the phone play a DIFFERENT clip from the desktop one
+  // (portrait-friendly, lighter, whatever). Falls back to cfg.video if unset.
+  const _isMobile = window.matchMedia && window.matchMedia("(max-width: 640px)").matches;
+  const VIDEO = (_isMobile ? (cfg.videoMobile || cfg.video) : cfg.video) || null;
 
   const canvas = document.getElementById("heroCanvas");
   const loader = document.getElementById("heroLoader");
@@ -238,7 +242,20 @@
       if (loader) loader.classList.add("hide");
       if (canvas) canvas.style.display = "none";
       const v = document.getElementById("heroVideo");
-      if (v) { const pr = v.play(); if (pr && pr.catch) pr.catch(() => {}); }
+      if (v) {
+        // The HTML <source> carries the desktop clip; if THIS device should play a
+        // different one (e.g. mobile), swap the source and reload before playing.
+        const cur = (v.querySelector("source") && v.querySelector("source").getAttribute("src")) || "";
+        if (VIDEO && cur.indexOf(VIDEO) === -1) {
+          while (v.firstChild) v.removeChild(v.firstChild);
+          const s = document.createElement("source");
+          s.src = VIDEO; s.type = "video/mp4";
+          v.appendChild(s);
+          v.poster = VIDEO.replace(/\.mp4$/i, "_poster.jpg");   // matching first-paint poster
+          v.load();
+        }
+        const pr = v.play(); if (pr && pr.catch) pr.catch(() => {});
+      }
       chrome();
       initScroll();
       return;

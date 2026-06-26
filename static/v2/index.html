@@ -43,8 +43,9 @@
   <!-- ───────────────────────── hero ──────────────────────── -->
   <header class="hero-stage" id="hero">
     <!-- Background video — loops immediately, no audio, no scaling up -->
-    <video class="hero-bg-video" autoplay loop muted playsinline disablepictureinpicture preload="auto">
-      <source src="/static/media/hero_bg.mp4" type="video/mp4">
+    <video class="hero-bg-video" autoplay loop muted playsinline disablepictureinpicture preload="auto"
+           poster="/static/media/hero_bg1_poster.jpg">
+      <source src="/static/media/hero_bg1.mp4" type="video/mp4">
     </video>
     <!-- 3D SPACE: a lit studio room behind the garment — back-wall grid, a
          perspective floor receding to a horizon, a spotlight pool + vignette.
@@ -56,7 +57,7 @@
       <div class="room-vignette"></div>
     </div>
     <div class="hero-copy">
-      <h1 class="word">Be unique, design your own.</h1>
+      <h1 class="word">Be unique, design your own Kak.</h1>
       <p class="hero-blurb">Printed once. For you. Never repeated.</p>
       <div class="hero-line"></div>
       <nav class="hero-sub">
@@ -77,10 +78,24 @@
       <div class="garment-key" aria-hidden="true"></div>
     </div>
 
-    <a class="scroll-cue" href="#gallery" aria-label="Scroll to gallery"></a>
+    <a class="scroll-cue" href="#collection" aria-label="Scroll down"></a>
   </header>
 
-  <!-- ── Studio section (page 2) — Lacoste-style: colour-cycling stage, perspective room, garment centred ── -->
+  <!-- ── Collection — Möbius design strip (page 2) ── -->
+  <section class="collection-section mobius-section" id="collection">
+    <div class="mobius-heading">
+      <p class="mobius-eyebrow">The Collection</p>
+      <h2 class="word mobius-title">Choose one of the designs<br>on the strip.</h2>
+      <p class="mobius-sub">Drag to spin. Tap any piece to open it in the studio.</p>
+    </div>
+    <div class="mobius-wrap">
+      <canvas id="collectionCanvas"></canvas>
+      <div id="collectionLabels"></div>
+    </div>
+    <div class="cta-row"><a class="btn-pill" href="/studio">Create yours +</a></div>
+  </section>
+
+  <!-- ── Studio section (page 3) — colour-cycling stage, perspective room, garment centred ── -->
   <section class="studio-hero" id="studio">
     <!-- colour-cycling tint overlay sits between the photo and the room grid -->
     <div class="studio-tint" aria-hidden="true"></div>
@@ -107,6 +122,8 @@
       <div class="studio-room-glow"></div>
       <div class="room-vignette"></div>
     </div>
+    <!-- camera flash overlay -->
+    <div class="cam-flash" aria-hidden="true"></div>
     <!-- sweeping stage spotlight — cone rotates left↔right, pool tracks on the floor -->
     <div class="studio-spotlight" aria-hidden="true">
       <div class="spl-beam"></div>
@@ -117,8 +134,8 @@
       <div class="studio-shadow"></div>
     </div>
     <div class="studio-copy">
-      <h2 class="word studio-headline">3D Design Studio</h2>
-      <p class="studio-subtext">Come up with your own thing. Start designing and create your one-of-a-kind masterpiece — whatever you come up with.</p>
+      <h2 class="word studio-headline">3D<br>Design<br>Studio</h2>
+      <p class="studio-subtext">Create your own design in a 3D space. Take full control and bring your vision to life!</p>
       <div class="hero-line"></div>
       <nav class="hero-sub">
         <a href="/studio" class="on">Open studio</a>
@@ -128,13 +145,74 @@
     </div>
   </section>
 
+  <!-- ── How It Works — pinned studio (scroll-driven transform) ── -->
+  <section class="hiw" id="howitworks" aria-label="How it works">
+    <div class="hiw-inner">
+
+      <header class="hiw-head hiw-reveal">
+        <p class="hiw-eyebrow">How it works</p>
+        <h2 class="hiw-heading">From idea to doorstep, in three steps.</h2>
+      </header>
+
+      <div class="hiw-grid">
+
+        <!-- contained garment visual (shown on mobile too) -->
+        <aside class="hiw-show hiw-reveal" aria-hidden="true">
+          <div class="hiw-card">
+            <!-- src set by JS on DESKTOP only; phones show the poster still (no MP4 fetch) -->
+            <video class="hiw-base" data-src="/static/media/hiw-model.mp4" poster="/static/media/ref_hoodie.jpg" muted loop playsinline disablepictureinpicture preload="none" aria-hidden="true"></video>
+            <span class="hiw-seal"><b>Printed</b><span>in South Africa</span></span>
+          </div>
+          <p class="hiw-ship">Shipped to your door · 3–5 days</p>
+        </aside>
+
+        <!-- copy: the gold-line timeline -->
+        <div class="hiw-copy">
+          <ol class="hiw-steps">
+            <li class="hiw-step hiw-reveal">
+              <span class="hiw-num">01</span>
+              <div class="hiw-text">
+                <h3 class="hiw-title">Pick your base</h3>
+                <p class="hiw-desc">Premium hoodies, tees and zip-ups — every piece a blank canvas, ready for your idea.</p>
+              </div>
+            </li>
+            <li class="hiw-step hiw-reveal">
+              <span class="hiw-num">02</span>
+              <div class="hiw-text">
+                <h3 class="hiw-title">Design it in 3D</h3>
+                <p class="hiw-desc">Drop your artwork onto a live 3D garment, spin it, and see exactly how it prints — before you commit.</p>
+              </div>
+            </li>
+            <li class="hiw-step hiw-reveal">
+              <span class="hiw-num">03</span>
+              <div class="hiw-text">
+                <h3 class="hiw-title">We print &amp; deliver</h3>
+                <p class="hiw-desc">Printed to order in South Africa and shipped straight to your door in 3–5 days.</p>
+              </div>
+            </li>
+          </ol>
+
+          <div class="hiw-foot hiw-reveal">
+            <ul class="hiw-strip" aria-label="At a glance">
+              <li><strong>100+</strong> designs</li>
+              <li><strong>Printed</strong> in SA</li>
+              <li><strong>3–5 day</strong> delivery</li>
+            </ul>
+            <a href="/studio" class="hiw-cta">Start creating <span aria-hidden="true">&rarr;</span></a>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
   <!-- ── The Collection (page 3) ── -->
   <section class="gallery2" id="gallery">
     <video class="gallery-bg-video" autoplay muted playsinline disablepictureinpicture preload="none" poster="/static/media/hero_poster.jpg" id="galleryVid">
       <source src="/static/media/hero_bg1.mp4" type="video/mp4">
     </video>
     <div class="gallery2-copy">
-      <h2 class="word">The Collection.</h2>
+      <h2 class="word">Truef Media Reels.</h2>
       <p class="hero-blurb">Enter the design studio.</p>
       <div class="g2-cta-row">
         <svg class="g2-arrow" viewBox="0 0 80 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
@@ -149,21 +227,6 @@
     </div>
   </section>
 
-  <!-- ── Collection — rolodex below the second hero ── -->
-  <section class="collection-section" id="collection">
-    <div class="collection-band">
-      <video class="collection-bg-video" autoplay loop muted playsinline disablepictureinpicture preload="none">
-        <source src="/static/media/collection_bg.mp4" type="video/mp4">
-      </video>
-      <div class="rolodex" id="rolodex" aria-roledescription="carousel" aria-label="Designs">
-        <button class="rdx-arrow prev" id="rdxPrev" type="button" aria-label="Previous">&lsaquo;</button>
-        <div class="rdx-track" id="rdxTrack"></div>
-        <button class="rdx-arrow next" id="rdxNext" type="button" aria-label="Next">&rsaquo;</button>
-      </div>
-      <div class="rdx-dots" id="rdxDots"></div>
-    </div>
-    <div class="cta-row"><a class="btn-pill" href="/studio">Create yours +</a></div>
-  </section>
 
   <footer class="v2foot">
     <div class="foot-inner">
@@ -200,6 +263,8 @@
   <script src="/static/v2/landing3d.js"></script>
   <script src="/static/v2/gallery3d.js"></script>
   <script src="/static/v2/rolodex.js"></script>
+  <script src="/static/js/collection-mobius.js"></script>
+  <script src="/static/v2/effects.js"></script>
   <script>
     // Brand name (in flux) — pull the live value so the wordmark always matches.
     fetch("/healthz").then((r) => r.json()).then((d) => {
@@ -216,7 +281,22 @@
       var heroV       = document.querySelector('.hero-bg-video');
       var galleryV    = document.getElementById('galleryVid');
       var collectionV = document.querySelector('.collection-bg-video');
+      // Per-device hero background: the DESKTOP/browser clip (hero_bg1.mp4, Hero
+      // backround 1) is the HTML default + poster, so the browser NEVER flashes a
+      // different clip on load. Phones swap DOWN to hero_bg.mp4 (Hero backround 3).
+      if (heroV && window.matchMedia && window.matchMedia('(max-width: 640px)').matches) {
+        var heroSrc = heroV.querySelector('source');
+        if (heroSrc && heroSrc.getAttribute('src').indexOf('hero_bg.mp4') === -1) {
+          heroSrc.setAttribute('src', '/static/media/hero_bg.mp4');
+          heroV.setAttribute('poster', '/static/media/hero_bg_poster.jpg');
+          // play once the swapped clip is ready (avoids the play()-interrupted-by-load race)
+          heroV.addEventListener('loadeddata', function () { tryPlay(heroV); }, { once: true });
+          heroV.load();
+        }
+      }
       tryPlay(heroV);
+      // Desktop browsers that block muted-autoplay: start on the first click/move.
+      document.addEventListener('pointerdown', function () { tryPlay(heroV); tryPlay(galleryV); tryPlay(collectionV); }, { once: true });
       document.addEventListener('touchstart', function () { tryPlay(heroV); tryPlay(galleryV); tryPlay(collectionV); }, { once: true });
       document.addEventListener('visibilitychange', function () { if (!document.hidden) { tryPlay(heroV); tryPlay(galleryV); tryPlay(collectionV); } });
       // Below-fold videos: play when they scroll into view
@@ -227,7 +307,7 @@
       });
 
       // Gallery background: alternate between hero_bg1 and hero_bg2 on each end
-      var galSrcs = ['/static/media/hero_bg1.mp4', '/static/media/hero_bg2.mp4'];
+      var galSrcs = ['/static/media/hero_bg1.mp4', '/static/media/hero_bg2.mp4', '/static/media/truef-model.mp4'];
       var galIdx  = 0;
       if (galleryV) {
         galleryV.addEventListener('ended', function () {
@@ -237,6 +317,68 @@
           tryPlay(galleryV);
         });
       }
+    }());
+
+    // Camera flash — fires every ~6s while the studio section is visible
+    (function () {
+      var flash = document.querySelector('.cam-flash');
+      var studioEl = document.querySelector('.studio-hero');
+      if (!flash || !studioEl) return;
+      var visible = false;
+      var timer = null;
+
+      function doFlash() {
+        if (!visible) return;
+        flash.classList.remove('firing');
+        void flash.offsetWidth;
+        flash.classList.add('firing');
+        flash.addEventListener('animationend', function handler() {
+          flash.removeEventListener('animationend', handler);
+          flash.classList.remove('firing');
+        });
+        timer = setTimeout(doFlash, 5000 + Math.random() * 3000);
+      }
+
+      if ('IntersectionObserver' in window) {
+        new IntersectionObserver(function (es) {
+          visible = es[0].isIntersecting;
+          if (visible) { clearTimeout(timer); timer = setTimeout(doFlash, 1500 + Math.random() * 2000); }
+          else { clearTimeout(timer); }
+        }, { threshold: 0.3 }).observe(studioEl);
+      }
+    }());
+
+    // How It Works — reveal the heading, garment and steps as the section enters
+    // view (staggered). Content is fully visible by default; we only "arm" the
+    // hidden state when JS + IntersectionObserver are present, so it can never get
+    // stuck invisible. No DOM is added/removed (safe alongside any GL canvas).
+    (function () {
+      var hiw = document.querySelector('.hiw');
+      if (!hiw) return;
+
+      // Desktop ONLY: load + play the model video. Phones leave it unset so they
+      // show the still poster (ref_hoodie.jpg) — no MP4 download on mobile.
+      var hbase = hiw.querySelector('.hiw-base');
+      if (hbase && hbase.tagName === 'VIDEO' && hbase.dataset.src &&
+          window.matchMedia && window.matchMedia('(min-width: 860px)').matches) {
+        hbase.src = hbase.dataset.src;
+        hbase.load();
+        var pr = hbase.play(); if (pr && pr.catch) pr.catch(function () {});
+      }
+
+      var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      if (reduce || !('IntersectionObserver' in window)) return;   // stays visible, no motion
+
+      hiw.classList.add('is-armed');   // now CSS hides .hiw-reveal until .in
+      var done = false;
+      function reveal() { if (done) return; done = true; hiw.classList.add('in'); }
+      var io = new IntersectionObserver(function (entries) {
+        if (entries.some(function (e) { return e.isIntersecting; })) { reveal(); io.disconnect(); }
+      }, { threshold: 0.15 });
+      io.observe(hiw);
+      // failsafe: if the observer never fires for any reason, reveal anyway so the
+      // section can never get stuck invisible.
+      setTimeout(reveal, 2500);
     }());
 
     // Gallery: load + play each clip only when it scrolls into view (poster shows

@@ -15,9 +15,12 @@ import json
 import os
 from pathlib import Path
 
-from flask import (Flask, jsonify, redirect, render_template, request,
-                   send_from_directory, url_for)
+from functools import wraps
 
+from flask import (Flask, jsonify, redirect, render_template, request,
+                   send_from_directory, session, url_for)
+
+import auth as auth_module
 import bundles
 import catalog
 import db
@@ -42,8 +45,19 @@ DESIGNS_DIR = BASE_DIR / "data" / "designs"   # ready-made design templates (Luk
 DESIGNS_DIR.mkdir(parents=True, exist_ok=True)
 _IMG_EXT = {".png", ".jpg", ".jpeg", ".webp"}
 
+import datetime as _dt
+
 app = Flask(__name__)
 app.config["MAX_CONTENT_LENGTH"] = 40 * 1024 * 1024  # 40 MB upload ceiling
+app.secret_key = os.environ.get("SECRET_KEY", "dev-secret-change-before-deploy")
+
+
+@app.template_filter("format_date")
+def _fmt_date(ts):
+    try:
+        return _dt.datetime.fromtimestamp(int(ts)).strftime("%-d %b %Y")
+    except Exception:
+        return ""
 
 
 @app.after_request
@@ -54,6 +68,31 @@ def _cache_heavy_static(resp):
     if p.startswith("/static/models/") or p.startswith("/static/media/"):
         resp.headers["Cache-Control"] = "public, max-age=31536000, immutable"
     return resp
+
+# --------------------------------------------------------------------------- #
+# Session helpers
+# --------------------------------------------------------------------------- #
+def current_user() -> dict | None:
+    uid = session.get("user_id")
+    return db.get_user_by_id(uid) if uid else None
+
+
+def _login_user(user_id: int) -> None:
+    user = db.get_user_by_id(user_id)
+    if user:
+        session["user_id"] = user["id"]
+        session["user_email"] = user["email"]
+        session["user_name"] = user.get("name") or ""
+
+
+def login_required(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        if not session.get("user_id"):
+            return redirect(url_for("auth_login", next=request.path))
+        return f(*args, **kwargs)
+    return decorated
+
 
 # --------------------------------------------------------------------------- #
 # Brand / store config  (rename here)
@@ -371,7 +410,18 @@ def save_design():
     return jsonify(ok=True, design_token=design["token"], gelato_uid=gelato_uid,
                    printfile_front_url=front_url, printfile_back_url=back_url,
                    preview_url=preview_url, moderation=mod,
-                   unit_price_cents=catalog.unit_price_cents(d["slug"], d.get("size_code")))
+                   unit_price_cents=_line_price_cents(d["slug"], d.get("size_code"), d.get("art_key")))
+
+
+# A blank garment (no artwork added) costs less than a printed one — there's no
+# print to pay for. Change PRINT_FEE_CENTS to set how much cheaper a blank is.
+PRINT_FEE_CENTS = 7000   # R70
+
+
+def _line_price_cents(slug, size_code, art_key) -> int:
+    """Unit selling price: printed = catalogue retail; blank (no art) = retail − print fee."""
+    base = catalog.unit_price_cents(slug, size_code)
+    return base if art_key else max(0, base - PRINT_FEE_CENTS)
 
 
 def _guard_items(raw_items):
@@ -409,11 +459,14 @@ def _guard_items(raw_items):
                                 or "This design can't be printed for copyright/usage reasons.")
         if design["moderation_status"] != moderation.APPROVED:
             pending.append(design["token"])
-        unit = catalog.unit_price_cents(design["product_slug"], design["size_code"])
+        unit = _line_price_cents(design["product_slug"], design["size_code"], design.get("art_key"))
+        upsize = catalog.upsize_fee_cents(
+            design["product_slug"], design["color_code"], design.get("placement"))
         items.append({
             "design_id": design["id"], "provider": provider, "gelato_uid": verified_uid,
             "slug": design["product_slug"],
             "quantity": max(1, int(it.get("quantity", 1))), "unit_price": unit,
+            "upsize_fee": upsize,
             "printfile_front_url": design["printfile_front_url"],
             "printfile_back_url": design["printfile_back_url"]})
     if not items:
@@ -445,24 +498,30 @@ def _held_designs(order: dict) -> list[dict]:
             if (it.get("moderation_status") or moderation.REVIEW) != moderation.APPROVED]
 
 
-def _settle_payment(order: dict) -> str:
-    """Idempotently move a freshly-paid order into the right state + email the
-    customer. Escrow: if any design is still in review, hold the order in
-    'in_review'; otherwise it's 'paid' and ready for an admin to release."""
-    if order["status"] not in ("created",):
+def _settle_payment(order: dict, txn: dict | None = None) -> str:
+    """Idempotently settle a paid order: capture payment details, confirm the
+    customer, then auto-release to the printer. No manual admin step required."""
+    if order["status"] not in ("created", "payment_initiated"):
         return order["status"]   # already settled — idempotent (webhook + callback)
-    held = _held_designs(order)
-    new_status = "in_review" if held else "paid"
-    note = (f"Paid. HELD: {len(held)} design(s) awaiting moderation." if held
-            else "Paid. All designs cleared — ready to release.")
-    db.set_order_status(order["reference"], new_status, notes=note)
+    ref = order["reference"]
+    # capture the Paystack transaction details (channel, card last4, fees, response)
+    if txn:
+        auth = txn.get("authorization") or {}
+        db.set_payment_meta(ref, paid_at=int(_dt.datetime.now().timestamp()),
+                            channel=txn.get("channel"), last4=auth.get("last4"),
+                            fees_cents=txn.get("fees"),
+                            gateway_response=txn.get("gateway_response"))
+    db.set_order_status(ref, "paid", notes="Paid — auto-releasing to printer.")
     fresh = db.get_order(order["reference"])
     if fresh and fresh.get("email"):
         status_url = _abs_url(f"/order/{fresh['reference']}")
         subj, html_body, text = mailer.order_confirmation(
             _enrich_for_email(fresh), status_url=status_url)
         mailer.send(fresh["email"], subj, html_body, text)
-    return new_status
+    _release_to_providers(fresh or order)
+    db.set_order_status(order["reference"], "submitted",
+                        notes="Auto-released to printer on payment.")
+    return "submitted"
 
 
 @app.route("/api/orders", methods=["POST"])
@@ -503,19 +562,22 @@ def shipping_quote():
     """Preview the cart's subtotal + shipping WITHOUT creating an order, so the
     checkout screen can show an honest total before the customer pays."""
     d = request.get_json(silent=True) or {}
-    lines, subtotal = [], 0
+    lines, subtotal, upsize_total = [], 0, 0
     for it in (d.get("items") or []):
         design = db.get_design(it.get("design_token", ""))
         if not design:
             continue
         qty = max(1, int(it.get("quantity", 1)))
-        unit = catalog.unit_price_cents(design["product_slug"], design["size_code"])
-        subtotal += unit * qty
+        unit = _line_price_cents(design["product_slug"], design["size_code"], design.get("art_key"))
+        upsize = catalog.upsize_fee_cents(
+            design["product_slug"], design["color_code"], design.get("placement"))
+        subtotal += (unit + upsize) * qty
+        upsize_total += upsize * qty
         lines.append({"slug": design["product_slug"], "quantity": qty})
     if not lines:
         return jsonify(ok=False, error="Your cart is empty."), 400
     quote = shipping.quote(lines, subtotal, country="ZA")
-    return jsonify(ok=True, subtotal=subtotal, shipping=quote,
+    return jsonify(ok=True, subtotal=subtotal, shipping=quote, upsize_total=upsize_total,
                    total=subtotal + quote["amount_cents"], currency="ZAR")
 
 
@@ -536,7 +598,7 @@ def checkout():
     if err:
         return jsonify(ok=False, error=err), 400
 
-    subtotal = sum(i["unit_price"] * i["quantity"] for i in items)
+    subtotal = sum((i["unit_price"] + i.get("upsize_fee", 0)) * i["quantity"] for i in items)
     ship = shipping.quote([{"slug": i["slug"], "quantity": i["quantity"]} for i in items],
                           subtotal, country="ZA")
     user_id = db.upsert_user(email, d.get("name"))
@@ -552,6 +614,7 @@ def checkout():
                 metadata={"reference": ref, "items": len(items)})
         except paystack.PaystackError as exc:
             return jsonify(ok=False, error=f"Payment init failed: {exc}"), 502
+        db.add_order_event(ref, "payment_initiated", "Paystack checkout opened", order["total"])
         return jsonify(ok=True, mode="paystack", reference=ref, total=order["total"],
                        currency="ZAR", shipping=ship,
                        authorization_url=init.get("authorization_url"),
@@ -576,21 +639,27 @@ def checkout_callback():
                                status="unknown", message="We couldn't find that order."), 404
 
     paid_ok = False
+    txn = None
     if paystack.has_keys():
         try:
             txn = paystack.verify_transaction(ref)
             paid_ok = (txn.get("status") == "success")
+            if not paid_ok and txn.get("status") == "failed" and order["status"] in ("created", "payment_initiated"):
+                db.set_order_status(ref, "declined",
+                                    notes=f"Payment declined: {txn.get('gateway_response') or 'failed'}")
         except paystack.PaystackError:
             paid_ok = False
     elif request.args.get("dev") == "1":
         paid_ok = True   # dev simulate
 
     if paid_ok:
-        _settle_payment(order)
+        _settle_payment(order, txn)
         order = db.get_order(ref)
 
+    paid_statuses = ("paid", "submitted", "in_production", "shipped", "delivered", "in_review")
+    show_signup = (paid_ok and order["status"] in paid_statuses and not session.get("user_id"))
     return render_template("checkout_result.html", brand=BRAND, order=order,
-                           status=order["status"], paid=paid_ok)
+                           status=order["status"], paid=paid_ok, show_signup=show_signup)
 
 
 @app.route("/api/webhooks/paystack", methods=["POST"])
@@ -603,11 +672,18 @@ def paystack_webhook():
     if not paystack.verify_webhook(raw, sig):
         return ("", 401)
     event = request.get_json(silent=True) or {}
-    if event.get("event") == "charge.success":
-        ref = (event.get("data") or {}).get("reference", "")
+    kind = event.get("event")
+    data = event.get("data") or {}
+    ref = data.get("reference", "")
+    if kind == "charge.success" and ref:
         order = db.get_order(ref)
         if order:
-            _settle_payment(order)
+            _settle_payment(order, data)
+    elif kind == "charge.failed" and ref:
+        order = db.get_order(ref)
+        if order and order["status"] in ("created", "payment_initiated"):
+            db.set_order_status(ref, "declined",
+                                notes=f"Payment declined: {data.get('gateway_response') or 'failed'}")
     return jsonify(ok=True)
 
 
@@ -626,6 +702,13 @@ def outbox(fn: str):
 # Admin — order queue + escrow actions (release / reject-redo / refund).
 # Guarded by ADMIN_KEY in production (open on localhost).
 # --------------------------------------------------------------------------- #
+def _enrich_stats(stats: dict) -> dict:
+    """Attach human product names to the best-sellers list."""
+    for b in stats.get("best_sellers", []):
+        b["name"] = _product_name(b.get("slug")) or (b.get("slug") or "—")
+    return stats
+
+
 @app.route("/admin/orders")
 def admin_orders():
     if not _admin_ok():
@@ -635,9 +718,21 @@ def admin_orders():
     for o in active + recent:
         for it in o["items"]:
             it["product_name"] = _product_name(it.get("product_slug"))
+    stats = _enrich_stats(db.dashboard_stats())
     return render_template("admin_orders.html", brand=BRAND, active=active,
-                           recent=recent, admin_key=request.args.get("key", ""),
+                           recent=recent, stats=stats, admin_key=request.args.get("key", ""),
                            paystack_live=paystack.has_keys(), mail_live=mailer.has_provider())
+
+
+@app.route("/admin/analytics")
+def admin_analytics():
+    """Dark KPI 'data visualizer' wall — revenue, conversion, declines, trends,
+    best-sellers, payment-channel mix and customer locations."""
+    if not _admin_ok():
+        return ("Unauthorized — append ?key=YOUR_ADMIN_KEY", 401)
+    stats = _enrich_stats(db.dashboard_stats(days=14))
+    return render_template("admin_analytics.html", brand=BRAND, stats=stats,
+                           admin_key=request.args.get("key", ""))
 
 
 @app.route("/api/admin/order", methods=["POST"])
@@ -1007,6 +1102,175 @@ def bundle_quote():
                    discount=b["discount_cents"],
                    total=b["discounted_subtotal_cents"] + ship["amount_cents"],
                    currency="ZAR")
+
+
+# --------------------------------------------------------------------------- #
+# Auth routes — register, login, logout, forgot/reset password
+# --------------------------------------------------------------------------- #
+@app.route("/auth/register", methods=["GET", "POST"])
+def auth_register():
+    if session.get("user_id"):
+        return redirect(url_for("account"))
+    error = None
+    if request.method == "POST":
+        email = request.form.get("email", "").strip()
+        name = request.form.get("name", "").strip()
+        password = request.form.get("password", "")
+        confirm = request.form.get("confirm", "")
+        if password != confirm:
+            error = "Passwords don't match."
+        else:
+            user_id, error = auth_module.register(email, name, password)
+            if user_id:
+                _login_user(user_id)
+                next_url = request.args.get("next") or url_for("account")
+                return redirect(next_url)
+    return render_template("auth/register.html", brand=BRAND, error=error)
+
+
+@app.route("/auth/login", methods=["GET", "POST"])
+def auth_login():
+    if session.get("user_id"):
+        return redirect(url_for("account"))
+    error = None
+    if request.method == "POST":
+        email = request.form.get("email", "").strip()
+        password = request.form.get("password", "")
+        user_id = auth_module.authenticate(email, password)
+        if user_id:
+            _login_user(user_id)
+            next_url = request.args.get("next") or url_for("account")
+            return redirect(next_url)
+        error = "Incorrect email or password."
+    return render_template("auth/login.html", brand=BRAND, error=error)
+
+
+@app.route("/auth/logout", methods=["POST"])
+def auth_logout():
+    session.clear()
+    return redirect(url_for("index"))
+
+
+@app.route("/auth/forgot-password", methods=["GET", "POST"])
+def auth_forgot():
+    sent = False
+    error = None
+    if request.method == "POST":
+        email = request.form.get("email", "").strip()
+        user, token = auth_module.create_reset_token(email)
+        if user and token:
+            reset_url = _abs_url(f"/auth/reset-password/{token}")
+            subj, html_body, text = mailer.password_reset(user.get("name") or "", reset_url)
+            mailer.send(user["email"], subj, html_body, text)
+        # Always show "sent" — don't reveal whether the email exists
+        sent = True
+    return render_template("auth/forgot_password.html", brand=BRAND, sent=sent, error=error)
+
+
+@app.route("/auth/reset-password/<token>", methods=["GET", "POST"])
+def auth_reset(token: str):
+    error = None
+    # Validate token exists before rendering the form
+    if not db.get_by_reset_token(token):
+        return render_template("auth/reset_password.html", brand=BRAND,
+                               token=token, invalid=True, error=None)
+    if request.method == "POST":
+        password = request.form.get("password", "")
+        confirm = request.form.get("confirm", "")
+        if password != confirm:
+            error = "Passwords don't match."
+        else:
+            user_id, error = auth_module.redeem_reset_token(token, password)
+            if user_id:
+                _login_user(user_id)
+                return redirect(url_for("account"))
+    return render_template("auth/reset_password.html", brand=BRAND,
+                           token=token, invalid=False, error=error)
+
+
+# --------------------------------------------------------------------------- #
+# Account dashboard
+# --------------------------------------------------------------------------- #
+@app.route("/account")
+@login_required
+def account():
+    user = current_user()
+    orders = db.get_user_orders(user["id"])
+    for o in orders:
+        for it in o["items"]:
+            it["product_name"] = _product_name(it.get("product_slug"))
+    saved = db.list_saved_designs(user["id"])
+    addresses = db.list_addresses(user["id"])
+    return render_template("account.html", brand=BRAND, user=user,
+                           orders=orders, saved=saved, addresses=addresses)
+
+
+@app.route("/api/account/address", methods=["POST"])
+@login_required
+def account_save_address():
+    user = current_user()
+    d = request.get_json(silent=True) or {}
+    addr_id = db.save_address(
+        user["id"],
+        name=d.get("name", ""),
+        line1=d.get("line1", ""),
+        line2=d.get("line2", ""),
+        city=d.get("city", ""),
+        province=d.get("province", ""),
+        postal_code=d.get("postal_code", ""),
+        country=d.get("country", "ZA"),
+        is_default=bool(d.get("is_default")))
+    return jsonify(ok=True, id=addr_id)
+
+
+@app.route("/api/account/address/<int:addr_id>", methods=["DELETE"])
+@login_required
+def account_delete_address(addr_id: int):
+    user = current_user()
+    ok = db.delete_address(addr_id, user["id"])
+    return jsonify(ok=ok)
+
+
+@app.route("/api/account/password", methods=["POST"])
+@login_required
+def account_change_password():
+    user = current_user()
+    d = request.get_json(silent=True) or {}
+    current_pw = d.get("current_password", "")
+    new_pw = d.get("new_password", "")
+    confirm = d.get("confirm_password", "")
+    if not auth_module.authenticate(user["email"], current_pw):
+        return jsonify(ok=False, error="Current password is incorrect."), 400
+    if len(new_pw) < 8:
+        return jsonify(ok=False, error="New password must be at least 8 characters."), 400
+    if new_pw != confirm:
+        return jsonify(ok=False, error="Passwords don't match."), 400
+    db.set_password(user["id"], auth_module.hash_pw(new_pw))
+    return jsonify(ok=True)
+
+
+# --------------------------------------------------------------------------- #
+# Post-payment account creation nudge (called client-side on checkout result)
+# --------------------------------------------------------------------------- #
+@app.route("/api/account/create-from-order", methods=["POST"])
+def account_create_from_order():
+    """Guest just paid — let them set a password to claim their order history."""
+    d = request.get_json(silent=True) or {}
+    reference = d.get("reference", "")
+    password = d.get("password", "")
+    order = db.get_order(reference)
+    if not order or not order.get("email"):
+        return jsonify(ok=False, error="Order not found."), 404
+    if len(password) < 8:
+        return jsonify(ok=False, error="Password must be at least 8 characters."), 400
+    email = order["email"]
+    existing = db.get_user_by_email(email)
+    if existing and existing.get("password_hash"):
+        return jsonify(ok=False, error="An account already exists for this email. Please log in."), 409
+    user_id = db.upsert_user(email, order.get("name"))
+    db.set_password(user_id, auth_module.hash_pw(password))
+    _login_user(user_id)
+    return jsonify(ok=True)
 
 
 if __name__ == "__main__":

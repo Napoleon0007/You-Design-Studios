@@ -68,8 +68,8 @@
       <!-- Hero video (swap the src to try a different mockup). Falls back to the
            frame-sequence canvas if HERO.video is unset in the script below. -->
       <video id="heroVideo" class="hero-video" autoplay muted loop playsinline preload="auto"
-             poster="{{ url_for('static', filename='media/hero_v4_poster.jpg') }}">
-        <source src="{{ url_for('static', filename='media/hero_v4.mp4') }}" type="video/mp4" />
+             poster="{{ url_for('static', filename='media/hero_bg_poster.jpg') }}">
+        <source src="{{ url_for('static', filename='media/hero_bg.mp4') }}" type="video/mp4" />
       </video>
       <canvas id="heroCanvas"></canvas>
       <div class="hero-grade" aria-hidden="true"></div>
@@ -177,45 +177,16 @@
     </div>
   </section>
 
-  <!-- ─────────────── motion wall — every spinning mockup ─────────────── -->
+  <!-- ─────────────── collection — Möbius design strip ────────────────── -->
   <section class="section wrap" id="motion">
     <div class="reveal">
-      <p class="eyebrow">The lookbook</p>
-      <h2 class="h2">The drop,<br>in motion.</h2>
-      <p class="lead">Our films and 3D mockups, all in one place — the whole vibe in
-        motion. Each one loads as you reach it.</p>
+      <p class="eyebrow">The Collection</p>
+      <h2 class="h2">Every design,<br>on the strip.</h2>
+      <p class="lead">Drag to spin. Click any piece to open it in the studio.</p>
     </div>
-    <div class="motion-grid">
-      <div class="motion-card reveal"><video autoplay muted loop playsinline preload="none"
-        poster="{{ url_for('static', filename='media/gallery/hero1_poster.jpg') }}"
-        src="{{ url_for('static', filename='media/gallery/hero1.mp4') }}"></video></div>
-      <div class="motion-card reveal"><video autoplay muted loop playsinline preload="none"
-        poster="{{ url_for('static', filename='media/gallery/hero2_poster.jpg') }}"
-        src="{{ url_for('static', filename='media/gallery/hero2.mp4') }}"></video></div>
-      <div class="motion-card reveal"><video preload="none" muted loop playsinline
-        poster="{{ url_for('static', filename='media/hero_v4_poster.jpg') }}"
-        src="{{ url_for('static', filename='media/hero_v4.mp4') }}"></video></div>
-      <div class="motion-card reveal"><video preload="none" muted loop playsinline
-        poster="{{ url_for('static', filename='media/hero_v1_poster.jpg') }}"
-        src="{{ url_for('static', filename='media/hero_v1.mp4') }}"></video></div>
-      <div class="motion-card reveal"><video preload="none" muted loop playsinline
-        poster="{{ url_for('static', filename='media/hero_v2_poster.jpg') }}"
-        src="{{ url_for('static', filename='media/hero_v2.mp4') }}"></video></div>
-      <div class="motion-card reveal"><video preload="none" muted loop playsinline
-        poster="{{ url_for('static', filename='media/poster_swae.jpg') }}"
-        src="{{ url_for('static', filename='media/spin_swae.mp4') }}"></video></div>
-      <div class="motion-card reveal"><video preload="none" muted loop playsinline
-        poster="{{ url_for('static', filename='media/poster_astro.jpg') }}"
-        src="{{ url_for('static', filename='media/look_astro.mp4') }}"></video></div>
-      <div class="motion-card reveal"><video preload="none" muted loop playsinline
-        poster="{{ url_for('static', filename='media/poster_throne.jpg') }}"
-        src="{{ url_for('static', filename='media/look_throne.mp4') }}"></video></div>
-      <div class="motion-card reveal"><video preload="none" muted loop playsinline
-        poster="{{ url_for('static', filename='media/hero_v3_poster.jpg') }}"
-        src="{{ url_for('static', filename='media/hero_v3.mp4') }}"></video></div>
-      <div class="motion-card reveal"><video preload="none" muted loop playsinline
-        poster="{{ url_for('static', filename='media/hero_v5_poster.jpg') }}"
-        src="{{ url_for('static', filename='media/hero_v5.mp4') }}"></video></div>
+    <div class="mobius-wrap reveal">
+      <canvas id="motionMobius"></canvas>
+      <div id="motionMobiusLabels"></div>
     </div>
   </section>
 
@@ -305,27 +276,14 @@
   <script>
     // Scroll-scrub hero: #4 (tattoo guy, hoodie → shirt) as a frame sequence so it
     // advances on scroll-down and reverses on scroll-up, smoothly on phones.
-    window.HERO = { frames: 81, pad: 3, base: "/static/media/hero1/", prefix: "f_",
+    window.HERO = { video: "/static/media/hero_bg1.mp4",        /* desktop/browser: Hero backround 1 */
+                    videoMobile: "/static/media/hero_bg.mp4",   /* phones: Hero backround 3 */
+                    frames: 81, pad: 3, base: "/static/media/hero1/", prefix: "f_",
                     ext: ".jpg", startFrame: 0,
                     landZoom: 1.12, portraitZoom: 1.02, focusY: 0.40 };
   </script>
   <script src="{{ url_for('static', filename='js/hero.js') }}"></script>
-  <script>
-    // Motion wall: each clip uses preload="none" + a poster, so nothing downloads
-    // until you scroll near it. Then we play it; when it leaves the screen we pause
-    // it again — fast first paint, light on data and on mobile batteries.
-    (function () {
-      var vids = document.querySelectorAll('.motion-card video');
-      if (!vids.length) return;
-      var play = function (v) { var p = v.play(); if (p && p.catch) p.catch(function () {}); };
-      if (!('IntersectionObserver' in window)) { vids.forEach(play); return; }
-      var io = new IntersectionObserver(function (entries) {
-        entries.forEach(function (e) {
-          if (e.isIntersecting) play(e.target); else e.target.pause();
-        });
-      }, { rootMargin: '300px 0px', threshold: 0.1 });
-      vids.forEach(function (v) { io.observe(v); });
-    })();
-  </script>
+  <script src="{{ url_for('static', filename='js/threejs/three.min.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/collection-mobius.js') }}"></script>
 </body>
 </html>

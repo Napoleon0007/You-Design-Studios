@@ -1,0 +1,28 @@
+# Large local-only directories — not needed at runtime on Railway
+data/files/
+data/*.db
+data/outbox/
+Garment photos for Meshy/
+OCT printers info and cataloque/
+2nd draft of printing website/
+Clothing art/
+TRUeF logo/
+New artwork for Truef studios/
+lacoste-taste/
+tools/
+__pycache__/
+*.pyc
+.env
+venv/
+.venv/
+.DS_Store
+.git/
+
+# Stray root-level source videos (junk, ~10MB) — NOT runtime assets. These are
+# UPPERCASE .MP4; the real hero/section videos in static/media/ are lowercase
+# .mp4 and stay in the bundle, so this line never touches them.
+*.MP4
+
+# NOTE: do NOT blanket-ignore *.mp4 — the landing page hero + section background
+# videos live in static/media/ (~11MB total) and are REQUIRED at runtime. A
+# global *.mp4 rule 404s them on Railway and the hero falls back to blank.

@@ -12,8 +12,8 @@
   const state = { product: null, color: null, colorCode: null, colorHex: null, size: null,
                   sizeCode: null, side: "front", qty: 1, design: null, is3D: false, previewing: false,
                   verdict: null, uid: null, artKey: null, designToken: null,
-                  moderation: null, artFilename: null, libraryDesign: null,
-                  art: { front: { key: null }, back: { key: null } } };
+                  moderation: null, artFilename: null, libraryDesign: null, overrideRes: false,
+                  art: { front: { key: null, _url: null }, back: { key: null, _url: null } } };
 
   // normalised placement of the art within the print area, PER SIDE. This IS the
   // object printfile.render_print_file() consumes → on-screen preview == 300-DPI print.
@@ -81,8 +81,14 @@
       if (ph) ph.style.display = "none";
       if (soon) soon.hidden = true;
       if (els.overlay) els.overlay.style.display = "none";
-      window.Garment3D.load(modelFor(p))
-        .then(() => { if (state.colorHex) window.Garment3D.setColor(state.colorHex); })
+      const _mscale = (window.MODEL_SCALES && window.MODEL_SCALES[p.slug]) || 1.0;
+      window.Garment3D.load(modelFor(p), { scale: _mscale })
+        .then(() => {
+          if (state.colorHex) window.Garment3D.setColor(state.colorHex);
+          // A design tapped on the landing Möbius strip (?design=<id>) lands on this
+          // default shirt as soon as the model is ready.
+          if (state.pendingDesign) { const _d = state.pendingDesign; state.pendingDesign = null; pickDesign(_d); }
+        })
         .catch((e) => console.warn("[studio] model load failed", e));
     } else {
       // No 3D model for this product yet → clean "coming soon" state. NEVER show the hero
@@ -163,14 +169,31 @@
   $("#qtyMinus").addEventListener("click", () => { state.qty = Math.max(1, state.qty - 1); els.qtyVal.textContent = state.qty; });
   $("#qtyPlus").addEventListener("click", () => { state.qty = Math.min(99, state.qty + 1); els.qtyVal.textContent = state.qty; });
 
+  // ---- clear art from current side (start over) ------------------------- //
+  function clearArt() {
+    const s = state.side;
+    if (state.is3D) window.Garment3D.setArt(s, null);
+    else { els.overlay.src = ""; els.overlay.style.display = "none"; }
+    state.art[s] = { key: null, _url: null, has: false, aspect: 1 };
+    state.design = null; state.verdict = null; state.artKey = null; state.overrideRes = false;
+    els.validation.className = "validation";
+    els.validation.innerHTML = "";
+    if (els.modNote) els.modNote.hidden = true;
+    PLACEMENT[s] = { scale: 0.62, cx: 0.5, cy: 0.46, rotation: 0 };
+    refreshTransform();
+    updateGate();
+  }
+
   // ---- upload + validation (REAL) --------------------------------------- //
   function handleFile(file) {
     if (!file) return;
     if (!/^image\//.test(file.type)) { toast("Please upload an image file."); return; }
     state.artFilename = file.name || "";   // used by the server-side IP screen
     state.libraryDesign = null;            // this is a user upload, not a library pick
+    state.overrideRes = false;
 
     const localURL = URL.createObjectURL(file);
+    state.art[state.side]._url = localURL;  // saved for "use anyway" re-apply
     if (state.is3D) {
       window.Garment3D.setArt(state.side, localURL);
       enterDesignMode();   // lock the shirt still + front-on so you can place the art
@@ -198,9 +221,15 @@
       .then((d) => {
         if (!d.ok) { showValidation("fail", d.error || "Could not read image", null); return; }
         state.verdict = d.verdict;
-        state.artKey = d.art_key;        // server-side key for print-file generation
+        state.artKey = d.art_key;
         state.art[state.side].key = d.art_key;
         state.moderation = d.moderation || null;
+        // Low-res: remove from shirt — user must explicitly override
+        if (d.verdict === "fail") {
+          if (state.is3D) window.Garment3D.setArt(state.side, null);
+          else { els.overlay.src = ""; els.overlay.style.display = "none"; }
+          state.art[state.side].has = false;
+        }
         showValidation(d.verdict, d.message, d);
         showModeration(state.moderation);
         if (state.verdict !== "fail") remindOriginality();
@@ -217,13 +246,29 @@
              ` · <b>${d.effective_dpi} DPI</b> at print size<br>` +
              `Prints crisp up to <b>${d.recommended_max_cm.width}×${d.recommended_max_cm.height}cm</b>.</div>`;
     }
+    const actions = verdict === "fail"
+      ? `<div class="val-actions"><button type="button" id="valRemove" class="val-btn-remove">Remove</button><button type="button" id="valOverride" class="val-btn-override">Use anyway</button></div>`
+      : `<div class="val-actions"><button type="button" id="valRemove" class="val-btn-remove">Start over</button></div>`;
     els.validation.innerHTML =
       `<div class="vhead"><span class="badge"></span>${verdictLabel(verdict)}</div>` +
-      `<div class="meta">${message}</div>` + meta;
+      `<div class="meta">${message}</div>` + meta + actions;
+    // wire up buttons (re-created each time innerHTML is set)
+    const removeBtn = document.getElementById("valRemove");
+    const overrideBtn = document.getElementById("valOverride");
+    if (removeBtn) removeBtn.addEventListener("click", clearArt);
+    if (overrideBtn) overrideBtn.addEventListener("click", () => {
+      state.overrideRes = true;
+      const url = state.art[state.side]._url;
+      if (state.is3D && url) { window.Garment3D.setArt(state.side, url); enterDesignMode(); }
+      else if (url) { els.overlay.src = url; els.overlay.style.display = "block"; }
+      state.art[state.side].has = true;
+      overrideBtn.remove();
+      updateGate();
+    });
     updateGate();
   }
   function verdictLabel(v) {
-    return v === "pass" ? "Looks great" : v === "warn" ? "Usable — heads up" : "Too low-res";
+    return v === "pass" ? "Looks great" : v === "warn" ? "Usable — heads up" : "Too low-res to print";
   }
 
   // ---- content / IP moderation ------------------------------------------ //
@@ -246,7 +291,7 @@
   function updateGate() {
     let ok = true;
     if (state.artKey) {
-      ok = state.verdict !== "fail"
+      ok = (state.verdict !== "fail" || state.overrideRes)
         && (!state.moderation || state.moderation.status !== "blocked");
     }
     els.addBtn.disabled = !ok;
@@ -268,6 +313,10 @@
   const ipModal = $("#ipModal");
   let _ipAgreeCb = null;
   function rightsConfirmed() {
+    // Once the customer has agreed to the originality terms, remember it for this
+    // browser so we never nag them again at checkout. Server-side moderation still
+    // checks every design, so the IP gate is preserved.
+    try { if (localStorage.getItem("yds_rights_ok") === "1") state.rightsAck = true; } catch (e) {}
     return !!state.rightsAck || !!(els.rights && els.rights.checked);
   }
   function showIpModal(onAgree) { _ipAgreeCb = onAgree || null; if (ipModal) ipModal.hidden = false; }
@@ -276,6 +325,7 @@
   const _ipAgree = $("#ipAgree"), _ipCancel = $("#ipCancel");
   if (_ipAgree) _ipAgree.addEventListener("click", () => {
     state.rightsAck = true;
+    try { localStorage.setItem("yds_rights_ok", "1"); } catch (e) {}   // remember — don't re-ask
     if (els.rights) els.rights.checked = true;     // keep the backend payload happy
     const cb = _ipAgreeCb; hideIpModal(); updateGate();
     if (cb) cb();
@@ -283,6 +333,41 @@
   if (_ipCancel) _ipCancel.addEventListener("click", hideIpModal);
   if (ipModal) ipModal.addEventListener("click", (e) => { if (e.target === ipModal) hideIpModal(); });
   if (els.rights) els.rights.addEventListener("change", updateGate);
+
+  // ---- print-size upsize pop-up ----------------------------------------- //
+  // Fires once per session the first time a design is pushed past the standard
+  // print area. Larger prints carry OTC's A3 add-on (+R20 light / +R30 dark) —
+  // applied server-side at checkout; this just warns the customer up-front.
+  const SIZE_THRESHOLD_CM = 31;          // mirrors catalog.UPSIZE_THRESHOLD_W_CM
+  const SIZE_FEE = { light: 20, dark: 30 };
+  let _sizeWarned = false;
+  const sizeModal = $("#sizeModal");
+  function _areaWcm() {
+    return (state.product && state.product.print_area && state.product.print_area.front
+            && state.product.print_area.front.w_cm) || 30;
+  }
+  function isLargePrint(p) { return (((p && p.scale) || 0) * _areaWcm()) > SIZE_THRESHOLD_CM; }
+  function showSizeModal() {
+    const fee = isLightColor(state.colorHex) ? SIZE_FEE.light : SIZE_FEE.dark;
+    const feeEl = $("#sizeFee"); if (feeEl) feeEl.textContent = "R" + fee;
+    if (sizeModal) sizeModal.hidden = false;
+  }
+  function hideSizeModal() { if (sizeModal) sizeModal.hidden = true; }
+  function checkPrintSize(s, p) {
+    if (s !== state.side) return;
+    state.sizeLarge = isLargePrint(p);
+    // Pop-up removed for now — the upsize is still applied at checkout (shown in the total).
+  }
+  const _sizeKeep = $("#sizeKeep"), _sizeRevert = $("#sizeRevert");
+  if (_sizeKeep) _sizeKeep.addEventListener("click", hideSizeModal);
+  if (_sizeRevert) _sizeRevert.addEventListener("click", () => {
+    const s = state.side, p = PLACEMENT[s] || {};
+    p.scale = Math.min(0.87, (SIZE_THRESHOLD_CM - 1) / _areaWcm());   // shrink back under the threshold
+    if (state.is3D && window.Garment3D) window.Garment3D.setPlacement(s, p);
+    state.sizeLarge = false;
+    refreshTransform(); hideSizeModal();
+  });
+  if (sizeModal) sizeModal.addEventListener("click", (e) => { if (e.target === sizeModal) hideSizeModal(); });
 
   // ---- actions (wired to swap-in API contract) -------------------------- //
   // Persist the current configuration as a design; returns the API response so
@@ -328,6 +413,7 @@
         preview: d.preview_url || (state.art.front.key ? "/files/" + state.art.front.key : null),
       });
       toast(`Added: ${state.product.name} · ${state.color} · ${state.size} ×${state.qty}`);
+      Cart.open();   // "Finish" → funnel straight to the bag + Checkout button (don't just toast)
     }).catch(() => { els.addBtn.disabled = false; toast("Couldn't add to cart."); });
   }
 
@@ -348,7 +434,7 @@
     // The garment FREEZES (no idle spin) so the person can drag the art to position it,
     // and the Transform panel appears so they can stretch it wider to fill the chest.
     const p = PLACEMENT[s];
-    p.scale = 1.0; p.scale_y = null; p.cx = 0.5; p.cy = 0.46; p.rotation = 0;
+    p.scale = 0.87; p.scale_y = null; p.cx = 0.5; p.cy = 0.46; p.rotation = 0;   // lands at the old full width; headroom above is the new "large"
     if (state.is3D) {
       window.Garment3D.setPlacement(s, p);
       enterDesignMode();   // hold still for design
@@ -376,6 +462,7 @@
     p.scale_y = (+els.xfH.value) / 100;
     p.rotation = +els.xfR.value;
     if (state.is3D) window.Garment3D.setPlacement(state.side, p);
+    checkPrintSize(state.side, p);
   }
   [els.xfW, els.xfH, els.xfR].forEach((el) => el && el.addEventListener("input", applyTransform));
   if (els.xfReset) els.xfReset.addEventListener("click", () => {
@@ -383,8 +470,41 @@
     p.scale = 0.62; p.cx = 0.5; p.cy = 0.46; p.rotation = 0;
     p.scale_y = aspectFitScaleY(state.side, a);
     if (state.is3D) window.Garment3D.setPlacement(state.side, p);
+    setActivePreset("full");
     refreshTransform();
   });
+
+  // ---- placement presets: Full Chest + Left Logo ----------------------- //
+  const presetFull = document.getElementById("presetFull");
+  const presetLogo = document.getElementById("presetLogo");
+
+  function setActivePreset(name) {
+    if (presetFull) presetFull.classList.toggle("on", name === "full");
+    if (presetLogo) presetLogo.classList.toggle("on", name === "logo");
+  }
+
+  function applyPreset(name) {
+    const a = (state.art[state.side] || {}).aspect || 1;
+    const p = PLACEMENT[state.side];
+    if (name === "logo") {
+      // Wearer's LEFT chest (screen right) — where pocket logos sit on polos/hoodies
+      p.scale = 0.21; p.scale_y = 0.21;
+      p.cx = 0.78; p.cy = 0.28;
+      p.rotation = 0;
+    } else {
+      p.scale = 0.54; p.cx = 0.5; p.cy = 0.46; p.rotation = 0;
+      p.scale_y = aspectFitScaleY(state.side, a);
+    }
+    if (state.is3D) window.Garment3D.setPlacement(state.side, p);
+    setActivePreset(name);
+    refreshTransform();
+    // Close the Move sheet so the 3D model is fully visible for fine-tuning
+    const closeBtnMove = document.querySelector("#sheet-move [data-close]");
+    if (closeBtnMove) closeBtnMove.click();
+  }
+
+  if (presetFull) presetFull.addEventListener("click", () => applyPreset("full"));
+  if (presetLogo) presetLogo.addEventListener("click", () => applyPreset("logo"));
 
   // ---- flat-design lock + 3D-preview toggle ----------------------------- //
   // Designing = shirt locked dead-still facing you, drag anywhere to move the print,
@@ -472,9 +592,12 @@
   // ---- boot ------------------------------------------------------------- //
   if (use3D) {
     engineOk = window.Garment3D.init(document.getElementById("garment3d"),
-      { onPlacement: (s, p) => { PLACEMENT[s] = p; if (s === state.side) refreshTransform(); } });
+      { onPlacement: (s, p) => { PLACEMENT[s] = p; if (s === state.side) refreshTransform(); checkPrintSize(s, p); } });
     // Stage visibility (3D canvas vs 2D photo) is set per-product by applyStageMode.
   }
+  // A design tapped on the landing Möbius strip arrives as ?design=<id> — stash it so
+  // applyStageMode's model-load .then applies it to the default shirt automatically.
+  try { const _qd = new URLSearchParams(location.search).get("design"); if (_qd) state.pendingDesign = _qd; } catch (e) {}
   if (PRODUCTS.length) selectProduct(PRODUCTS[0]);
   $$("#productTabs button").forEach((b) =>
     b.addEventListener("click", () => selectProduct(PRODUCTS.find((p) => p.slug === b.dataset.slug))));
@@ -541,8 +664,8 @@
       if (tool) tool.classList.add("on");
       if (scrim) scrim.hidden = false;
       openName = name;
-      // Design sheet: snap to front, lock still so art can be placed precisely
-      if (name === "design") enterDesignMode();
+      // Design + Move sheets: snap to front, lock still so art can be placed precisely
+      if (name === "design" || name === "move") enterDesignMode();
     }
 
     $$("#edDock .tool").forEach((t) => {
@@ -664,6 +787,7 @@
     const on = (sel, ev, fn) => { const e = $(sel); if (e) e.addEventListener(ev, fn); };
     on("#cartBtn", "click", open);
     on("#cartClose", "click", close);
+    on("#checkoutClose", "click", close);   // checkout pane also gets a direct ✕ exit
     on("#checkoutBack", "click", showCart);
     on("#toCheckout", "click", showCheckout);
     on("#payBtn", "click", pay);

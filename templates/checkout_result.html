@@ -26,7 +26,15 @@
     .ln { display:flex; justify-content:space-between; padding:5px 0; font-size:14px; }
     .ln.tot { font-weight:700; border-top:1px solid var(--line); margin-top:6px; padding-top:10px; font-size:16px; }
     .btn { display:block; text-align:center; text-decoration:none; background:#111; color:#fff;
-           font-weight:600; padding:15px; border-radius:12px; margin-top:20px; }
+           font-weight:600; padding:15px; border-radius:12px; margin-top:20px;
+           border:none; cursor:pointer; font-size:16px; width:100%; }
+    .signup-nudge { background:#f9f9f7; border:1px solid var(--line); border-radius:12px;
+                    padding:16px; margin-top:18px; }
+    .nudge-label { font-weight:700; margin:0 0 4px; font-size:15px; }
+    .signup-nudge input { display:block; width:100%; box-sizing:border-box; padding:12px 14px;
+                          border:1px solid var(--line); border-radius:10px; font-size:15px;
+                          margin:10px 0 8px; outline:none; }
+    .signup-nudge input:focus { border-color:#111; }
   </style>
 </head>
 <body>
@@ -61,9 +69,51 @@
         <div class="ln dim"><span>Shipping</span><span>{{ 'FREE' if order.shipping == 0 else 'R%.2f'|format(order.shipping/100) }}</span></div>
         <div class="ln tot"><span>Total</span><span>R{{ '%.2f'|format(order.total/100) }}</span></div>
       </div>
-      <a class="btn" href="/studio">Design something else</a>
+
+      {% if show_signup %}
+      <div class="signup-nudge" id="signupNudge">
+        <p class="nudge-label">Save your order to an account</p>
+        <p class="dim">Track this and future orders in one place. Your email is already saved — just set a password.</p>
+        <div id="nudgeForm">
+          <input type="password" id="nudgePw" placeholder="Choose a password (8+ chars)" autocomplete="new-password" />
+          <button class="btn" onclick="claimAccount()">Create account</button>
+        </div>
+        <p id="nudgeMsg" class="dim" style="display:none"></p>
+      </div>
+      {% endif %}
+
+      <a class="btn" href="/studio" style="margin-top:{% if show_signup %}8{% else %}20{% endif %}px">Design something else</a>
       {% endif %}
     </div>
   </div>
+{% if show_signup %}
+<script>
+async function claimAccount() {
+  const pw = document.getElementById('nudgePw').value;
+  const msg = document.getElementById('nudgeMsg');
+  const form = document.getElementById('nudgeForm');
+  if (pw.length < 8) { showMsg('Password must be at least 8 characters.', false); return; }
+  const res = await fetch('/api/account/create-from-order', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({ reference: '{{ order.reference }}', password: pw })
+  });
+  const data = await res.json();
+  if (data.ok) {
+    form.style.display = 'none';
+    showMsg('Account created! You can now track your orders.', true);
+    setTimeout(() => { window.location.href = '/account'; }, 1200);
+  } else {
+    showMsg(data.error || 'Something went wrong.', false);
+  }
+}
+function showMsg(text, ok) {
+  const el = document.getElementById('nudgeMsg');
+  el.textContent = text;
+  el.style.color = ok ? '#1c8c4c' : '#e8472b';
+  el.style.display = 'block';
+}
+</script>
+{% endif %}
 </body>
 </html>

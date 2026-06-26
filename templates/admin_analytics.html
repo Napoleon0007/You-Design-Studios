@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Analytics — {{ brand.name }}</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    :root{ --tile:#1b2236; --tile2:#222c45; --ink:#eef2ff; --mut:#8a96b8;
+           --cyan:#3ad0ff; --yellow:#ffd24a; --green:#33d69f; --red:#ff6b6b; --line:#2c3656; }
+    *{ box-sizing:border-box; margin:0; padding:0; }
+    body{ font-family:'Inter',system-ui,sans-serif; background:#0e1322; color:var(--ink);
+          padding:18px; min-height:100vh; }
+    .top{ display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; }
+    .top h1{ font-size:18px; font-weight:800; letter-spacing:.02em; }
+    .top .sub{ color:var(--mut); font-size:12px; font-weight:500; }
+    .top a{ color:var(--cyan); text-decoration:none; font-size:13px; font-weight:600; margin-left:16px; }
+    .grid{ display:grid; grid-template-columns:repeat(4,1fr); gap:12px; }
+    .tile{ background:var(--tile); border-radius:14px; padding:18px 18px 16px; min-height:120px;
+           border:1px solid rgba(255,255,255,.04); }
+    .tile h3{ font-size:12px; font-weight:600; color:var(--mut); text-transform:uppercase;
+              letter-spacing:.08em; margin-bottom:10px; }
+    .big{ font-size:40px; font-weight:800; line-height:1; letter-spacing:-.02em; }
+    .big.sm{ font-size:30px; }
+    .delta{ font-size:12px; color:var(--mut); margin-top:8px; font-weight:500; }
+    .delta b{ color:var(--green); }
+    .span2{ grid-column:span 2; } .span4{ grid-column:span 4; }
+    .row2{ grid-row:span 2; }
+    /* sparkline / chart */
+    svg{ display:block; width:100%; }
+    .legend{ display:flex; gap:14px; font-size:11px; color:var(--mut); margin-top:8px; }
+    .legend i{ width:9px;height:3px;display:inline-block;border-radius:2px;margin-right:5px;vertical-align:middle; }
+    /* breakdown tables */
+    table{ width:100%; border-collapse:collapse; font-size:13px; }
+    td{ padding:7px 0; border-bottom:1px solid var(--line); color:var(--ink); }
+    td.r{ text-align:right; color:var(--mut); font-variant-numeric:tabular-nums; }
+    tr:last-child td{ border-bottom:0; }
+    .pill{ font-size:10px; font-weight:700; padding:3px 8px; border-radius:20px; text-transform:uppercase; letter-spacing:.04em; }
+    .badge-row{ display:flex; flex-wrap:wrap; gap:7px; margin-top:6px; }
+    .gauge-val{ font-size:34px; font-weight:800; text-align:center; margin-top:-6px; }
+    .gauge-cap{ text-align:center; color:var(--mut); font-size:12px; }
+    .ev{ display:flex; justify-content:space-between; font-size:12.5px; padding:6px 0; border-bottom:1px solid var(--line); }
+    .ev .k{ color:var(--mut); } .ev b{ font-weight:600; }
+    .ev .tag{ font-size:10px; padding:2px 7px; border-radius:6px; font-weight:700; text-transform:uppercase; }
+    @media(max-width:880px){ .grid{ grid-template-columns:repeat(2,1fr);} .span2,.span4{grid-column:span 2;} }
+    @media(max-width:520px){ .grid{ grid-template-columns:1fr;} .span2,.span4{grid-column:span 1;} .big{font-size:34px;} }
+  </style>
+</head>
+<body>
+  <div class="top">
+    <div>
+      <h1>{{ brand.name }} · Live analytics</h1>
+      <div class="sub">Orders, revenue & conversion — last 14 days · <span id="clock"></span></div>
+    </div>
+    <div>
+      <a href="/admin/orders?key={{ admin_key }}">Orders →</a>
+      <a href="/admin/analytics?key={{ admin_key }}">↻ Refresh</a>
+    </div>
+  </div>
+
+  <div class="grid">
+    <!-- KPI big numbers -->
+    <div class="tile">
+      <h3>Revenue · 7 days</h3>
+      <div class="big" style="color:var(--green)">R{{ "{:,.0f}".format(stats.revenue_7d/100) }}</div>
+      <div class="delta">All-time: <b>R{{ "{:,.0f}".format(stats.revenue/100) }}</b></div>
+    </div>
+    <div class="tile">
+      <h3>Conversion rate</h3>
+      <div class="big">{{ stats.conversion }}%</div>
+      <div class="delta">{{ stats.orders_paid }} paid of {{ stats.orders_total }} started</div>
+    </div>
+    <div class="tile">
+      <h3>Orders · paid</h3>
+      <div class="big" style="color:var(--cyan)">{{ stats.orders_paid }}</div>
+      <div class="delta">{{ stats.orders_7d }} in the last 7 days</div>
+    </div>
+    <div class="tile">
+      <h3>Avg order value</h3>
+      <div class="big sm">R{{ "{:,.0f}".format(stats.aov/100) }}</div>
+      <div class="delta">Declines: <b style="color:var(--red)">{{ stats.declined }}</b> ({{ stats.decline_rate }}%)</div>
+    </div>
+
+    <!-- revenue trend line chart -->
+    <div class="tile span2 row2">
+      <h3>Daily revenue & orders</h3>
+      <svg id="chart" viewBox="0 0 600 220" preserveAspectRatio="none" style="height:200px"></svg>
+      <div class="legend"><span><i style="background:var(--green)"></i>Revenue</span><span><i style="background:var(--cyan)"></i>Orders</span></div>
+    </div>
+
+    <!-- conversion gauge -->
+    <div class="tile">
+      <h3>Conversion</h3>
+      <svg viewBox="0 0 160 90" style="height:84px"><g id="gauge"></g></svg>
+      <div class="gauge-val" id="gaugeVal">{{ stats.conversion }}%</div>
+      <div class="gauge-cap">paid ÷ started</div>
+    </div>
+
+    <!-- decline gauge -->
+    <div class="tile">
+      <h3>Decline rate</h3>
+      <svg viewBox="0 0 160 90" style="height:84px"><g id="gauge2"></g></svg>
+      <div class="gauge-val" id="gauge2Val" style="color:var(--red)">{{ stats.decline_rate }}%</div>
+      <div class="gauge-cap">{{ stats.declined }} declined / failed</div>
+    </div>
+
+    <!-- best sellers -->
+    <div class="tile span2">
+      <h3>Best sellers</h3>
+      <table>
+        {% for b in stats.best_sellers %}
+        <tr><td>{{ b.name }}</td><td class="r">{{ b.qty }} sold</td><td class="r">R{{ "{:,.0f}".format(b.revenue/100) }}</td></tr>
+        {% else %}<tr><td class="r">No sales yet.</td></tr>{% endfor %}
+      </table>
+    </div>
+
+    <!-- payment channels -->
+    <div class="tile">
+      <h3>Payment method</h3>
+      <table>
+        {% for ch in stats.channels %}
+        <tr><td style="text-transform:capitalize">{{ ch.channel }}</td><td class="r">{{ ch.n }}</td></tr>
+        {% else %}<tr><td class="r">—</td></tr>{% endfor %}
+      </table>
+    </div>
+
+    <!-- locations -->
+    <div class="tile">
+      <h3>Customer locations</h3>
+      <table>
+        {% for loc, n in stats.locations[:6] %}
+        <tr><td>{{ loc }}</td><td class="r">{{ n }}</td></tr>
+        {% else %}<tr><td class="r">No paid orders yet.</td></tr>{% endfor %}
+      </table>
+    </div>
+
+    <!-- status funnel -->
+    <div class="tile span2">
+      <h3>Order pipeline</h3>
+      <div class="badge-row">
+        {% for st, n in stats.status_counts.items() %}
+        <span class="pill" style="background:rgba(255,255,255,.08);color:var(--ink)">{{ st.replace('_',' ') }} · {{ n }}</span>
+        {% else %}<span class="delta">No orders yet.</span>{% endfor %}
+      </div>
+    </div>
+
+    <!-- recent activity -->
+    <div class="tile span2">
+      <h3>Latest activity</h3>
+      <div id="events">
+        {% for e in stats.recent_events[:8] %}
+        <div class="ev">
+          <span><b>{{ e.reference }}</b> <span class="k">— {{ e.detail or '' }}</span></span>
+          <span class="tag" data-ev="{{ e.event }}">{{ e.event.replace('_',' ') }}</span>
+        </div>
+        {% else %}<div class="delta">No activity yet — events appear here as orders move.</div>{% endfor %}
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const STATS = {{ stats|tojson }};
+    const money = c => "R" + Math.round(c/100).toLocaleString();
+    // clock
+    const clk = () => { const d=new Date(); document.getElementById('clock').textContent = d.toLocaleString('en-ZA',{hour:'2-digit',minute:'2-digit'}); };
+    clk(); setInterval(clk, 30000);
+
+    // ---- dual line chart (revenue green, orders cyan) ----
+    (function(){
+      const s = STATS.series || []; if(!s.length) return;
+      const W=600,H=220,P=24;
+      const rev = s.map(d=>d.revenue), ord = s.map(d=>d.orders);
+      const maxR = Math.max(1, ...rev), maxO = Math.max(1, ...ord);
+      const x = i => P + i*(W-2*P)/Math.max(1,s.length-1);
+      const yR = v => H-P - (v/maxR)*(H-2*P);
+      const yO = v => H-P - (v/maxO)*(H-2*P);
+      const path = (arr,y)=>arr.map((v,i)=>(i?'L':'M')+x(i).toFixed(1)+' '+y(v).toFixed(1)).join(' ');
+      const area = `M${x(0)} ${H-P} `+rev.map((v,i)=>'L'+x(i).toFixed(1)+' '+yR(v).toFixed(1)).join(' ')+` L${x(s.length-1)} ${H-P} Z`;
+      document.getElementById('chart').innerHTML =
+        `<defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1">
+           <stop offset="0" stop-color="#33d69f" stop-opacity=".35"/><stop offset="1" stop-color="#33d69f" stop-opacity="0"/></linearGradient></defs>
+         <path d="${area}" fill="url(#g)"/>
+         <path d="${path(rev,yR)}" fill="none" stroke="#33d69f" stroke-width="2.5"/>
+         <path d="${path(ord,yO)}" fill="none" stroke="#3ad0ff" stroke-width="2" stroke-dasharray="1 0"/>`;
+    })();
+
+    // ---- semicircle gauges ----
+    function gauge(elId, pct, color){
+      const el=document.getElementById(elId); if(!el) return;
+      const cx=80,cy=80,r=64, a0=Math.PI, a1=Math.PI*(1 - Math.min(100,pct)/100);
+      const arc=(s,e)=>`M ${cx+r*Math.cos(s)} ${cy+r*Math.sin(s)} A ${r} ${r} 0 0 1 ${cx+r*Math.cos(e)} ${cy+r*Math.sin(e)}`;
+      el.innerHTML = `<path d="${arc(Math.PI,0)}" fill="none" stroke="#2c3656" stroke-width="11" stroke-linecap="round"/>
+                      <path d="${arc(a0,a1)}" fill="none" stroke="${color}" stroke-width="11" stroke-linecap="round"/>`;
+    }
+    gauge('gauge', STATS.conversion, '#3ad0ff');
+    gauge('gauge2', STATS.decline_rate, '#ff6b6b');
+
+    // colour event tags
+    document.querySelectorAll('.tag').forEach(t=>{
+      const map={paid:'#33d69f',created:'#8a96b8',payment_initiated:'#ffd24a',declined:'#ff6b6b',failed:'#ff6b6b',shipped:'#7c9cff',submitted:'#3ad0ff',refunded:'#b07cff'};
+      const c=map[t.dataset.ev]||'#8a96b8'; t.style.background=c+'22'; t.style.color=c;
+    });
+  </script>
+</body>
+</html>

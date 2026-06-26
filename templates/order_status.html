@@ -89,9 +89,9 @@
         </div>
 
         <!-- Items -->
-        {% if order.items %}
+        {% if order['items'] %}
         <div class="items">
-          {% for it in order.items %}
+          {% for it in order['items'] %}
           <div class="item">
             <div>
               <div>{{ it.product_name or "Item" }}</div>

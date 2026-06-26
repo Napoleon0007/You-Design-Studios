@@ -91,8 +91,8 @@
     AREA.cy = size.y * 0.10;
     AREA.z  = (size.z / 2) * 0.72;
     AREA.w  = size.x * 0.34;
-    AREA.h  = size.y * 0.32;
-    DECAL_DEPTH = size.z * 1.4;
+    AREA.h  = size.y * 0.40;
+    DECAL_DEPTH = size.z * 0.5; // deep enough to reach tee front face, shallow enough to exclude back
   }
 
   // ── Art decal ─────────────────────────────────────────────────────────────
@@ -108,8 +108,10 @@
     let geo;
     try { geo = new THREE.DecalGeometry(mainMesh, pos, new THREE.Euler(0, 0, 0), sz); } catch (e) { return; }
     const dmat = new THREE.MeshStandardMaterial({
-      map: artTex, transparent: true, roughness: 0.9, metalness: 0,
-      polygonOffset: true, polygonOffsetFactor: -8, depthTest: false, depthWrite: false,
+      map: artTex, transparent: true, alphaTest: 0.05,
+      roughness: 0.92, metalness: 0,
+      polygonOffset: true, polygonOffsetFactor: -8, polygonOffsetUnits: -8,
+      depthTest: false, depthWrite: false,
     });
     decalMesh = new THREE.Mesh(geo, dmat);
     scene.add(decalMesh);
@@ -163,11 +165,11 @@
 
   // ── Carousel playlist — 2 hoodies + 3 coloured tees ─────────────────────
   const PLAYLIST = [
-    { model: "/static/models/meshy_hoodie.glb",      colour: "#111111", artUrl: "/designs/transformer.webp"   }, // black hoodie + Transformer — opener
-    { model: "/static/models/meshy_hoodie_zip.glb",  colour: "#1e1535", artUrl: "/designs/transformer.webp"   }, // dark plum zip hoodie + Transformer
-    { model: "/static/models/meshy_tee.glb",          colour: "#b04a2c", artUrl: "/designs/spirits.jpeg"        }, // rust tee + Spirits
-    { model: "/static/models/meshy_tee_premium.glb", colour: "#1a3a5c", artUrl: "/designs/angel-statue.jpg"    }, // navy premium tee + Angel Statue
-    { model: "/static/models/meshy_tee.glb",          colour: "#2e5225", artUrl: "/designs/sun-island.jpeg"    }, // forest green tee + Sun Island
+    { model: "/static/models/meshy_hoodie.glb", colour: "#d4a843", artUrl: "/designs/eagle-spirit.jpeg"         }, // yellow hoodie + Eagle Spirit
+    { model: "/static/models/meshy_hoodie.glb", colour: "#2a4a8c", artUrl: "/designs/skull-shaman.jpeg"         }, // blue hoodie + Skull Shaman
+    { model: "/static/models/meshy_tee.glb",    colour: "#d4622a", artUrl: "/designs/indian-warrior.jpeg"       }, // orange tee + Indian Warrior
+    { model: "/static/models/meshy_tee.glb",    colour: "#f4f3ef", artUrl: "/designs/crest-imperial-eagle.jpg"  }, // white tee + Crest Imperial Eagle
+    { model: "/static/models/meshy_hoodie.glb", colour: "#d4607a", artUrl: "/designs/einstein.jpeg"              }, // pink hoodie + Einstein
   ];
 
   // ── Model loader ──────────────────────────────────────────────────────────
@@ -205,10 +207,14 @@
     paintColor(slot.colour);
 
     if (slot.model === currentPath && currentModel) {
-      // Same model — just swap colour + art
+      // Same model — just swap colour + art, no fade needed
       loadArt(slot.artUrl);
       return;
     }
+
+    // Fade out cleanly before swapping the model
+    canvas.style.transition = "opacity 0.18s ease";
+    canvas.style.opacity = "0";
 
     loader.load(slot.model, (gltf) => {
       const model = gltf.scene;
@@ -241,19 +247,27 @@
       currentPath  = slot.model;
 
       loadArt(slot.artUrl);
+      // Fade back in once model + art are ready
+      requestAnimationFrame(() => requestAnimationFrame(() => {
+        canvas.style.transition = "opacity 0.35s ease";
+        canvas.style.opacity = "1";
+      }));
     });
   }
 
   // ── Render loop — paused when off-screen ─────────────────────────────────
   let rafId = null;
+  let sectionVisible = false;
   function loop() { rafId = requestAnimationFrame(loop); controls.update(); renderer.render(scene, camera); }
 
   if (typeof IntersectionObserver !== "undefined") {
     new IntersectionObserver(entries => {
-      if (entries[0].isIntersecting) { if (!rafId) loop(); }
+      sectionVisible = entries[0].isIntersecting;
+      if (sectionVisible) { if (!rafId) loop(); }
       else { if (rafId) { cancelAnimationFrame(rafId); rafId = null; } }
     }, { threshold: 0.05 }).observe(canvas);
   } else {
+    sectionVisible = true;
     loop();
   }
 
@@ -269,35 +283,44 @@
   }
 
   // ── Boot ──────────────────────────────────────────────────────────────────
+  // Preload all design images into browser cache so they're ready the instant a slot needs them.
+  PLAYLIST.forEach(slot => { if (slot.artUrl) { const img = new Image(); img.src = slot.artUrl; } });
+
   showSlot(0);
 
   // Preload remaining model GLBs into browser HTTP cache
   const otherModels = [...new Set(PLAYLIST.map(s => s.model))].filter(m => m !== PLAYLIST[0].model);
   otherModels.forEach((m, k) => setTimeout(() => loader.load(m, () => {}), 2000 + k * 1500));
 
-  // ── Carousel — advance every 5 s ─────────────────────────────────────────
+  // ── Carousel — advance every 5 s, only while section is visible ─────────
   const studioEl = document.querySelector(".studio-hero");
   if (studioEl) {
-    setInterval(() => { slotIdx = (slotIdx + 1) % PLAYLIST.length; showSlot(slotIdx); }, 5000);
+    setInterval(() => {
+      if (!sectionVisible) return;
+      slotIdx = (slotIdx + 1) % PLAYLIST.length;
+      showSlot(slotIdx);
+    }, 5000);
   }
 
-  // ── Background colour-cycling (7 s) — tints the studio photo, not replaces it ─
-  // rgba values: ~60% opacity so the photo texture always shows through
+  // ── Background colour-cycling (7 s) ──────────────────────────────────────
   const STUDIO_PALETTES = [
-    "rgba(0,0,0,.62)",        // near-black — default
-    "rgba(15,16,50,.66)",     // deep ink blue
-    "rgba(0,14,28,.62)",      // midnight
-    "rgba(28,10,40,.64)",     // deep plum
-    "rgba(0,22,12,.62)",      // dark forest
-    "rgba(35,12,8,.64)",      // deep rust
-    "rgba(18,10,22,.62)",     // dark violet
-    "rgba(12,25,15,.62)",     // dark emerald
+    "rgba(0,0,0,.62)",
+    "rgba(15,16,50,.66)",
+    "rgba(0,14,28,.62)",
+    "rgba(28,10,40,.64)",
+    "rgba(0,22,12,.62)",
+    "rgba(35,12,8,.64)",
+    "rgba(18,10,22,.62)",
+    "rgba(12,25,15,.62)",
   ];
   let bgIdx = 0;
   if (studioEl) {
     setInterval(() => {
+      if (!sectionVisible) return;
       bgIdx = (bgIdx + 1) % STUDIO_PALETTES.length;
       document.documentElement.style.setProperty("--studio-bg", STUDIO_PALETTES[bgIdx]);
     }, 7000);
   }
+
+  // HIW colour cycling disabled
 })();

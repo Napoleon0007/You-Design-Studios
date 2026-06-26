@@ -45,8 +45,8 @@
   // Fit the print boxes to a freshly-measured garment size (world units, the
   // model is re-centred on the origin so the surfaces are at ±half-extent).
   function calibrateArea(size) {
-    const PW  = size.x * 0.34;   // print width  ≈ chest area (bbox x includes sleeves)
-    const PH  = size.y * 0.32;   // print height
+    const PW  = size.x * 0.391;  // print width ≈ chest — grown 15% (keep in sync w/ catalog PRINT_GROW)
+    const PH  = size.y * 0.368;  // print height — grown 15%
     const PCY = size.y * 0.10;   // vertical centre: upper chest, just above the middle
     const PZ  = (size.z / 2) * 0.72;  // projection plane just inside the front/back surface
     AREA.front = { cx: 0, cy: PCY, z:  PZ, w: PW, h: PH, back: false };
@@ -246,6 +246,11 @@
     gltf.scene.traverse((o) => { if (o.isMesh) meshes.push(o); });
     if (!meshes.length) return null;
     meshes.forEach((m) => {
+      // Some Meshy exports ship POSITION only (no NORMAL / no UV). THREE.DecalGeometry
+      // reads the target's normal attribute to project the print — without it the decal
+      // build throws and the art silently never appears (and the fabric lights flat).
+      // Compute normals so decals + lighting work on every model, current and future.
+      if (m.geometry && !m.geometry.attributes.normal) m.geometry.computeVertexNormals();
       (Array.isArray(m.material) ? m.material : [m.material]).forEach((one) => {
         if (!one) return;
         one.map = tex; one.color = new THREE.Color(0xffffff);
@@ -292,29 +297,36 @@
   };
 
   // Swap a (cached or freshly-loaded) model entry into the scene + reframe it.
-  function _showModel(entry) {
+  // modelScale < 1 makes the garment appear smaller (used for kids products).
+  function _showModel(entry, modelScale) {
+    modelScale = modelScale || 1.0;
     ["front", "back"].forEach(removeDecal);
     if (mesh && mesh.userData._root && mesh.userData._root !== entry.root) {
       scene.remove(mesh.userData._root);
     }
+    entry.root.scale.setScalar(modelScale);
+    entry.root.updateMatrixWorld(true);
+    const scaledBox = new THREE.Box3().setFromObject(entry.root);
+    const scaledSize = scaledBox.getSize(new THREE.Vector3());
     mesh = entry.mesh;
     mat = Array.isArray(mesh.material) ? mesh.material[0] : mesh.material;
-    calibrateArea(entry.size);                     // fit the print boxes to THIS model
-    const maxDim = Math.max(entry.size.x, entry.size.y);
-    fitDist = (maxDim / (2 * Math.tan((camera.fov * Math.PI / 180) / 2))) * 1.5;
+    calibrateArea(scaledSize);
+    const maxDim = Math.max(scaledSize.x, scaledSize.y);
+    fitDist = (maxDim / (2 * Math.tan((camera.fov * Math.PI / 180) / 2))) * (1.5 / modelScale);
     controls.minDistance = fitDist * 0.55; controls.maxDistance = fitDist * 1.9;
     setCam(side, fitDist);
-    if (_roomOn && _modelSize) { _modelSize.copy(entry.size); _layoutRoom(); }   // keep the room floor at this garment's feet
+    if (_roomOn && _modelSize) { _modelSize.copy(scaledSize); _layoutRoom(); }
     if (entry.root.parent !== scene) scene.add(entry.root);
-    ["front", "back"].forEach(buildDecal);         // re-apply any existing art
+    ["front", "back"].forEach(buildDecal);
     redraw(); kick();
   }
 
-  G.load = function (url) {
-    if (_modelCache[url]) { _showModel(_modelCache[url]); return Promise.resolve(_modelCache[url]); }
+  G.load = function (url, opts) {
+    const modelScale = (opts && opts.scale) || 1.0;
+    if (_modelCache[url]) { _showModel(_modelCache[url], modelScale); return Promise.resolve(_modelCache[url]); }
     showLoading(true);
     return _fetchModel(url).then(
-      (entry) => { _showModel(entry); showLoading(false); return entry; },
+      (entry) => { _showModel(entry, modelScale); showLoading(false); return entry; },
       (err) => { showLoading(false); throw err; });
   };
 

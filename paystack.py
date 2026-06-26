@@ -73,7 +73,14 @@ def _request(method: str, path: str, body: dict | None = None) -> dict:
     if not has_keys():
         raise PaystackError("PAYSTACK_SECRET_KEY not set — add a test key to .env")
     data = json.dumps(body).encode() if body is not None else None
-    headers = {"Authorization": f"Bearer {secret_key()}", "Accept": "application/json"}
+    # A real User-Agent is REQUIRED: api.paystack.co sits behind Cloudflare, which
+    # bans urllib's default "Python-urllib/x.y" signature with HTTP 403 Error 1010
+    # (browser_signature_banned) — the silent reason checkout never reached a card page.
+    headers = {
+        "Authorization": f"Bearer {secret_key()}",
+        "Accept": "application/json",
+        "User-Agent": "Mozilla/5.0 (compatible; YouDesignStudios/1.0; +https://youdesignstudios.co.za)",
+    }
     if data is not None:
         headers["Content-Type"] = "application/json"
     req = urllib.request.Request(f"{BASE}{path}", data=data, headers=headers, method=method)

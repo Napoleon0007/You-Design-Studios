@@ -294,6 +294,17 @@ def order_released(order: dict, currency: str = "R") -> tuple:
             f"Order {ref} is in production.")
 
 
+def password_reset(name: str, reset_url: str) -> tuple:
+    greeting = f"Hi {_html.escape(name)}," if name else "Hi,"
+    title = "Reset your password"
+    intro = (f"{greeting} we received a request to reset the password on your "
+             f"{BRAND_NAME} account. Tap the button below — the link expires in 1 hour.")
+    html_body = _shell(title, intro, cta=("Reset my password", reset_url),
+                       footer=f"If you didn't request this, you can safely ignore this email.")
+    text = f"Reset your {BRAND_NAME} password: {reset_url}\nThis link expires in 1 hour."
+    return ("Reset your password", html_body, text)
+
+
 def order_shipped(order: dict, tracking_url: str = "", currency: str = "R") -> tuple:
     ref = order.get("reference", "")
     title = "Your order is on its way"

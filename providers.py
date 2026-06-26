@@ -1,37 +1,35 @@
 """
 providers.py — fulfilment routing. THE anti-mix-up keystone.
 
-Every product in the catalogue declares a `provider` ("gelato" | "printful").
-Before any product UID can be priced or sent for fulfilment it must pass three
-checks, IN ORDER — fail any one and it's a hard reject:
+Every product in the catalogue declares a `provider`. Today all live products
+are fulfilled in South Africa via OTC Printing ("local-sa"). A "printful" path
+is retained for its integer-UID grammar guard but is dormant — nothing is sent
+there unless a product is explicitly tagged 'printful'.
+
+Before any product UID can be priced or sent for fulfilment it must pass, IN
+ORDER — fail any one and it's a hard reject:
 
   1. provider is known
   2. the UID's GRAMMAR matches that provider.
-       Gelato  = long token string, starts `<something>_product_gca_...`
        Printful = a bare integer catalog-variant id (e.g. 4012)
-     These shapes can't overlap, so a Gelato UID can never be sent to Printful
-     (or vice-versa) even if a product were somehow mislabeled.
   3. the UID RESOLVES live on that provider AND its product category matches
      what we expect (the cup -> shirt guard).
 
 So an order line can only ever reach the factory that actually makes it.
+local-sa lines skip the live API check — they are routed to the SA printer
+dashboard, and the structural catalogue guard (verify_item) has already passed.
 """
 from __future__ import annotations
 
 import re
 
-import gelato
-import gooten
 import printful
 
-GELATO = "gelato"
 PRINTFUL = "printful"
-GOOTEN = "gooten"
 LOCAL_SA = "local-sa"
-SUPPORTED = (GELATO, PRINTFUL, GOOTEN, LOCAL_SA)
+SUPPORTED = (PRINTFUL, LOCAL_SA)
 
-# Grammar fingerprints — deliberately non-overlapping.
-_GELATO_UID = re.compile(r"^[a-z][a-z0-9]*_product_gca_[a-z0-9_-]+$")
+# Grammar fingerprint — a bare integer catalog-variant id.
 _PRINTFUL_UID = re.compile(r"^\d+$")
 
 
@@ -42,8 +40,6 @@ def uid_provider(uid: str | int | None) -> str | None:
     u = str(uid).strip()
     if _PRINTFUL_UID.match(u):
         return PRINTFUL
-    if _GELATO_UID.match(u):
-        return GELATO
     return None
 
 
@@ -52,31 +48,9 @@ def belongs_to(provider: str, uid: str) -> bool:
 
 
 def has_key(provider: str) -> bool:
-    if provider == GELATO:
-        return gelato.has_key()
     if provider == PRINTFUL:
         return printful.has_key()
-    if provider == GOOTEN:
-        return gooten.has_key()
     return False
-
-
-def _gelato_verify(uid: str, expected_category: str | None) -> tuple[bool, str]:
-    """Resolve a Gelato UID + check its GarmentCategory. Network errors are not
-    fatal (a definitive 4xx is); the structural catalogue guard already passed."""
-    try:
-        if not gelato.has_key():
-            return True, "skipped (no key)"
-        p = gelato.get_product(uid)
-    except Exception as e:  # noqa: BLE001
-        msg = str(e)
-        if any(code in msg for code in (" 400", " 404", " 422")):
-            return False, f"Gelato rejected UID: {msg[:120]}"
-        return True, f"live check skipped ({msg[:80]})"
-    gca = (p.get("attributes") or {}).get("GarmentCategory")
-    if gca and expected_category and gca != expected_category:
-        return False, f"Type mismatch: UID resolves to '{gca}', expected '{expected_category}'"
-    return True, "ok"
 
 
 def verify(provider: str, uid: str, expected_category: str | None = None) -> tuple[bool, str]:
@@ -86,21 +60,15 @@ def verify(provider: str, uid: str, expected_category: str | None = None) -> tup
     if not uid:
         return False, "Missing product UID"
     if provider == LOCAL_SA:
-        # Fulfilled via the SA printer dashboard — no live API check needed.
-        # The structural catalogue guard (verify_item) has already passed.
+        # Fulfilled via the SA printer dashboard (OTC Printing) — no live API
+        # check needed. The structural catalogue guard (verify_item) has already
+        # passed.
         return True, "local-sa"
-    # Gooten SKUs are free-form strings (no unique regex), so the provider tag is
-    # authoritative and we verify the SKU live against Gooten's catalog. A
-    # mislabeled UID (e.g. a Gelato UID tagged 'gooten') fails this live check.
-    if provider == GOOTEN:
-        return gooten.verify_sku(uid, expected_category)
-    # Gelato + Printful have non-overlapping grammars — reject on shape first,
-    # so a UID can never be sent to the wrong one even before a network call.
+    # Printful UIDs are bare integers — reject on shape first, so a UID can never
+    # be sent to the wrong factory even before a network call.
     if not belongs_to(provider, uid):
         return False, (f"UID does not belong to provider '{provider}' "
                        f"(grammar says '{uid_provider(uid) or 'unknown'}'): {str(uid)[:48]}")
-    if provider == GELATO:
-        return _gelato_verify(uid, expected_category)
     return printful.verify_variant(uid, expected_category)
 
 
@@ -111,24 +79,3 @@ def group_by_provider(items: list[dict]) -> dict[str, list[dict]]:
     for it in items:
         out.setdefault(it.get("provider") or "unknown", []).append(it)
     return out
-
-
-# Map a provider's free-text order status onto our order state machine
-# (db.ORDER_STATES). Keyword match, most-specific first.
-_GOOTEN_STATUS = [
-    ("deliver", "delivered"), ("ship", "shipped"), ("transit", "shipped"),
-    ("production", "in_production"), ("printed", "in_production"),
-    ("printing", "in_production"), ("manufactur", "in_production"),
-    ("ready", "in_production"), ("cancel", "cancelled"), ("refund", "failed"),
-    ("error", "failed"), ("reject", "rejected"), ("new", "submitted"),
-    ("receiv", "submitted"), ("pending", "submitted"), ("hold", "submitted"),
-]
-
-
-def map_gooten_status(raw: str) -> str | None:
-    """Gooten status text -> our order state, or None if unrecognised."""
-    s = (raw or "").lower()
-    for needle, mapped in _GOOTEN_STATUS:
-        if needle in s:
-            return mapped
-    return None

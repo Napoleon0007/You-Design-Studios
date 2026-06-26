@@ -30,3 +30,7 @@ data/designs_parked/
 static/v2/_cardgen.html
 /tools/
 /lacoste-taste/
+# OTC supplier reference docs (~25MB of PDFs/catalogues) — not website runtime.
+/OCT printers info and cataloque/
+# Final Cut Pro marketing project — not part of the website.
+/TRUEF_Marketing.fcpxml

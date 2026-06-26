@@ -1,0 +1,424 @@
+{
+  "mode": "otc",
+  "currency": "ZAR",
+  "markup": 1.0,
+  "bases": [
+    {
+      "slug": "classic-fine-comb-tee",
+      "name": "Classic Fine Comb Tee",
+      "otc_garment": "Classic Fine Comb 165gsm Unisex",
+      "blank": "Classic Fine Comb 165gsm",
+      "provider": "local-sa",
+      "blurb": "100% combed cotton. Light, smooth, modern fit. The everyday staple.",
+      "catalog": "t-shirts",
+      "fabric": "100% Combed Cotton",
+      "gsm": 165,
+      "gender": "unisex",
+      "price_from": 349,
+      "cost_from": 186.50,
+      "print_area": {
+        "front": { "w_cm": 30, "h_cm": 40, "w_px": 3543, "h_px": 4724, "dpi": 300 },
+        "back":  { "w_cm": 30, "h_cm": 40, "w_px": 3543, "h_px": 4724, "dpi": 300 }
+      },
+      "sizes": [
+        { "code": "xs",  "label": "XS",  "cost_zar": 186.50, "retail_zar": 349 },
+        { "code": "s",   "label": "S",   "cost_zar": 186.50, "retail_zar": 349 },
+        { "code": "m",   "label": "M",   "cost_zar": 186.50, "retail_zar": 349 },
+        { "code": "l",   "label": "L",   "cost_zar": 186.50, "retail_zar": 349 },
+        { "code": "xl",  "label": "XL",  "cost_zar": 186.50, "retail_zar": 349 },
+        { "code": "2xl", "label": "2XL", "cost_zar": 186.50, "retail_zar": 379 },
+        { "code": "3xl", "label": "3XL", "cost_zar": 186.50, "retail_zar": 399 },
+        { "code": "4xl", "label": "4XL", "cost_zar": 186.50, "retail_zar": 419 }
+      ],
+      "colors": [
+        { "gelato_code": "black",      "name": "Black",      "hex": "#1a1a1a" },
+        { "gelato_code": "charcoal",   "name": "Charcoal",   "hex": "#4a4a4a" },
+        { "gelato_code": "navy",       "name": "Navy",       "hex": "#1b2a4a" },
+        { "gelato_code": "royal-blue", "name": "Royal Blue", "hex": "#2057ae" },
+        { "gelato_code": "olive",      "name": "Olive",      "hex": "#6b7c3a" },
+        { "gelato_code": "red",        "name": "Red",        "hex": "#c0392b" },
+        { "gelato_code": "purple",     "name": "Purple",     "hex": "#7b2d8b" },
+        { "gelato_code": "pink",       "name": "Pink",       "hex": "#e87ca0" },
+        { "gelato_code": "yellow",     "name": "Yellow",     "hex": "#f5c842" },
+        { "gelato_code": "white",      "name": "White",      "hex": "#ffffff" },
+        { "gelato_code": "grey",       "name": "Grey",       "hex": "#9e9e9e" }
+      ]
+    },
+    {
+      "slug": "vic-bay-tee",
+      "name": "Vic Bay Tee",
+      "otc_garment": "Vic Bay Heavyweight 180gsm Unisex",
+      "blank": "Vic Bay Heavyweight 180gsm",
+      "provider": "local-sa",
+      "blurb": "Durable carded cotton. Heavyweight feel, reliable fit. Built to last.",
+      "catalog": "t-shirts",
+      "fabric": "100% Carded Cotton",
+      "gsm": 180,
+      "gender": "unisex",
+      "price_from": 329,
+      "cost_from": 171.50,
+      "print_area": {
+        "front": { "w_cm": 30, "h_cm": 40, "w_px": 3543, "h_px": 4724, "dpi": 300 },
+        "back":  { "w_cm": 30, "h_cm": 40, "w_px": 3543, "h_px": 4724, "dpi": 300 }
+      },
+      "sizes": [
+        { "code": "s",   "label": "S",   "cost_zar": 171.50, "retail_zar": 329 },
+        { "code": "m",   "label": "M",   "cost_zar": 171.50, "retail_zar": 329 },
+        { "code": "l",   "label": "L",   "cost_zar": 171.50, "retail_zar": 329 },
+        { "code": "xl",  "label": "XL",  "cost_zar": 171.50, "retail_zar": 329 },
+        { "code": "2xl", "label": "2XL", "cost_zar": 171.50, "retail_zar": 359 },
+        { "code": "3xl", "label": "3XL", "cost_zar": 171.50, "retail_zar": 379 }
+      ],
+      "colors": [
+        { "gelato_code": "black",      "name": "Black",      "hex": "#1a1a1a" },
+        { "gelato_code": "white",      "name": "White",      "hex": "#ffffff" },
+        { "gelato_code": "navy",       "name": "Navy",       "hex": "#1b2a4a" },
+        { "gelato_code": "royal-blue", "name": "Royal Blue", "hex": "#2057ae" },
+        { "gelato_code": "purple",     "name": "Purple",     "hex": "#7b2d8b" },
+        { "gelato_code": "pink",       "name": "Pink",       "hex": "#e87ca0" },
+        { "gelato_code": "stone",      "name": "Stone",      "hex": "#c8b99a" },
+        { "gelato_code": "olive",      "name": "Olive",      "hex": "#6b7c3a" },
+        { "gelato_code": "yellow",     "name": "Yellow",     "hex": "#f5c842" },
+        { "gelato_code": "orange",     "name": "Orange",     "hex": "#e8762b" },
+        { "gelato_code": "red",        "name": "Red",        "hex": "#c0392b" }
+      ]
+    },
+    {
+      "slug": "vic-bay-hoodie",
+      "name": "Vic Bay Hoodie",
+      "otc_garment": "Vic Bay Hoodie 260gsm",
+      "blank": "Vic Bay 260gsm Pullover",
+      "provider": "local-sa",
+      "blurb": "Heavyweight 260gsm brushed fleece. Kangaroo pocket, ribbed cuffs.",
+      "catalog": "hoodies",
+      "fabric": "100% Brushed Cotton Anti-Pill Fleece",
+      "gsm": 260,
+      "gender": "unisex",
+      "price_from": 799,
+      "cost_from": 400,
+      "print_area": {
+        "front": { "w_cm": 30, "h_cm": 40, "w_px": 3543, "h_px": 4724, "dpi": 300 },
+        "back":  { "w_cm": 30, "h_cm": 40, "w_px": 3543, "h_px": 4724, "dpi": 300 }
+      },
+      "sizes": [
+        { "code": "s",   "label": "S",   "cost_zar": 400, "retail_zar": 799 },
+        { "code": "m",   "label": "M",   "cost_zar": 400, "retail_zar": 799 },
+        { "code": "l",   "label": "L",   "cost_zar": 400, "retail_zar": 799 },
+        { "code": "xl",  "label": "XL",  "cost_zar": 400, "retail_zar": 799 },
+        { "code": "2xl", "label": "2XL", "cost_zar": 400, "retail_zar": 849 },
+        { "code": "3xl", "label": "3XL", "cost_zar": 400, "retail_zar": 899 }
+      ],
+      "colors": [
+        { "gelato_code": "black",   "name": "Black",   "hex": "#1a1a1a" },
+        { "gelato_code": "white",   "name": "White",   "hex": "#ffffff" },
+        { "gelato_code": "navy",    "name": "Navy",    "hex": "#1b2a4a" },
+        { "gelato_code": "melange", "name": "Melange", "hex": "#b8b4b0" }
+      ]
+    },
+    {
+      "slug": "classic-base-hoodie",
+      "name": "Classic Base Hoodie",
+      "otc_garment": "Classic Base Hoodie 240gsm",
+      "blank": "Classic Base Hoodie 240gsm Poly-Cotton",
+      "provider": "local-sa",
+      "blurb": "240gsm poly-cotton blend. Slightly vintage DTG finish, kangaroo pocket, ribbed cuffs.",
+      "catalog": "hoodies",
+      "fabric": "Poly-Cotton Blend",
+      "gsm": 240,
+      "gender": "unisex",
+      "price_from": 849,
+      "cost_from": 440,
+      "print_area": {
+        "front": { "w_cm": 30, "h_cm": 40, "w_px": 3543, "h_px": 4724, "dpi": 300 },
+        "back":  { "w_cm": 30, "h_cm": 40, "w_px": 3543, "h_px": 4724, "dpi": 300 }
+      },
+      "sizes": [
+        { "code": "s",   "label": "S",   "cost_zar": 440, "retail_zar": 849 },
+        { "code": "m",   "label": "M",   "cost_zar": 440, "retail_zar": 849 },
+        { "code": "l",   "label": "L",   "cost_zar": 440, "retail_zar": 849 },
+        { "code": "xl",  "label": "XL",  "cost_zar": 440, "retail_zar": 849 },
+        { "code": "2xl", "label": "2XL", "cost_zar": 440, "retail_zar": 899 },
+        { "code": "3xl", "label": "3XL", "cost_zar": 440, "retail_zar": 949 }
+      ],
+      "colors": [
+        { "gelato_code": "black",   "name": "Black",   "hex": "#1a1a1a" },
+        { "gelato_code": "white",   "name": "White",   "hex": "#ffffff" },
+        { "gelato_code": "navy",    "name": "Navy",    "hex": "#1b2a4a" },
+        { "gelato_code": "grey",    "name": "Grey",    "hex": "#9e9e9e" }
+      ]
+    },
+    {
+      "slug": "crewneck-sweatshirt",
+      "name": "Crewneck Sweatshirt",
+      "otc_garment": "Vic Bay Sweatshirt 260gsm",
+      "blank": "Vic Bay Sweatshirt 260gsm",
+      "provider": "local-sa",
+      "blurb": "260gsm brushed cotton. No hood, ribbed crew neck, cuffs and hem. Clean and minimal.",
+      "catalog": "hoodies",
+      "fabric": "100% Brushed Cotton",
+      "gsm": 260,
+      "gender": "unisex",
+      "price_from": 699,
+      "cost_from": 350,
+      "print_area": {
+        "front": { "w_cm": 30, "h_cm": 40, "w_px": 3543, "h_px": 4724, "dpi": 300 },
+        "back":  { "w_cm": 30, "h_cm": 40, "w_px": 3543, "h_px": 4724, "dpi": 300 }
+      },
+      "sizes": [
+        { "code": "s",   "label": "S",   "cost_zar": 350, "retail_zar": 699 },
+        { "code": "m",   "label": "M",   "cost_zar": 350, "retail_zar": 699 },
+        { "code": "l",   "label": "L",   "cost_zar": 350, "retail_zar": 699 },
+        { "code": "xl",  "label": "XL",  "cost_zar": 350, "retail_zar": 699 },
+        { "code": "2xl", "label": "2XL", "cost_zar": 350, "retail_zar": 749 },
+        { "code": "3xl", "label": "3XL", "cost_zar": 350, "retail_zar": 799 }
+      ],
+      "colors": [
+        { "gelato_code": "black",   "name": "Black",   "hex": "#1a1a1a" },
+        { "gelato_code": "white",   "name": "White",   "hex": "#ffffff" },
+        { "gelato_code": "navy",    "name": "Navy",    "hex": "#1b2a4a" },
+        { "gelato_code": "grey",    "name": "Grey",    "hex": "#9e9e9e" }
+      ]
+    },
+    {
+      "slug": "long-sleeve-tee",
+      "name": "Long Sleeve Tee",
+      "otc_garment": "Vic Bay Long Sleeve 180gsm",
+      "blank": "Vic Bay Long Sleeve 180gsm",
+      "provider": "local-sa",
+      "blurb": "Long sleeve crew neck tee. Same great Vic Bay cotton, extra coverage.",
+      "catalog": "t-shirts",
+      "fabric": "100% Carded Cotton",
+      "gsm": 180,
+      "gender": "unisex",
+      "price_from": 379,
+      "cost_from": 191.50,
+      "print_area": {
+        "front": { "w_cm": 30, "h_cm": 40, "w_px": 3543, "h_px": 4724, "dpi": 300 },
+        "back":  { "w_cm": 30, "h_cm": 40, "w_px": 3543, "h_px": 4724, "dpi": 300 }
+      },
+      "sizes": [
+        { "code": "s",   "label": "S",   "cost_zar": 191.50, "retail_zar": 379 },
+        { "code": "m",   "label": "M",   "cost_zar": 191.50, "retail_zar": 379 },
+        { "code": "l",   "label": "L",   "cost_zar": 191.50, "retail_zar": 379 },
+        { "code": "xl",  "label": "XL",  "cost_zar": 191.50, "retail_zar": 379 },
+        { "code": "2xl", "label": "2XL", "cost_zar": 191.50, "retail_zar": 409 },
+        { "code": "3xl", "label": "3XL", "cost_zar": 191.50, "retail_zar": 429 }
+      ],
+      "colors": [
+        { "gelato_code": "black",      "name": "Black",      "hex": "#1a1a1a" },
+        { "gelato_code": "white",      "name": "White",      "hex": "#ffffff" },
+        { "gelato_code": "navy",       "name": "Navy",       "hex": "#1b2a4a" },
+        { "gelato_code": "royal-blue", "name": "Royal Blue", "hex": "#2057ae" },
+        { "gelato_code": "olive",      "name": "Olive",      "hex": "#6b7c3a" },
+        { "gelato_code": "red",        "name": "Red",        "hex": "#c0392b" }
+      ]
+    },
+    {
+      "slug": "kids-fine-comb-tee",
+      "name": "Kids Fine Comb Tee",
+      "otc_garment": "Classic Fine Comb 165gsm Kids",
+      "blank": "Classic Fine Comb 165gsm Kids",
+      "provider": "local-sa",
+      "blurb": "Same soft combed cotton as the adult, scaled down for kids. Ages 1–14.",
+      "catalog": "t-shirts",
+      "fabric": "100% Combed Cotton",
+      "gsm": 165,
+      "gender": "kids",
+      "price_from": 299,
+      "cost_from": 171.50,
+      "print_area": {
+        "front": { "w_cm": 30, "h_cm": 40, "w_px": 3543, "h_px": 4724, "dpi": 300 },
+        "back":  { "w_cm": 30, "h_cm": 40, "w_px": 3543, "h_px": 4724, "dpi": 300 }
+      },
+      "sizes": [
+        { "code": "1-2y",   "label": "1/2y",   "cost_zar": 171.50, "retail_zar": 299 },
+        { "code": "3-4y",   "label": "3/4y",   "cost_zar": 171.50, "retail_zar": 299 },
+        { "code": "5-6y",   "label": "5/6y",   "cost_zar": 171.50, "retail_zar": 299 },
+        { "code": "7-8y",   "label": "7/8y",   "cost_zar": 171.50, "retail_zar": 299 },
+        { "code": "9-10y",  "label": "9/10y",  "cost_zar": 171.50, "retail_zar": 299 },
+        { "code": "11-12y", "label": "11/12y", "cost_zar": 171.50, "retail_zar": 299 },
+        { "code": "13-14y", "label": "13/14y", "cost_zar": 171.50, "retail_zar": 299 }
+      ],
+      "colors": [
+        { "gelato_code": "black",      "name": "Black",      "hex": "#1a1a1a" },
+        { "gelato_code": "white",      "name": "White",      "hex": "#ffffff" },
+        { "gelato_code": "navy",       "name": "Navy",       "hex": "#1b2a4a" },
+        { "gelato_code": "royal-blue", "name": "Royal Blue", "hex": "#2057ae" },
+        { "gelato_code": "red",        "name": "Red",        "hex": "#c0392b" },
+        { "gelato_code": "pink",       "name": "Pink",       "hex": "#e87ca0" },
+        { "gelato_code": "yellow",     "name": "Yellow",     "hex": "#f5c842" },
+        { "gelato_code": "grey",       "name": "Grey",       "hex": "#9e9e9e" }
+      ]
+    },
+    {
+      "slug": "kids-vic-bay-tee",
+      "name": "Kids Vic Bay Tee",
+      "otc_garment": "Vic Bay Heavyweight 180gsm Kids",
+      "blank": "Vic Bay Heavyweight 180gsm Kids",
+      "provider": "local-sa",
+      "blurb": "Durable heavyweight cotton for kids. Built to take a beating. Ages 1–14.",
+      "catalog": "t-shirts",
+      "fabric": "100% Carded Cotton",
+      "gsm": 180,
+      "gender": "kids",
+      "price_from": 279,
+      "cost_from": 166.50,
+      "print_area": {
+        "front": { "w_cm": 30, "h_cm": 40, "w_px": 3543, "h_px": 4724, "dpi": 300 },
+        "back":  { "w_cm": 30, "h_cm": 40, "w_px": 3543, "h_px": 4724, "dpi": 300 }
+      },
+      "sizes": [
+        { "code": "1-2y",   "label": "1/2y",   "cost_zar": 166.50, "retail_zar": 279 },
+        { "code": "3-4y",   "label": "3/4y",   "cost_zar": 166.50, "retail_zar": 279 },
+        { "code": "5-6y",   "label": "5/6y",   "cost_zar": 166.50, "retail_zar": 279 },
+        { "code": "7-8y",   "label": "7/8y",   "cost_zar": 166.50, "retail_zar": 279 },
+        { "code": "9-10y",  "label": "9/10y",  "cost_zar": 166.50, "retail_zar": 279 },
+        { "code": "11-12y", "label": "11/12y", "cost_zar": 166.50, "retail_zar": 279 },
+        { "code": "13-14y", "label": "13/14y", "cost_zar": 166.50, "retail_zar": 279 }
+      ],
+      "colors": [
+        { "gelato_code": "black",      "name": "Black",      "hex": "#1a1a1a" },
+        { "gelato_code": "white",      "name": "White",      "hex": "#ffffff" },
+        { "gelato_code": "navy",       "name": "Navy",       "hex": "#1b2a4a" },
+        { "gelato_code": "royal-blue", "name": "Royal Blue", "hex": "#2057ae" },
+        { "gelato_code": "red",        "name": "Red",        "hex": "#c0392b" },
+        { "gelato_code": "yellow",     "name": "Yellow",     "hex": "#f5c842" },
+        { "gelato_code": "grey",       "name": "Grey",       "hex": "#9e9e9e" }
+      ]
+    },
+    {
+      "slug": "kids-hoodie",
+      "name": "Kiddies Hoodie",
+      "otc_garment": "Kiddies Hoodie",
+      "blank": "Kiddies Hoodie",
+      "provider": "local-sa",
+      "blurb": "Pullover hoodie for kids. Warm, cosy, kangaroo pocket. Ages 1–14.",
+      "catalog": "hoodies",
+      "fabric": "Cotton Blend",
+      "gsm": null,
+      "gender": "kids",
+      "price_from": 549,
+      "cost_from": 335,
+      "print_area": {
+        "front": { "w_cm": 25, "h_cm": 30, "w_px": 2953, "h_px": 3543, "dpi": 300 },
+        "back":  { "w_cm": 25, "h_cm": 30, "w_px": 2953, "h_px": 3543, "dpi": 300 }
+      },
+      "sizes": [
+        { "code": "1-2y",   "label": "1/2y",   "cost_zar": 335, "retail_zar": 549 },
+        { "code": "3-4y",   "label": "3/4y",   "cost_zar": 335, "retail_zar": 549 },
+        { "code": "5-6y",   "label": "5/6y",   "cost_zar": 335, "retail_zar": 549 },
+        { "code": "7-8y",   "label": "7/8y",   "cost_zar": 335, "retail_zar": 549 },
+        { "code": "9-10y",  "label": "9/10y",  "cost_zar": 335, "retail_zar": 549 },
+        { "code": "11-12y", "label": "11/12y", "cost_zar": 335, "retail_zar": 549 },
+        { "code": "13-14y", "label": "13/14y", "cost_zar": 335, "retail_zar": 549 }
+      ],
+      "colors": [
+        { "gelato_code": "black",   "name": "Black",   "hex": "#1a1a1a" },
+        { "gelato_code": "white",   "name": "White",   "hex": "#ffffff" },
+        { "gelato_code": "navy",    "name": "Navy",    "hex": "#1b2a4a" },
+        { "gelato_code": "red",     "name": "Red",     "hex": "#c0392b" },
+        { "gelato_code": "grey",    "name": "Grey",    "hex": "#9e9e9e" }
+      ]
+    },
+    {
+      "slug": "kids-long-sleeve",
+      "name": "Kiddies Long Sleeve",
+      "otc_garment": "Kiddies Long Sleeve",
+      "blank": "Kiddies Long Sleeve",
+      "provider": "local-sa",
+      "blurb": "Long sleeve tee for kids. Extra coverage, same great print quality. Ages 1–14.",
+      "catalog": "t-shirts",
+      "fabric": "100% Cotton",
+      "gsm": null,
+      "gender": "kids",
+      "price_from": 329,
+      "cost_from": 186.50,
+      "print_area": {
+        "front": { "w_cm": 30, "h_cm": 40, "w_px": 3543, "h_px": 4724, "dpi": 300 },
+        "back":  { "w_cm": 30, "h_cm": 40, "w_px": 3543, "h_px": 4724, "dpi": 300 }
+      },
+      "sizes": [
+        { "code": "1-2y",   "label": "1/2y",   "cost_zar": 186.50, "retail_zar": 329 },
+        { "code": "3-4y",   "label": "3/4y",   "cost_zar": 186.50, "retail_zar": 329 },
+        { "code": "5-6y",   "label": "5/6y",   "cost_zar": 186.50, "retail_zar": 329 },
+        { "code": "7-8y",   "label": "7/8y",   "cost_zar": 186.50, "retail_zar": 329 },
+        { "code": "9-10y",  "label": "9/10y",  "cost_zar": 186.50, "retail_zar": 329 },
+        { "code": "11-12y", "label": "11/12y", "cost_zar": 186.50, "retail_zar": 329 },
+        { "code": "13-14y", "label": "13/14y", "cost_zar": 186.50, "retail_zar": 329 }
+      ],
+      "colors": [
+        { "gelato_code": "black",      "name": "Black",      "hex": "#1a1a1a" },
+        { "gelato_code": "white",      "name": "White",      "hex": "#ffffff" },
+        { "gelato_code": "navy",       "name": "Navy",       "hex": "#1b2a4a" },
+        { "gelato_code": "red",        "name": "Red",        "hex": "#c0392b" },
+        { "gelato_code": "grey",       "name": "Grey",       "hex": "#9e9e9e" }
+      ]
+    },
+    {
+      "slug": "washed-bucket-hat",
+      "name": "Washed Bucket Hat",
+      "otc_garment": "Washed Bucket Hat",
+      "blank": "Washed Bucket Hat",
+      "provider": "local-sa",
+      "blurb": "Relaxed washed bucket hat. DTG full-colour front print.",
+      "catalog": "headwear",
+      "fabric": "Cotton",
+      "gsm": null,
+      "gender": "unisex",
+      "price_from": 299,
+      "cost_from": 150,
+      "print_area": {
+        "front": { "w_cm": 10, "h_cm": 8, "w_px": 1181, "h_px": 945, "dpi": 300 }
+      },
+      "sizes": [
+        { "code": "one-size", "label": "One Size", "cost_zar": 150, "retail_zar": 299 }
+      ],
+      "colors": [
+        { "gelato_code": "charcoal",     "name": "Charcoal",     "hex": "#4a4a4a" },
+        { "gelato_code": "olive",        "name": "Olive",        "hex": "#6b7c3a" },
+        { "gelato_code": "denim",        "name": "Denim",        "hex": "#4a6fa5" },
+        { "gelato_code": "khaki",        "name": "Khaki",        "hex": "#c4b080" },
+        { "gelato_code": "bottle-green", "name": "Bottle Green", "hex": "#2d6a4f" },
+        { "gelato_code": "raspberry",    "name": "Raspberry",    "hex": "#c0395a" },
+        { "gelato_code": "mustard",      "name": "Mustard",      "hex": "#d4a017" }
+      ]
+    },
+    {
+      "slug": "washed-cap",
+      "name": "Washed Cap",
+      "otc_garment": "Washed Cap",
+      "blank": "Washed Cap",
+      "provider": "local-sa",
+      "blurb": "Structured washed cap. DTG full-colour front panel print.",
+      "catalog": "headwear",
+      "fabric": "Cotton",
+      "gsm": null,
+      "gender": "unisex",
+      "price_from": 279,
+      "cost_from": 140,
+      "print_area": {
+        "front": { "w_cm": 7, "h_cm": 5, "w_px": 827, "h_px": 591, "dpi": 300 }
+      },
+      "sizes": [
+        { "code": "one-size", "label": "One Size", "cost_zar": 140, "retail_zar": 279 }
+      ],
+      "colors": [
+        { "gelato_code": "charcoal",     "name": "Charcoal",     "hex": "#4a4a4a" },
+        { "gelato_code": "olive",        "name": "Olive",        "hex": "#6b7c3a" },
+        { "gelato_code": "denim",        "name": "Denim",        "hex": "#4a6fa5" },
+        { "gelato_code": "khaki",        "name": "Khaki",        "hex": "#c4b080" },
+        { "gelato_code": "bottle-green", "name": "Bottle Green", "hex": "#2d6a4f" },
+        { "gelato_code": "raspberry",    "name": "Raspberry",    "hex": "#c0395a" },
+        { "gelato_code": "mustard",      "name": "Mustard",      "hex": "#d4a017" },
+        { "gelato_code": "red-coral",    "name": "Red Coral",    "hex": "#e05a4e" },
+        { "gelato_code": "aqua",         "name": "Aqua",         "hex": "#4db8c8" },
+        { "gelato_code": "grey",         "name": "Grey",         "hex": "#9e9e9e" },
+        { "gelato_code": "peach",        "name": "Peach",        "hex": "#f4b896" },
+        { "gelato_code": "royal-blue",   "name": "Royal Blue",   "hex": "#2057ae" },
+        { "gelato_code": "cobalt-blue",  "name": "Cobalt Blue",  "hex": "#0047ab" },
+        { "gelato_code": "turquoise",    "name": "Turquoise",    "hex": "#40c8c0" },
+        { "gelato_code": "fuchsia",      "name": "Fuchsia",      "hex": "#cc2f8a" }
+      ]
+    }
+  ]
+}

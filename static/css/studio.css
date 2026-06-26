@@ -211,7 +211,7 @@ body.ed::before {
   bottom: calc(var(--ed-dock-h) + env(safe-area-inset-bottom));
   display: grid; place-items: center; overflow: hidden;
 }
-#garment3d { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 2; }
+#garment3d { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 2; touch-action: none; }
 
 /* soft contact shadow grounding the garment */
 .ed-stage::after {
@@ -391,6 +391,21 @@ body.ed::before {
 .design-thumb:hover { transform: translateY(-3px) scale(1.03); border-color: var(--ed-ink);
   box-shadow: 0 14px 28px -10px rgba(0,0,0,.28); }
 
+/* placement presets */
+.xf-presets { display: flex; gap: 10px; margin-bottom: 4px; }
+.xf-preset {
+  flex: 1; display: flex; flex-direction: column; align-items: center; gap: 5px;
+  padding: 10px 6px; border-radius: 12px; border: 1.5px solid var(--ink-3);
+  background: var(--ink-3); color: var(--paper-dim);
+  font-size: 11px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase;
+  cursor: pointer; transition: border-color .18s, color .18s, background .18s;
+}
+.xf-preset svg { width: 28px; height: 28px; }
+.xf-preset.on {
+  border-color: var(--accent); background: rgba(183,138,46,.10); color: var(--accent);
+}
+.xf-preset:hover:not(.on) { border-color: var(--paper-dim); color: var(--paper); }
+
 /* transform sliders */
 .xf { display: flex; flex-direction: column; gap: 12px; }
 .xf-row { display: flex; align-items: center; gap: 12px; }
@@ -409,6 +424,19 @@ body.ed::before {
 .validation.fail { border-color: rgba(210,70,60,.45); } .validation.fail .badge { background: #d6483c; }
 .validation .meta { color: var(--paper-dim); margin-top: 8px; line-height: 1.5; }
 .validation .meta b { color: var(--paper); font-weight: 600; }
+.val-actions { display: flex; gap: 8px; margin-top: 12px; }
+.val-btn-remove {
+  flex: 1; padding: 9px 12px; border-radius: 10px; font-size: 12px; font-weight: 600;
+  border: 1.5px solid var(--ink-3); background: var(--ink-3); color: var(--paper);
+  cursor: pointer; letter-spacing: .03em; transition: border-color .18s;
+}
+.val-btn-remove:hover { border-color: var(--paper-dim); }
+.val-btn-override {
+  flex: 1; padding: 9px 12px; border-radius: 10px; font-size: 12px; font-weight: 600;
+  border: 1.5px solid rgba(210,70,60,.45); background: transparent; color: #d6483c;
+  cursor: pointer; letter-spacing: .03em; transition: background .18s;
+}
+.val-btn-override:hover { background: rgba(210,70,60,.08); }
 
 /* moderation note */
 .modnote { margin-top: 10px; border-radius: 10px; padding: 12px 14px; font-size: 12.5px;
@@ -466,4 +494,43 @@ body.ed::before {
   .ed-sheet { animation: none; transform: none; opacity: 1; }
   .g3d-hint { animation: none; opacity: .9; }
   .toast { transition: opacity .2s; }
+}
+
+/* ============================================ SIZE-METER LIVE PREVIEW ==== */
+/* The MOVE sheet covers the lower ~half of the garment, so while you drag the
+   Width / Height / Rotate sliders you couldn't see the print resize. This makes
+   the sheet turn see-through for exactly as long as a slider is held, then snap
+   back the moment you let go — so you watch the change live.
+   Pure CSS (:has + :active); the sheet never moves, so your finger stays on the
+   slider. Flat translucency only — NO backdrop-filter over the live WebGL canvas
+   (that combo glitches). Degrades gracefully where :has() is unsupported. */
+#sheet-move {
+  transition: background .15s ease, box-shadow .15s ease, border-color .15s ease;
+}
+#sheet-move::before,
+#sheet-move .ed-sheet__h,
+#sheet-move .xf-presets,
+#sheet-move .xf-hint,
+#sheet-move #xfReset {
+  transition: opacity .15s ease;
+}
+#sheet-move:has(.xf-row input[type="range"]:active) {
+  background: rgba(12, 12, 15, .20);
+  box-shadow: none;
+  border-color: transparent;
+}
+/* fade the chrome out of the way (kept in place — no reflow, so the slider you're
+   dragging doesn't shift under your finger) */
+#sheet-move:has(.xf-row input[type="range"]:active)::before,
+#sheet-move:has(.xf-row input[type="range"]:active) .ed-sheet__h,
+#sheet-move:has(.xf-row input[type="range"]:active) .xf-presets,
+#sheet-move:has(.xf-row input[type="range"]:active) .xf-hint,
+#sheet-move:has(.xf-row input[type="range"]:active) #xfReset {
+  opacity: .1;
+  pointer-events: none;
+}
+/* keep the live sliders + their labels crisp and readable over the garment */
+#sheet-move:has(.xf-row input[type="range"]:active) .xf-row span {
+  color: #fff;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, .8);
 }

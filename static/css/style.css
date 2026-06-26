@@ -277,17 +277,71 @@ a { color: inherit; text-decoration: none; }
 .step p { color: var(--paper-dim); font-size: 15px; }
 @media (max-width: 760px){ .steps { grid-template-columns: 1fr; gap: 8px; } }
 
-/* motion wall — every spinning mockup in one place, just to look at --------- */
-#motion .lead { margin-top: 14px; max-width: 52ch; }
-.motion-grid { margin-top: 40px; display: grid; gap: 14px;
-  grid-template-columns: repeat(2, 1fr); }
-.motion-card { position: relative; aspect-ratio: 3 / 4; overflow: hidden;
-  border-radius: var(--r); background: var(--ink-2); border: 1px solid var(--line); }
-.motion-card video { position: absolute; inset: 0; width: 100%; height: 100%;
-  object-fit: cover; display: block; transition: transform .6s var(--ease); }
-.motion-card:hover video { transform: scale(1.05); }
-@media (min-width: 720px)  { .motion-grid { grid-template-columns: repeat(3, 1fr); gap: 18px; } }
-@media (min-width: 1080px) { .motion-grid { grid-template-columns: repeat(4, 1fr); } }
+/* ── Möbius collection strip ─────────────────────────────────────────────── */
+#motion {
+  background: #fff;
+  color: #0a0a0a;
+}
+#motion .eyebrow { color: #0a0a0a; opacity: 0.55; }
+#motion .h2      { color: #0a0a0a; }
+#motion .lead    { color: #3a3a3a; margin-top: 14px; max-width: 52ch; }
+
+.mobius-wrap {
+  position: relative;
+  width: 100%;
+  height: 600px;
+  margin-top: 40px;
+  overflow: hidden;
+  border-radius: var(--r);
+}
+.mobius-wrap canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  cursor: grab;
+}
+.mobius-wrap canvas.is-grabbing { cursor: grabbing; }
+
+#motionMobiusLabels {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+.mobius-label {
+  position: absolute;
+  transform: translate(-50%, calc(-100% - 14px));
+  background: #0a0a0a;
+  color: #fff;
+  padding: 8px 14px 10px;
+  border-radius: 6px;
+  font: 600 13px/1.3 var(--font-ui);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity .15s;
+  white-space: nowrap;
+  letter-spacing: .03em;
+}
+.mobius-label.show { opacity: 1; }
+.mobius-kicker {
+  display: block;
+  font-size: 9px;
+  color: var(--pop);
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  margin-bottom: 3px;
+}
+.mobius-enter {
+  display: inline-block;
+  margin-left: 6px;
+  color: var(--pop);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+@media (max-width: 600px) {
+  .mobius-wrap { height: 420px; margin-top: 28px; }
+}
 
 /* 360 showcase — split */
 .showcase { display: grid; grid-template-columns: 1.05fr .95fr; gap: clamp(30px,5vw,80px);
