@@ -1214,13 +1214,47 @@ a { color: inherit; text-decoration: none; }
   transition:transform .15s ease, opacity .15s ease !important;
 }
 
-/* ── How It Works overrides — placed LAST so they survive the section being
-   restructured: white studio backdrop (darkened so the white copy stays legible)
-   and NO garment model. ── */
+/* ── How It Works — LIGHT studio re-skin — placed LAST so it survives the
+   section restructure. The old 86–92% black wash over the (watermarked) studio
+   photo is gone; in its place a clean, airy CSS studio light. The heading now
+   carries the SAME 3D throw-up lettering as the hero (dark-on-light variant) and
+   the copy flips to ink so it stays crisp on the brighter ground. ── */
 .hiw {
+  color: var(--ink) !important;
   background:
-    linear-gradient(rgba(10,10,12,.86), rgba(10,10,12,.92)),
-    url('/static/media/hiw-studio.jpg') center / cover no-repeat #0b0b0c !important;
+    radial-gradient(125% 82% at 50% -12%, #ffffff, rgba(255,255,255,0) 58%),
+    linear-gradient(180deg, #f8f5ef 0%, #efeae1 60%, #e8e2d7 100%) !important;
 }
-.hiw-show { display: none !important; }              /* remove the olive-hoodie model */
-.hiw-grid { grid-template-columns: 1fr !important; } /* copy fills the row now the visual is gone */
+.hiw::before { background: linear-gradient(90deg, transparent, rgba(183,138,46,.6), transparent); }
+.hiw-show { display: none !important; }              /* no garment model */
+.hiw-grid { grid-template-columns: 1fr !important; max-width: 62rem; } /* copy fills the row */
+
+/* eyebrow keeps gold — premium on the light ground */
+.hiw-eyebrow { color: var(--gold); }
+
+/* heading → 3D throw-up, dark-on-light (same Titan One extrude family as the hero) */
+.hiw-heading {
+  color: #1c1c1f; line-height: 1.0;
+  text-shadow:
+    .015em .015em 0 #b9b2a3, .03em .03em 0 #b9b2a3, .045em .045em 0 #b3ac9d,
+    .06em .06em 0 #aaa395, .075em .075em 0 #aaa395,
+    .13em .16em .12em rgba(0,0,0,.20);
+}
+
+/* gold number-coins read strong on the light ground (dark coin + gold numeral) */
+.hiw-num {
+  color: var(--gold);
+  background: radial-gradient(circle at 50% 30%, #26262a, #141416);
+  border: 1.5px solid rgba(183,138,46,.75);
+  box-shadow: 0 0 0 6px #f1ece3, 0 12px 26px rgba(0,0,0,.18);
+}
+.hiw-steps::before { background: linear-gradient(180deg, var(--gold), rgba(183,138,46,.3)); }
+
+/* copy → ink */
+.hiw-title { color: #1c1c1f; }
+.hiw-desc  { color: #56514a; }
+
+/* proof strip + divider on light */
+.hiw-strip { border-top-color: rgba(0,0,0,.12); }
+.hiw-strip li { color: #6b665e; }
+.hiw-strip li strong { color: var(--gold); }
