@@ -1,0 +1,171 @@
+/** Ported 1:1 from templates/admin_orders.html. */
+import type { Order } from "../lib/db";
+
+export function AdminOrdersPage(props: {
+  brandName: string;
+  active: Order[];
+  recent: Order[];
+  adminKey: string;
+  paystackLive: boolean;
+  mailLive: boolean;
+}) {
+  const { brandName, active, recent, adminKey, paystackLive, mailLive } = props;
+  return (
+    <html lang="en">
+      <head>
+        <meta charSet="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>Orders · {brandName}</title>
+        <style>{`
+    :root { --bg:#0e0f12; --card:#17191e; --line:#2a2d35; --ink:#eceef2; --dim:#9aa0ab;
+            --ok:#46c37b; --bad:#e5604d; --warn:#e6b450; --blue:#5b9dff; }
+    * { box-sizing:border-box; }
+    body { margin:0; font:15px/1.5 -apple-system,Segoe UI,Roboto,sans-serif; background:var(--bg); color:var(--ink); }
+    header { padding:20px 24px; border-bottom:1px solid var(--line); display:flex; align-items:baseline; gap:14px; flex-wrap:wrap; }
+    header h1 { font-size:18px; margin:0; } header .dim { color:var(--dim); font-size:13px; }
+    header a { color:var(--blue); font-size:13px; text-decoration:none; margin-left:auto; }
+    .wrap { padding:20px; max-width:900px; margin:0 auto; }
+    h2 { font-size:13px; text-transform:uppercase; letter-spacing:.1em; color:var(--dim); margin:26px 0 12px; }
+    .empty { color:var(--dim); padding:18px; border:1px dashed var(--line); border-radius:12px; }
+    .order { background:var(--card); border:1px solid var(--line); border-radius:14px; padding:16px; margin-bottom:14px; }
+    .top { display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+    .ref { font-weight:700; font-size:15px; } .email { color:var(--dim); font-size:13px; }
+    .total { margin-left:auto; font-weight:700; }
+    .pill { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.05em; padding:3px 9px; border-radius:99px; }
+    .s-paid { background:rgba(70,195,123,.15); color:var(--ok); }
+    .s-in_review { background:rgba(230,180,80,.15); color:var(--warn); }
+    .s-awaiting_redo { background:rgba(91,157,255,.15); color:var(--blue); }
+    .s-submitted,.s-in_production,.s-shipped,.s-delivered { background:rgba(70,195,123,.12); color:var(--ok); }
+    .s-refunded,.s-rejected,.s-failed,.s-cancelled { background:rgba(229,96,77,.15); color:var(--bad); }
+    .items { display:flex; gap:8px; margin:12px 0; flex-wrap:wrap; }
+    .it { display:flex; gap:8px; align-items:center; background:#0e0f12; border:1px solid var(--line); border-radius:10px; padding:6px 10px; }
+    .it .th { width:34px; height:34px; border-radius:7px; background:#fff center/contain no-repeat; flex:none; }
+    .it .nm { font-size:12.5px; } .it .ms { font-size:11px; color:var(--dim); }
+    .it.review { outline:1px solid var(--warn); }
+    .notes { color:var(--dim); font-size:12px; margin-top:6px; }
+    .row { display:flex; gap:8px; margin-top:12px; flex-wrap:wrap; }
+    button { padding:10px 14px; border-radius:9px; border:0; font-weight:600; cursor:pointer; font-size:13px; }
+    .release { background:var(--ok); color:#06210f; } .reject { background:var(--blue); color:#04122e; }
+    .refund { background:var(--bad); color:#2a0b07; } button:disabled { opacity:.4; cursor:not-allowed; }
+    .order.gone { opacity:.45; pointer-events:none; }
+    .banner { font-size:12px; color:var(--dim); background:var(--card); border:1px solid var(--line);
+              border-radius:10px; padding:10px 12px; margin-bottom:8px; }
+    .banner b { color:var(--warn); }
+        `}</style>
+      </head>
+      <body>
+        <header>
+          <h1>{brandName} — Orders</h1>
+          <span class="dim">{active.length} need attention</span>
+          <a href={`/admin/moderation${adminKey ? `?key=${adminKey}` : ""}`}>→ Moderation queue</a>
+        </header>
+        <div class="wrap">
+          {!paystackLive || !mailLive ? (
+            <div class="banner">
+              {!paystackLive ? <b>DEV mode</b> : null}
+              {!paystackLive ? " — no Paystack key: refunds are simulated. " : null}
+              {!mailLive ? <b>No mail provider</b> : null}
+              {!mailLive ? " — emails are written to the dev outbox (a preview link is returned)." : null}
+            </div>
+          ) : null}
+
+          <h2>Needs attention ({active.length})</h2>
+          {!active.length ? <div class="empty">Nothing to action right now. 🎉</div> : null}
+          {active.map((o) => (
+            <div class="order" id={`o-${o.reference}`}>
+              <div class="top">
+                <span class="ref">{o.reference}</span>
+                <span class="email">{o.email || "—"}</span>
+                <span class={`pill s-${o.status}`} id={`st-${o.reference}`}>
+                  {o.status.replace(/_/g, " ")}
+                </span>
+                <span class="total">R{(o.total / 100).toFixed(2)}</span>
+              </div>
+              <div class="items">
+                {(o.items ?? []).map((it) => (
+                  <div class={`it ${it.moderation_reason || it.moderation_status !== "approved" ? "review" : ""}`}>
+                    <div
+                      class="th"
+                      style={`background-image:url('${it.preview_url || (it.art_key ? `/files/${it.art_key.replace("/files/", "").replace(/^\//, "")}` : "")}')`}
+                    ></div>
+                    <div>
+                      <div class="nm">
+                        {it.product_name} <span class="ms">×{it.quantity}</span>
+                      </div>
+                      <div class="ms">
+                        {it.color || ""} {it.size || ""}
+                        {it.provider ? ` · ${it.provider}` : ""}
+                      </div>
+                      {it.moderation_reason ? (
+                        <div class="ms" style="color:var(--warn)">
+                          {it.moderation_reason}
+                        </div>
+                      ) : null}
+                    </div>
+                  </div>
+                ))}
+              </div>
+              {o.notes ? <div class="notes">{o.notes}</div> : null}
+              <div class="row">
+                <button class="release" onclick={`act('${o.reference}','release',this)`}>
+                  Approve &amp; release
+                </button>
+                <button class="reject" onclick={`act('${o.reference}','reject',this)`}>
+                  Reject → ask redo
+                </button>
+                <button class="refund" onclick={`act('${o.reference}','refund',this)`}>
+                  Refund
+                </button>
+              </div>
+            </div>
+          ))}
+
+          <h2>Recent ({recent.length})</h2>
+          {recent.map((o) => (
+            <div class="order">
+              <div class="top">
+                <span class="ref">{o.reference}</span>
+                <span class="email">{o.email || "—"}</span>
+                <span class={`pill s-${o.status}`}>{o.status.replace(/_/g, " ")}</span>
+                <span class="total">R{(o.total / 100).toFixed(2)}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+const ADMIN_KEY = ${JSON.stringify(adminKey)};
+function act(reference, action, btn) {
+  let reason = null;
+  if (action === "reject") {
+    reason = prompt("What should the customer fix? (shown in their email)",
+                    "One of your designs needs updating before we can print it.");
+    if (reason === null) return;
+  }
+  if (action === "refund" && !confirm("Refund this order in full?")) return;
+  const row = document.querySelectorAll("#o-" + CSS.escape(reference) + " button");
+  row.forEach(b => b.disabled = true);
+  fetch("/api/admin/order", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "X-Admin-Key": ADMIN_KEY },
+    body: JSON.stringify({ reference, action, reason })
+  }).then(r => r.json()).then(d => {
+    if (!d.ok) { alert(d.error || "Failed"); row.forEach(b => b.disabled = false); return; }
+    const st = document.getElementById("st-" + reference);
+    if (st) { st.textContent = d.status.replace(/_/g,' '); st.className = "pill s-" + d.status; }
+    document.getElementById("o-" + reference).classList.add("gone");
+    let msg = "Order " + d.status.replace(/_/g,' ') + ".";
+    if (d.resume_url) msg += "\\nRedo link: " + d.resume_url;
+    if (d.email && d.email.preview_url) msg += "\\nEmail preview: " + location.origin + d.email.preview_url;
+    alert(msg);
+  }).catch(() => { alert("Request failed"); row.forEach(b => b.disabled = false); });
+}
+            `,
+          }}
+        />
+      </body>
+    </html>
+  );
+}

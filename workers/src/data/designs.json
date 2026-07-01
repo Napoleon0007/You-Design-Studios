@@ -1,0 +1,92 @@
+[
+  {
+    "id": "angel-statue.jpg",
+    "title": "Angel Statue",
+    "url": "/static/designs/angel-statue.jpg"
+  },
+  {
+    "id": "art-lines.jpeg",
+    "title": "Art Lines",
+    "url": "/static/designs/art-lines.jpeg"
+  },
+  {
+    "id": "crest-imperial-eagle.jpg",
+    "title": "Crest Imperial Eagle",
+    "url": "/static/designs/crest-imperial-eagle.jpg"
+  },
+  {
+    "id": "eagle-spirit.jpeg",
+    "title": "Eagle Spirit",
+    "url": "/static/designs/eagle-spirit.jpeg"
+  },
+  {
+    "id": "einstein.jpeg",
+    "title": "Einstein",
+    "url": "/static/designs/einstein.jpeg"
+  },
+  {
+    "id": "indian-warrior.jpeg",
+    "title": "Indian Warrior",
+    "url": "/static/designs/indian-warrior.jpeg"
+  },
+  {
+    "id": "my-my.jpeg",
+    "title": "My My",
+    "url": "/static/designs/my-my.jpeg"
+  },
+  {
+    "id": "neon-animal.jpeg",
+    "title": "Neon Animal",
+    "url": "/static/designs/neon-animal.jpeg"
+  },
+  {
+    "id": "pirate.jpg",
+    "title": "Pirate",
+    "url": "/static/designs/pirate.jpg"
+  },
+  {
+    "id": "rider.jpeg",
+    "title": "Rider",
+    "url": "/static/designs/rider.jpeg"
+  },
+  {
+    "id": "skull-knife.jpeg",
+    "title": "Skull Knife",
+    "url": "/static/designs/skull-knife.jpeg"
+  },
+  {
+    "id": "skull-shaman.jpeg",
+    "title": "Skull Shaman",
+    "url": "/static/designs/skull-shaman.jpeg"
+  },
+  {
+    "id": "skully.png",
+    "title": "Skully",
+    "url": "/static/designs/skully.png"
+  },
+  {
+    "id": "spirits.jpeg",
+    "title": "Spirits",
+    "url": "/static/designs/spirits.jpeg"
+  },
+  {
+    "id": "sun-island.jpeg",
+    "title": "Sun Island",
+    "url": "/static/designs/sun-island.jpeg"
+  },
+  {
+    "id": "transformer.webp",
+    "title": "Transformer",
+    "url": "/static/designs/transformer.webp"
+  },
+  {
+    "id": "uncle.jpeg",
+    "title": "Uncle",
+    "url": "/static/designs/uncle.jpeg"
+  },
+  {
+    "id": "wolf-art.jpeg",
+    "title": "Wolf Art",
+    "url": "/static/designs/wolf-art.jpeg"
+  }
+]

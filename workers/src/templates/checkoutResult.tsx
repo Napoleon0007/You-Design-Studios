@@ -1,0 +1,179 @@
+/** Ported 1:1 from templates/checkout_result.html. */
+import type { Order } from "../lib/db";
+
+function money(cents: number): string {
+  return (cents / 100).toFixed(2);
+}
+
+export function CheckoutResultPage(props: {
+  brandName: string;
+  order: Order | null;
+  status: string;
+  message?: string;
+  showSignup?: boolean;
+}) {
+  const { brandName, order, status, message, showSignup } = props;
+  return (
+    <html lang="en">
+      <head>
+        <meta charSet="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+        <title>Order · {brandName}</title>
+        <style>{`
+    :root { --ink:#111; --dim:#666; --line:#e8e8e6; --accent:#e8472b; --ok:#1c8c4c; --warn:#b8860b; }
+    * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+    body { margin:0; background:#f4f4f2; color:var(--ink);
+           font:16px/1.55 -apple-system,Segoe UI,Roboto,sans-serif;
+           padding:max(20px,env(safe-area-inset-top)) 16px max(20px,env(safe-area-inset-bottom)); }
+    .card { max-width:440px; margin:24px auto; background:#fff; border-radius:18px;
+            box-shadow:0 2px 22px rgba(0,0,0,.06); overflow:hidden; }
+    .hd { background:#111; color:#fff; padding:16px 22px; font-weight:700; letter-spacing:.3px; }
+    .body { padding:24px 22px; }
+    .mark { width:56px; height:56px; border-radius:50%; display:flex; align-items:center;
+            justify-content:center; font-size:30px; margin-bottom:14px; }
+    .mark.ok { background:rgba(28,140,76,.12); color:var(--ok); }
+    .mark.hold { background:rgba(184,134,11,.14); color:var(--warn); }
+    .mark.bad { background:rgba(232,71,43,.12); color:var(--accent); }
+    h1 { font-size:22px; margin:0 0 8px; }
+    p { margin:0 0 12px; color:#333; } .dim { color:var(--dim); font-size:14px; }
+    .ref { font-family:ui-monospace,Menlo,monospace; background:#f4f4f2; padding:2px 8px; border-radius:6px; }
+    .lines { border-top:1px solid var(--line); margin-top:16px; padding-top:14px; }
+    .ln { display:flex; justify-content:space-between; padding:5px 0; font-size:14px; }
+    .ln.tot { font-weight:700; border-top:1px solid var(--line); margin-top:6px; padding-top:10px; font-size:16px; }
+    .btn { display:block; text-align:center; text-decoration:none; background:#111; color:#fff;
+           font-weight:600; padding:15px; border-radius:12px; margin-top:20px;
+           border:none; cursor:pointer; font-size:16px; width:100%; }
+    .signup-nudge { background:#f9f9f7; border:1px solid var(--line); border-radius:12px;
+                    padding:16px; margin-top:18px; }
+    .nudge-label { font-weight:700; margin:0 0 4px; font-size:15px; }
+    .signup-nudge input { display:block; width:100%; box-sizing:border-box; padding:12px 14px;
+                          border:1px solid var(--line); border-radius:10px; font-size:15px;
+                          margin:10px 0 8px; outline:none; }
+    .signup-nudge input:focus { border-color:#111; }
+        `}</style>
+      </head>
+      <body>
+        <div class="card">
+          <div class="hd">{brandName}</div>
+          <div class="body">
+            {!order ? (
+              <>
+                <div class="mark bad">!</div>
+                <h1>Order not found</h1>
+                <p>{message || "We couldn't find that order."}</p>
+                <a class="btn" href="/studio">
+                  Back to the studio
+                </a>
+              </>
+            ) : ["paid", "submitted", "in_production", "shipped", "delivered"].includes(status) ? (
+              <>
+                <div class="mark ok">✓</div>
+                <h1>Payment received</h1>
+                <p>
+                  Thanks! Your order <span class="ref">{order.reference}</span> is confirmed and being prepared. We've
+                  emailed your receipt{order.email ? ` to ${order.email}` : ""}.
+                </p>
+              </>
+            ) : status === "in_review" ? (
+              <>
+                <div class="mark hold">⏳</div>
+                <h1>Payment received</h1>
+                <p>
+                  Thanks! Your order <span class="ref">{order.reference}</span> is paid. We're just giving your design
+                  a quick check before printing — usually within a few hours. We'll email you the moment it's on its
+                  way.
+                </p>
+              </>
+            ) : (
+              <>
+                <div class="mark hold">…</div>
+                <h1>Almost there</h1>
+                <p>
+                  Your order <span class="ref">{order.reference}</span> is <b>{status.replace(/_/g, " ")}</b>. If
+                  you've just paid, this page will reflect it shortly.
+                </p>
+              </>
+            )}
+
+            {order ? (
+              <>
+                <div class="lines">
+                  {(order.items ?? []).map((it) => (
+                    <div class="ln">
+                      <span>
+                        {(it.product_slug ? it.product_slug.replace(/-/g, " ") : "Item").replace(/\b\w/g, (m) =>
+                          m.toUpperCase()
+                        )}{" "}
+                        ×{it.quantity}
+                      </span>
+                      <span>R{money(it.unit_price * it.quantity)}</span>
+                    </div>
+                  ))}
+                  <div class="ln dim">
+                    <span>Shipping</span>
+                    <span>{order.shipping === 0 ? "FREE" : `R${money(order.shipping)}`}</span>
+                  </div>
+                  <div class="ln tot">
+                    <span>Total</span>
+                    <span>R{money(order.total)}</span>
+                  </div>
+                </div>
+
+                {showSignup ? (
+                  <div class="signup-nudge" id="signupNudge">
+                    <p class="nudge-label">Save your order to an account</p>
+                    <p class="dim">Track this and future orders in one place. Your email is already saved — just set a password.</p>
+                    <div id="nudgeForm">
+                      <input type="password" id="nudgePw" placeholder="Choose a password (8+ chars)" autocomplete="new-password" />
+                      <button class="btn" onclick="claimAccount()">
+                        Create account
+                      </button>
+                    </div>
+                    <p id="nudgeMsg" class="dim" style="display:none"></p>
+                  </div>
+                ) : null}
+
+                <a class="btn" href="/studio" style={`margin-top:${showSignup ? 8 : 20}px`}>
+                  Design something else
+                </a>
+              </>
+            ) : null}
+          </div>
+        </div>
+        {showSignup ? (
+          <script
+            dangerouslySetInnerHTML={{
+              __html: `
+async function claimAccount() {
+  const pw = document.getElementById('nudgePw').value;
+  const msg = document.getElementById('nudgeMsg');
+  const form = document.getElementById('nudgeForm');
+  if (pw.length < 8) { showMsg('Password must be at least 8 characters.', false); return; }
+  const res = await fetch('/api/account/create-from-order', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({ reference: ${JSON.stringify(order?.reference ?? "")}, password: pw })
+  });
+  const data = await res.json();
+  if (data.ok) {
+    form.style.display = 'none';
+    showMsg('Account created! You can now track your orders.', true);
+    setTimeout(() => { window.location.href = '/account'; }, 1200);
+  } else {
+    showMsg(data.error || 'Something went wrong.', false);
+  }
+}
+function showMsg(text, ok) {
+  const el = document.getElementById('nudgeMsg');
+  el.textContent = text;
+  el.style.color = ok ? '#1c8c4c' : '#e8472b';
+  el.style.display = 'block';
+}
+              `,
+            }}
+          />
+        ) : null}
+      </body>
+    </html>
+  );
+}

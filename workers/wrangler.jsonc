@@ -1,0 +1,22 @@
+{
+  // Reconfigures the existing "truef-studios" Worker in place (was accidentally
+  // Connect-to-Git'd to the You-Design-Studios repo, serving broken raw templates).
+  "name": "truef-studios",
+  "main": "src/index.tsx",
+  "compatibility_date": "2025-01-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "assets": {
+    "directory": "./public",
+    "binding": "ASSETS"
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "truef-studios-db",
+      "database_id": "3983873e-9743-4d58-9806-6468d13aca90"
+    }
+  ],
+  "r2_buckets": [
+    { "binding": "FILES", "bucket_name": "truef-studios-files" }
+  ]
+}

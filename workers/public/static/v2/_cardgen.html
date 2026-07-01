@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>card render harness</title>
+  <style>
+    html,body{margin:0}
+    #wrap{position:relative; width:800px; height:1000px;
+      background:linear-gradient(#f6f5f1, #e7e5de); overflow:hidden;}
+    .cardshadow{position:absolute; left:50%; bottom:11%; width:44%; height:30px;
+      transform:translateX(-50%); border-radius:50%;
+      background:radial-gradient(ellipse at center, rgba(0,0,0,.30), transparent 72%);
+      filter:blur(13px); z-index:0;}
+    #garment3d{position:relative; z-index:1; width:100%; height:100%; display:block;}
+  </style>
+</head>
+<body>
+  <div id="wrap">
+    <div class="cardshadow"></div>
+    <canvas id="garment3d"></canvas>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/DRACOLoader.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/geometries/DecalGeometry.js"></script>
+  <script src="/static/js/garment3d.js"></script>
+  <script>
+    const G = window.Garment3D;
+    const canvas = document.getElementById("garment3d");
+    let booted = false, curModel = null;
+    const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+    const raf2 = () => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+
+    window.cardReady = () => !!(G && G.supported);
+
+    // Set up the garment for ONE card, front-facing + still. We do NOT read the
+    // WebGL buffer (toDataURL corrupts under SwiftShader); the driver captures the
+    // composited page region instead, which is clean. Resolves true when painted.
+    window.renderCard = async function (modelUrl, color, artUrl) {
+      if (!booted) {
+        G.init(canvas, { antialias: false });
+        G.lockPlacement(true);
+        if (G.setRoom) G.setRoom(false);
+        booted = true;
+      }
+      G.setAutoSpin(false);
+      if (G.freezeSpin) G.freezeSpin(true);
+      G.setColor(color || "#f4f3ef");
+      if (modelUrl !== curModel) { await G.load(modelUrl); curModel = modelUrl; }
+      G.setSide("front");
+      if (G.resetView) G.resetView();
+      await G.setArt("front", artUrl);
+      await G.setArt("back", null);
+      await raf2(); await wait(500); await raf2();
+      return true;
+    };
+  </script>
+</body>
+</html>

@@ -1,0 +1,399 @@
+/** Ported 1:1 from templates/account.html. */
+import type { Order, Address, User, Design } from "../lib/db";
+
+function formatDate(ts: number): string {
+  try {
+    const d = new Date(ts * 1000);
+    return d.toLocaleDateString("en-US", { day: "numeric", month: "short", year: "numeric" });
+  } catch {
+    return "";
+  }
+}
+function titleCaseSlug(s: string): string {
+  return s.replace(/-/g, " ").replace(/\b\w/g, (m) => m.toUpperCase());
+}
+
+export function AccountPage(props: {
+  brandName: string;
+  user: User;
+  orders: Order[];
+  saved: (Design & { saved_name?: string | null })[];
+  addresses: Address[];
+}) {
+  const { brandName, user, orders, saved, addresses } = props;
+  return (
+    <html lang="en">
+      <head>
+        <meta charSet="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+        <title>My account · {brandName}</title>
+        <style>{`
+    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@700&family=Share+Tech+Mono&display=swap');
+    :root { --bg:#0a0a0a; --card:#111; --border:#1e1e1e; --accent:#00f5ff; --pink:#ff2d78;
+            --text:#e0e0e0; --dim:#555; --ok:#00e676; --warn:#ffb300; }
+    * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+    body { margin:0; background:var(--bg); color:var(--text);
+           font:15px/1.55 'Share Tech Mono',monospace;
+           padding:0 0 env(safe-area-inset-bottom); }
+    .topbar { display:flex; align-items:center; justify-content:space-between;
+              padding:16px 20px; border-bottom:1px solid var(--border);
+              position:sticky; top:0; background:rgba(10,10,10,.95);
+              backdrop-filter:blur(8px); z-index:10; }
+    .brand { font-family:'Orbitron',sans-serif; font-size:15px; letter-spacing:2px;
+             color:var(--accent); text-decoration:none;
+             text-shadow:0 0 10px rgba(0,245,255,.4); }
+    .topbar-right { display:flex; align-items:center; gap:16px; font-size:13px; color:var(--dim); }
+    .topbar-right a { color:var(--accent); text-decoration:none; }
+    .logout-btn { background:none; border:1px solid var(--border); color:var(--dim);
+                  font:13px 'Share Tech Mono',monospace; padding:6px 12px;
+                  border-radius:6px; cursor:pointer; }
+    .logout-btn:hover { border-color:var(--pink); color:var(--pink); }
+    .page { max-width:860px; margin:0 auto; padding:28px 20px 48px; }
+    h2 { font-family:'Orbitron',sans-serif; font-size:22px; color:#fff;
+         letter-spacing:1px; margin:0 0 4px; }
+    .welcome { color:var(--dim); font-size:13px; margin:0 0 32px; }
+    .section-head { display:flex; align-items:center; gap:10px; margin:32px 0 14px;
+                    border-bottom:1px solid var(--border); padding-bottom:10px; }
+    .section-head h3 { font-family:'Orbitron',sans-serif; font-size:14px; color:var(--accent);
+                       letter-spacing:1px; margin:0; text-transform:uppercase; }
+    .badge { background:var(--border); color:var(--dim); font-size:11px;
+             padding:2px 8px; border-radius:20px; }
+    .order-card { background:var(--card); border:1px solid var(--border);
+                  border-radius:12px; padding:16px 18px; margin-bottom:12px; }
+    .order-top { display:flex; justify-content:space-between; align-items:flex-start;
+                 gap:12px; flex-wrap:wrap; }
+    .order-ref { font-size:13px; color:#fff; letter-spacing:.5px; }
+    .order-date { font-size:12px; color:var(--dim); margin-top:2px; }
+    .status-pill { font-size:11px; padding:3px 10px; border-radius:20px;
+                   font-family:'Orbitron',sans-serif; letter-spacing:.5px;
+                   text-transform:uppercase; white-space:nowrap; }
+    .s-paid, .s-submitted, .s-in_production { background:rgba(0,230,118,.1); color:var(--ok); border:1px solid rgba(0,230,118,.2); }
+    .s-shipped, .s-delivered { background:rgba(0,245,255,.1); color:var(--accent); border:1px solid rgba(0,245,255,.2); }
+    .s-in_review, .s-awaiting_redo, .s-created { background:rgba(255,179,0,.1); color:var(--warn); border:1px solid rgba(255,179,0,.2); }
+    .s-refunded, .s-cancelled, .s-rejected, .s-failed { background:rgba(255,45,120,.08); color:var(--pink); border:1px solid rgba(255,45,120,.2); }
+    .order-items { margin-top:10px; border-top:1px solid var(--border); padding-top:10px;
+                   font-size:13px; color:var(--dim); }
+    .order-items .item-row { display:flex; justify-content:space-between; padding:3px 0; }
+    .order-total { display:flex; justify-content:space-between; padding-top:8px;
+                   border-top:1px solid var(--border); margin-top:6px;
+                   font-size:14px; color:#fff; }
+    .order-actions { margin-top:12px; display:flex; gap:8px; flex-wrap:wrap; }
+    .link-btn { font-size:12px; color:var(--accent); text-decoration:none;
+                border:1px solid rgba(0,245,255,.2); padding:5px 12px;
+                border-radius:6px; transition:border-color .15s; }
+    .link-btn:hover { border-color:var(--accent); }
+    .designs-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(130px,1fr));
+                    gap:12px; }
+    .design-thumb { background:var(--card); border:1px solid var(--border);
+                    border-radius:10px; overflow:hidden; aspect-ratio:1;
+                    display:flex; align-items:center; justify-content:center;
+                    position:relative; }
+    .design-thumb img { width:100%; height:100%; object-fit:cover; }
+    .design-label { position:absolute; bottom:0; left:0; right:0;
+                    background:rgba(10,10,10,.8); font-size:11px; color:var(--dim);
+                    padding:4px 8px; text-overflow:ellipsis; overflow:hidden; white-space:nowrap; }
+    .design-thumb:hover .design-label { color:#fff; }
+    .addr-card { background:var(--card); border:1px solid var(--border);
+                 border-radius:12px; padding:14px 16px; margin-bottom:10px;
+                 display:flex; justify-content:space-between; align-items:flex-start; gap:10px; }
+    .addr-text { font-size:13px; color:var(--text); line-height:1.6; }
+    .addr-text strong { color:#fff; }
+    .addr-default { font-size:11px; color:var(--accent); margin-top:4px; letter-spacing:.5px; }
+    .addr-del { background:none; border:none; color:var(--dim); cursor:pointer; font-size:18px;
+                padding:0 4px; }
+    .addr-del:hover { color:var(--pink); }
+    .add-addr-btn { display:inline-block; margin-top:6px; font-size:13px; color:var(--accent);
+                    border:1px dashed rgba(0,245,255,.3); padding:10px 16px;
+                    border-radius:10px; cursor:pointer; width:100%; text-align:center; }
+    .add-addr-btn:hover { border-color:var(--accent); }
+    .addr-form { display:none; background:var(--card); border:1px solid var(--border);
+                 border-radius:12px; padding:20px; margin-top:10px; }
+    .addr-form.open { display:block; }
+    .addr-form label { display:block; font-size:11px; color:var(--dim); letter-spacing:1px;
+                       text-transform:uppercase; margin:10px 0 4px; }
+    .addr-form label:first-child { margin-top:0; }
+    .addr-form input, .addr-form select { display:block; width:100%; padding:10px 12px;
+                background:#0a0a0a; border:1px solid var(--border); border-radius:7px;
+                color:#fff; font:14px 'Share Tech Mono',monospace; outline:none; }
+    .addr-form input:focus, .addr-form select:focus { border-color:var(--accent); }
+    .addr-form select option { background:#111; }
+    .row2 { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+    .form-actions { display:flex; gap:8px; margin-top:14px; }
+    .save-btn { flex:1; padding:11px; background:var(--accent); color:#000;
+                font-family:'Orbitron',sans-serif; font-size:12px; letter-spacing:1px;
+                font-weight:700; border:none; border-radius:8px; cursor:pointer;
+                text-transform:uppercase; }
+    .cancel-btn { padding:11px 16px; background:none; border:1px solid var(--border);
+                  color:var(--dim); font:13px 'Share Tech Mono',monospace;
+                  border-radius:8px; cursor:pointer; }
+    .cancel-btn:hover { border-color:var(--pink); color:var(--pink); }
+    .pw-form { background:var(--card); border:1px solid var(--border);
+               border-radius:12px; padding:20px; }
+    .pw-form label { display:block; font-size:11px; color:var(--dim); letter-spacing:1px;
+                     text-transform:uppercase; margin:10px 0 4px; }
+    .pw-form label:first-child { margin-top:0; }
+    .pw-form input { display:block; width:100%; padding:10px 12px; background:#0a0a0a;
+                     border:1px solid var(--border); border-radius:7px; color:#fff;
+                     font:14px 'Share Tech Mono',monospace; outline:none; }
+    .pw-form input:focus { border-color:var(--accent); }
+    .pw-save { margin-top:14px; padding:12px; width:100%; background:var(--accent); color:#000;
+               font-family:'Orbitron',sans-serif; font-size:12px; letter-spacing:1px;
+               font-weight:700; border:none; border-radius:8px; cursor:pointer;
+               text-transform:uppercase; }
+    .pw-msg { font-size:13px; margin-top:10px; }
+    .pw-msg.ok { color:var(--ok); }
+    .pw-msg.err { color:var(--pink); }
+    .empty { color:var(--dim); font-size:13px; padding:16px 0; }
+    @media (max-width:480px) {
+      .page { padding:20px 14px 40px; }
+      .designs-grid { grid-template-columns:repeat(3,1fr); }
+    }
+        `}</style>
+      </head>
+      <body>
+        <div class="topbar">
+          <a class="brand" href="/">
+            {brandName}
+          </a>
+          <div class="topbar-right">
+            <span>{user.email}</span>
+            <form method="post" action="/auth/logout" style="margin:0">
+              <button class="logout-btn" type="submit">
+                Sign out
+              </button>
+            </form>
+          </div>
+        </div>
+
+        <div class="page">
+          <h2>My account</h2>
+          <p class="welcome">{user.name || user.email}</p>
+
+          <div class="section-head">
+            <h3>Orders</h3>
+            <span class="badge">{orders.length}</span>
+          </div>
+          {orders.length ? (
+            orders.map((o) => (
+              <div class="order-card">
+                <div class="order-top">
+                  <div>
+                    <div class="order-ref">{o.reference}</div>
+                    <div class="order-date">{formatDate(o.created_at)}</div>
+                  </div>
+                  <span class={`status-pill s-${o.status}`}>{o.status.replace(/_/g, " ")}</span>
+                </div>
+                <div class="order-items">
+                  {(o.items ?? []).map((it) => (
+                    <div class="item-row">
+                      <span>
+                        {it.product_name || it.product_slug || "Item"} ×{it.quantity}
+                      </span>
+                      <span>R{((it.unit_price * it.quantity) / 100).toFixed(2)}</span>
+                    </div>
+                  ))}
+                  <div class="order-total">
+                    <span>Total</span>
+                    <span>R{(o.total / 100).toFixed(2)}</span>
+                  </div>
+                </div>
+                <div class="order-actions">
+                  <a class="link-btn" href={`/order/${o.reference}`}>
+                    Track order →
+                  </a>
+                  {o.tracking_url ? (
+                    <a class="link-btn" href={o.tracking_url} target="_blank">
+                      Courier tracking →
+                    </a>
+                  ) : null}
+                </div>
+              </div>
+            ))
+          ) : (
+            <p class="empty">
+              No orders yet.{" "}
+              <a href="/studio" style="color:var(--accent)">
+                Design something →
+              </a>
+            </p>
+          )}
+
+          <div class="section-head">
+            <h3>Saved designs</h3>
+            <span class="badge">{saved.length}</span>
+          </div>
+          {saved.length ? (
+            <div class="designs-grid">
+              {saved.map((d) => (
+                <div class="design-thumb">
+                  {d.preview_url ? (
+                    <img src={d.preview_url} alt={d.saved_name || "Design"} loading="lazy" />
+                  ) : (
+                    <span style="font-size:28px">🎨</span>
+                  )}
+                  <div class="design-label">{d.saved_name || titleCaseSlug(d.product_slug || "Design")}</div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p class="empty">No saved designs yet.</p>
+          )}
+
+          <div class="section-head">
+            <h3>Address book</h3>
+          </div>
+          <div id="addressList">
+            {addresses.length ? (
+              addresses.map((a) => (
+                <div class="addr-card" id={`addr-${a.id}`}>
+                  <div class="addr-text">
+                    <strong>{a.name || ""}</strong>
+                    <br />
+                    {a.line1}
+                    {a.line2 ? `, ${a.line2}` : ""}
+                    <br />
+                    {a.city}
+                    {a.province ? `, ${a.province}` : ""} {a.postal_code}
+                    {a.is_default ? <div class="addr-default">✦ Default</div> : null}
+                  </div>
+                  <button class="addr-del" onclick={`deleteAddress(${a.id})`} title="Remove">
+                    ×
+                  </button>
+                </div>
+              ))
+            ) : (
+              <p class="empty" id="noAddresses">
+                No saved addresses.
+              </p>
+            )}
+          </div>
+          <div class="add-addr-btn" onclick="toggleAddrForm()">
+            + Add address
+          </div>
+          <div class="addr-form" id="addrForm">
+            <label>Full name</label>
+            <input type="text" id="aName" placeholder="Recipient name" />
+            <label>Address line 1</label>
+            <input type="text" id="aLine1" placeholder="Street address" />
+            <label>Address line 2 (optional)</label>
+            <input type="text" id="aLine2" placeholder="Apartment, unit, etc." />
+            <div class="row2">
+              <div>
+                <label>City</label>
+                <input type="text" id="aCity" />
+              </div>
+              <div>
+                <label>Postal code</label>
+                <input type="text" id="aPostal" />
+              </div>
+            </div>
+            <label>Province</label>
+            <select id="aProvince">
+              <option value="">— Select —</option>
+              <option>Western Cape</option>
+              <option>Gauteng</option>
+              <option>KwaZulu-Natal</option>
+              <option>Eastern Cape</option>
+              <option>Limpopo</option>
+              <option>Mpumalanga</option>
+              <option>North West</option>
+              <option>Free State</option>
+              <option>Northern Cape</option>
+            </select>
+            <div class="form-actions">
+              <button class="save-btn" onclick="saveAddress()">
+                Save address
+              </button>
+              <button class="cancel-btn" onclick="toggleAddrForm()">
+                Cancel
+              </button>
+            </div>
+            <p id="addrMsg" style="font-size:13px;color:var(--pink);margin-top:8px;display:none"></p>
+          </div>
+
+          <div class="section-head">
+            <h3>Change password</h3>
+          </div>
+          <div class="pw-form">
+            <label>Current password</label>
+            <input type="password" id="pwCurrent" autocomplete="current-password" />
+            <label>New password</label>
+            <input type="password" id="pwNew" autocomplete="new-password" placeholder="8+ characters" />
+            <label>Confirm new password</label>
+            <input type="password" id="pwConfirm" autocomplete="new-password" />
+            <button class="pw-save" onclick="changePassword()">
+              Update password
+            </button>
+            <p id="pwMsg" class="pw-msg" style="display:none"></p>
+          </div>
+        </div>
+
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+function toggleAddrForm() {
+  const f = document.getElementById('addrForm');
+  f.classList.toggle('open');
+}
+
+async function saveAddress() {
+  const msg = document.getElementById('addrMsg');
+  const payload = {
+    name: document.getElementById('aName').value.trim(),
+    line1: document.getElementById('aLine1').value.trim(),
+    line2: document.getElementById('aLine2').value.trim(),
+    city: document.getElementById('aCity').value.trim(),
+    province: document.getElementById('aProvince').value,
+    postal_code: document.getElementById('aPostal').value.trim(),
+    country: 'ZA'
+  };
+  if (!payload.line1 || !payload.city) {
+    msg.textContent = 'Address line 1 and city are required.';
+    msg.style.display = 'block'; return;
+  }
+  const res = await fetch('/api/account/address', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify(payload)
+  });
+  if ((await res.json()).ok) { location.reload(); }
+  else { msg.textContent = 'Could not save address.'; msg.style.display = 'block'; }
+}
+
+async function deleteAddress(id) {
+  if (!confirm('Remove this address?')) return;
+  const res = await fetch(\`/api/account/address/\${id}\`, { method: 'DELETE' });
+  if ((await res.json()).ok) {
+    document.getElementById('addr-' + id)?.remove();
+  }
+}
+
+async function changePassword() {
+  const msg = document.getElementById('pwMsg');
+  const payload = {
+    current_password: document.getElementById('pwCurrent').value,
+    new_password: document.getElementById('pwNew').value,
+    confirm_password: document.getElementById('pwConfirm').value
+  };
+  const res = await fetch('/api/account/password', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify(payload)
+  });
+  const data = await res.json();
+  msg.textContent = data.ok ? 'Password updated.' : (data.error || 'Something went wrong.');
+  msg.className = 'pw-msg ' + (data.ok ? 'ok' : 'err');
+  msg.style.display = 'block';
+  if (data.ok) {
+    document.getElementById('pwCurrent').value = '';
+    document.getElementById('pwNew').value = '';
+    document.getElementById('pwConfirm').value = '';
+  }
+}
+            `,
+          }}
+        />
+      </body>
+    </html>
+  );
+}

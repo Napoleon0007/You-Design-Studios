@@ -1,0 +1,691 @@
+/** Ported 1:1 from templates/studio.html. */
+import type * as catalog from "../lib/catalog";
+
+type StudioProduct = ReturnType<typeof catalog.studioProducts>[number];
+
+export function StudioPage(props: { brandName: string; products: StudioProduct[] }) {
+  const { brandName, products } = props;
+  const first = products[0];
+  return (
+    <html lang="en">
+      <head>
+        <meta charSet="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+        <title>Design Studio — {brandName}</title>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="" />
+        {/* speed up the 3D engine: warm the CDN connections + fetch the default model early */}
+        <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin="" />
+        <link rel="preconnect" href="https://www.gstatic.com" crossorigin="" />
+        <link rel="preload" as="fetch" crossorigin="" href="/static/models/meshy_tee.glb" />
+        <link rel="icon" type="image/svg+xml" href="/static/v2/favicon.svg" />
+        <link
+          href="https://fonts.googleapis.com/css2?family=Anton&family=Archivo:wght@700;800&family=Figtree:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap"
+          rel="stylesheet"
+        />
+        <link rel="stylesheet" href="/static/css/style.css" />
+        <link rel="stylesheet" href="/static/css/studio.css" />
+        <style>{`
+    /* Cart + checkout overlay — mobile-first bottom sheet, desktop sidebar */
+    .cart-overlay { position:fixed; inset:0; z-index:160; background:rgba(20,18,16,.5);
+      display:flex; justify-content:flex-end; }
+    .cart-overlay[hidden] { display:none; }
+    /* Each pane must itself be a flex column filling the sheet, so .cart-body
+       scrolls and .cart-foot (Checkout / Pay button) stays pinned and ON-SCREEN.
+       Without this the checkout form overflowed the sheet and pushed Pay off the
+       bottom — the "no place to put my card" bug. (display:flex overrides the UA
+       [hidden]{display:none}, so re-assert display:none for the hidden pane.) */
+    #cartPane, #checkoutPane { display:flex; flex-direction:column; height:100%; min-height:0; }
+    #cartPane[hidden], #checkoutPane[hidden] { display:none; }
+    .cart-sheet { width:100%; max-width:440px; background:#fff; height:100%;
+      display:flex; flex-direction:column; box-shadow:-8px 0 40px rgba(0,0,0,.2);
+      animation:cartIn .22s ease; }
+    @keyframes cartIn { from { transform:translateX(24px); opacity:.6 } to { transform:none; opacity:1 } }
+    @media (max-width:520px){
+      .cart-overlay { align-items:flex-end; justify-content:center; }
+      .cart-sheet { max-width:none; border-radius:18px 18px 0 0;
+        height:92dvh; height:92vh; /* dvh first, vh fallback */
+        animation:sheetUp .24s ease; box-shadow:0 -8px 40px rgba(0,0,0,.2); }
+    }
+    @keyframes sheetUp { from { transform:translateY(40px) } to { transform:none } }
+    .cart-sheet h2 { font:600 18px/1 "Space Grotesk",sans-serif; margin:0; }
+    .cart-head { display:flex; align-items:center; justify-content:space-between;
+      padding:18px 20px; border-bottom:1px solid #eee; flex-shrink:0; }
+    .cart-close,.cart-back { background:none; border:0; font-size:20px; cursor:pointer;
+      color:#666; padding:10px; margin:-10px; min-width:44px; min-height:44px;
+      display:flex; align-items:center; justify-content:center; }
+    .cart-back { font-size:14px; font-weight:600; }
+    .cart-body { flex:1; min-height:0; overflow-y:auto; overflow-x:hidden;
+      padding:8px 20px 12px; -webkit-overflow-scrolling:touch; }
+    .cart-foot { padding:14px 20px max(16px,env(safe-area-inset-bottom));
+      border-top:1px solid #eee; background:#fff; flex-shrink:0; }
+    .cart-row { display:flex; gap:12px; padding:14px 0; border-bottom:1px solid #f1f1ef; align-items:center; }
+    .cart-th { width:56px; height:56px; border-radius:10px; background:#faf7f5 center/contain no-repeat;
+      border:1px solid #eee; flex:none; }
+    .cart-meta { flex:1; min-width:0; } .cart-name { font-weight:600; font-size:14px; }
+    .cart-vary { color:#888; font-size:12.5px; margin:2px 0 6px; } .cart-vary i { color:#b8860b; font-style:normal; }
+    .cart-q { display:flex; align-items:center; gap:4px; }
+    .cart-q button { width:44px; height:44px; border:1px solid #ddd; background:#fff; border-radius:10px;
+      font-size:18px; cursor:pointer; line-height:1; display:flex; align-items:center; justify-content:center; }
+    .cart-q span { min-width:22px; text-align:center; font-size:15px; font-weight:600; }
+    .cart-rm { width:auto !important; border:0 !important; color:#c0392b !important;
+      font-size:12px !important; padding:8px 4px !important; min-height:44px; }
+    .cart-line { font-weight:700; font-size:14px; white-space:nowrap; }
+    .cart-empty { color:#999; text-align:center; padding:40px 0; }
+    .cart-sub { display:flex; justify-content:space-between; font-weight:700; margin-bottom:12px; font-size:16px; }
+    #toCheckout,#payBtn { width:100%; justify-content:center; padding:17px 16px;
+      font-size:16px; min-height:54px; border-radius:14px; }
+    #toCheckout:disabled,#payBtn:disabled { opacity:.4; pointer-events:none; }
+    .co-field { margin-bottom:12px; }
+    .co-field label { display:block; font-size:12px; color:#777; margin-bottom:5px; font-weight:500; }
+    .co-field input { width:100%; padding:13px 14px; border:1.5px solid #e0e0e0;
+      border-radius:12px; font-size:16px; box-sizing:border-box; outline:none;
+      transition:border-color .15s; -webkit-appearance:none; }
+    .co-field input:focus { border-color:#111; }
+    .co-2 { display:flex; gap:10px; }
+    .co-2 .co-field { flex:1; }
+    @media (max-width:380px){ .co-2 { flex-direction:column; gap:0; } }
+    .co-summary { border-top:1px solid #eee; margin-top:16px; padding-top:12px; }
+    .co-summary .ln { display:flex; justify-content:space-between; padding:5px 0; font-size:14px; color:#444; }
+    .co-summary .ln.tot { font-weight:700; font-size:17px; color:#111; border-top:1px solid #eee; margin-top:8px; padding-top:12px; }
+    .co-shipnote { font-size:12px; color:#888; margin:6px 0 0; }
+    .co-secure { text-align:center; font-size:12px; color:#aaa; margin:10px 0 0; }
+
+    /* Originality reminder pop-up — replaces the inline rights checkbox */
+    #rightsRow { display:none; }   /* consent now happens via the pop-up below */
+    .ip-modal { position:fixed; inset:0; z-index:180; background:rgba(20,18,16,.38);
+      display:flex; align-items:flex-end; justify-content:center; padding:20px 20px max(28px,env(safe-area-inset-bottom)); }
+    .ip-modal[hidden] { display:none; }
+    .ip-card { background:#fff; border-radius:18px; max-width:380px; width:100%;
+      padding:26px 22px max(22px,env(safe-area-inset-bottom)); text-align:center;
+      box-shadow:0 20px 60px rgba(0,0,0,.3); animation:ipIn .2s ease; }
+    @keyframes ipIn { from { transform:translateY(14px) scale(.98); opacity:.6 } to { transform:none; opacity:1 } }
+    .ip-mark { width:44px; height:44px; color:#111; margin-bottom:10px; }
+    .ip-card h3 { font:700 19px/1.2 "Space Grotesk",sans-serif; margin:4px 0 8px; color:#111; }
+    .ip-card p { font-size:14px; line-height:1.6; color:#555; margin:0 0 20px; }
+    .ip-card p b { color:#111; }
+    #ipAgree { width:100%; justify-content:center; padding:15px; font-size:15px; }
+    .ip-cancel { display:block; width:100%; background:none; border:0; color:#999;
+      font-size:13px; margin-top:10px; padding:8px; cursor:pointer; letter-spacing:.03em; }
+        `}</style>
+      </head>
+      <body class="theme-light ed">
+        <div class="grain"></div>
+
+        {/* ============================== TOP BAR (transparent floating chrome) === */}
+        <header class="ed-top">
+          <div class="ed-top__l">
+            <a class="ed-back" href="/static/v2/index.html" aria-label="Back to TRUEF">
+              <svg class="navmark" viewBox="0 0 100 100" fill="none" aria-hidden="true">
+                <rect x="9" y="9" width="82" height="82" rx="22" stroke="currentColor" stroke-width="7" />
+                <rect x="30" y="31" width="40" height="10.5" rx="2" fill="currentColor" />
+                <rect x="44.75" y="31" width="10.5" height="40" rx="2" fill="currentColor" />
+                <rect x="55" y="46" width="15.5" height="9.5" rx="2" fill="currentColor" />
+              </svg>
+              <span class="ed-back__lbl">Back</span>
+            </a>
+          </div>
+
+          {/* centre pill: Front / Back (the existing .side-toggle, restyled) */}
+          <div class="ed-top__c">
+            <div class="side-toggle ed-pill" role="group" aria-label="Side">
+              <button class="on" data-side="front" type="button">
+                Front
+              </button>
+              <button data-side="back" type="button">
+                Back
+              </button>
+            </div>
+          </div>
+
+          <div class="ed-top__r">
+            <button class="ed-cart" id="cartBtn" type="button" aria-label="Open cart">
+              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path
+                  d="M4 5h2l1.6 10.2A2 2 0 0 0 9.6 17h7.6a2 2 0 0 0 2-1.6L20.5 8H7"
+                  stroke="currentColor"
+                  stroke-width="1.7"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+                <circle cx="10" cy="20" r="1.3" fill="currentColor" />
+                <circle cx="17" cy="20" r="1.3" fill="currentColor" />
+              </svg>
+              <span class="ed-cart__n" id="cartCount">
+                0
+              </span>
+            </button>
+            <button class="ed-finish" id="addBtn" type="button">
+              Finish
+            </button>
+          </div>
+        </header>
+
+        {/* ============================================= FULL-BLEED STAGE ========= */}
+        <main class="ed-stage" id="stage">
+          {/* photo-studio environment (neutral/greyscale so the artwork's real colours read true) */}
+          <div class="studio-room" aria-hidden="true">
+            <div class="sr-cyc"></div>
+            <div class="sr-floor3d"></div>
+            <div class="sr-lum"></div>
+            <div class="sr-gear sr-gear--l">
+              <svg viewBox="0 0 120 230" fill="none">
+                <g stroke="#2a2a30" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M60 66V162" />
+                  <path d="M60 162 32 221" />
+                  <path d="M60 162 60 225" />
+                  <path d="M60 162 90 221" />
+                  <path d="M60 74 34 50" />
+                </g>
+                <rect x="6" y="20" width="44" height="30" rx="5" transform="rotate(-20 28 35)" fill="#2a2a30" />
+              </svg>
+            </div>
+            <div class="sr-gear sr-gear--r">
+              <svg viewBox="0 0 170 230" fill="none">
+                <g stroke="#2a2a30" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M58 44V174" />
+                  <path d="M58 174 28 223" />
+                  <path d="M58 174 88 223" />
+                  <path d="M58 54H150" />
+                </g>
+                <circle cx="150" cy="54" r="13" fill="#2a2a30" />
+              </svg>
+            </div>
+            <div class="sr-shaft"></div>
+            <div class="sr-key"></div>
+            <div class="sr-softbox"></div>
+            <div class="sr-motes"></div>
+            <div class="sr-vignette"></div>
+            <div class="sr-flash"></div>
+          </div>
+          <button class="preview-toggle" id="previewBtn" type="button">
+            Preview in 3D ⟳
+          </button>
+          <canvas id="garment3d"></canvas>
+          <div class="stage__placeholder">
+            <img id="refPhoto" src={first.ref_image} alt="Product preview" />
+            <img id="overlayArt" class="stage__overlay-art" alt="" style="display:none" />
+          </div>
+          <div class="stage__soon" id="comingSoon" hidden>
+            <span class="soon-name"></span>
+            <p>Live 3D preview coming soon — pick your colour, size and design; it'll print perfectly.</p>
+          </div>
+          <span class="stage__note" id="stageNote">
+            Front print · live preview
+          </span>
+        </main>
+
+        {/* ================================= BOTTOM TOOL DOCK ===================== */}
+        <nav class="ed-dock" id="edDock" aria-label="Editor tools">
+          <button class="tool" data-sheet="garment" type="button">
+            <svg viewBox="0 0 24 24" fill="none">
+              <path
+                d="M8.5 4 4 6.5 6 10l2.5-1.2V20h7V8.8L18 10l2-3.5L15.5 4a3.5 3.5 0 0 1-7 0Z"
+                stroke="currentColor"
+                stroke-width="1.7"
+                stroke-linejoin="round"
+              />
+            </svg>
+            <span class="tool__lbl">Garment</span>
+          </button>
+          <button class="tool" data-sheet="colour" type="button">
+            <svg viewBox="0 0 24 24" fill="none">
+              <path
+                d="M12 3.5c3 3.4 5 6 5 8.5a5 5 0 0 1-10 0c0-2.5 2-5.1 5-8.5Z"
+                stroke="currentColor"
+                stroke-width="1.7"
+                stroke-linejoin="round"
+              />
+            </svg>
+            <span class="tool__lbl">Colour</span>
+          </button>
+          <button class="tool" data-sheet="size" type="button">
+            <svg viewBox="0 0 24 24" fill="none">
+              <path
+                d="M9 4H4v5M15 20h5v-5M4.5 4.5l7 7M19.5 19.5l-7-7"
+                stroke="currentColor"
+                stroke-width="1.7"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+            <span class="tool__lbl">Size</span>
+          </button>
+          <button class="tool" data-sheet="design" type="button">
+            <svg viewBox="0 0 24 24" fill="none">
+              <path
+                d="M12 15V4M8.5 7.5 12 4l3.5 3.5M5 20h14"
+                stroke="currentColor"
+                stroke-width="1.7"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+            <span class="tool__lbl">Design</span>
+          </button>
+          <button class="tool" data-sheet="move" id="toolMove" type="button">
+            <svg viewBox="0 0 24 24" fill="none">
+              <path
+                d="M12 3v18M3 12h18M9 6l3-3 3 3M9 18l3 3 3-3M6 9l-3 3 3 3M18 9l3 3-3 3"
+                stroke="currentColor"
+                stroke-width="1.7"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+            <span class="tool__lbl">Move</span>
+          </button>
+          <button class="tool" data-sheet="qty" type="button">
+            <svg viewBox="0 0 24 24" fill="none">
+              <path
+                d="M9.5 4 7.5 20M16.5 4l-2 16M4.5 9h15M4 15h15"
+                stroke="currentColor"
+                stroke-width="1.7"
+                stroke-linecap="round"
+              />
+            </svg>
+            <span class="tool__lbl">Qty</span>
+          </button>
+          <button class="tool" id="saveBtn" type="button">
+            <svg viewBox="0 0 24 24" fill="none">
+              <path
+                d="M12 21C7 17 3 13.5 3 9.5 3 7 5 5 7.5 5c1.7 0 3.3 1 4.5 2.5C13.2 6 14.8 5 16.5 5 19 5 21 7 21 9.5c0 4-4 7.5-9 11.5Z"
+                stroke="currentColor"
+                stroke-width="1.7"
+                stroke-linejoin="round"
+              />
+            </svg>
+            <span class="tool__lbl">Save</span>
+          </button>
+        </nav>
+
+        {/* ================================= CONTROL SHEETS ======================= */}
+        <div class="ed-scrim" id="edScrim" hidden></div>
+        <div class="ed-sheets" id="edSheets">
+          {/* GARMENT: range filter + product picker + specs */}
+          <section class="ed-sheet" id="sheet-garment" data-sheet="garment" hidden>
+            <header class="ed-sheet__h">
+              <span>Garment</span>
+              <button class="ed-sheet__x" type="button" data-close aria-label="Close">
+                ✕
+              </button>
+            </header>
+            <div class="ed-sheet__b">
+              <div class="field" style="margin-top:0">
+                <div class="gender-filter" id="genderFilter" aria-label="Range">
+                  <button data-g="all" class="on" type="button">
+                    All
+                  </button>
+                  <button data-g="unisex" type="button">
+                    Men
+                  </button>
+                  <button data-g="women" type="button">
+                    Women
+                  </button>
+                </div>
+                <div class="product-tabs" id="productTabs">
+                  {products.map((p, i) => (
+                    <button data-slug={p.slug} data-gender={p.gender} class={i === 0 ? "on" : ""}>
+                      {p.name}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div class="prod-info">
+                <h1 id="pName">{first.name}</h1>
+                <div class="price" id="pPrice">
+                  R{first.price}
+                </div>
+                <div class="blurb" id="pBlurb">
+                  {first.blurb}
+                </div>
+                <div class="sku" id="skuLine" title="Verified Gelato product UID"></div>
+              </div>
+            </div>
+          </section>
+
+          {/* COLOUR */}
+          <section class="ed-sheet" id="sheet-colour" data-sheet="colour" hidden>
+            <header class="ed-sheet__h">
+              <span>
+                Colour · <b class="val" id="colorVal">—</b>
+              </span>
+              <button class="ed-sheet__x" type="button" data-close aria-label="Close">
+                ✕
+              </button>
+            </header>
+            <div class="ed-sheet__b">
+              <div class="swatches" id="swatches"></div>
+            </div>
+          </section>
+
+          {/* SIZE */}
+          <section class="ed-sheet" id="sheet-size" data-sheet="size" hidden>
+            <header class="ed-sheet__h">
+              <span>
+                Size · <b class="val" id="sizeVal">—</b>
+              </span>
+              <button class="ed-sheet__x" type="button" data-close aria-label="Close">
+                ✕
+              </button>
+            </header>
+            <div class="ed-sheet__b">
+              <div class="sizes" id="sizes"></div>
+            </div>
+          </section>
+
+          {/* DESIGN: upload + quality check + library */}
+          <section class="ed-sheet ed-sheet--tall" id="sheet-design" data-sheet="design" hidden>
+            <header class="ed-sheet__h">
+              <span>Your design</span>
+              <button class="ed-sheet__x" type="button" data-close aria-label="Close">
+                ✕
+              </button>
+            </header>
+            <div class="ed-sheet__b">
+              <div class="dropzone" id="dropzone">
+                <svg class="dz-mark" viewBox="0 0 100 100" fill="none" aria-hidden="true">
+                  <rect x="9" y="9" width="82" height="82" rx="22" stroke="currentColor" stroke-width="7" />
+                  <rect x="30" y="31" width="40" height="10.5" rx="2" fill="currentColor" />
+                  <rect x="44.75" y="31" width="10.5" height="40" rx="2" fill="currentColor" />
+                  <rect x="55" y="46" width="15.5" height="9.5" rx="2" fill="currentColor" />
+                </svg>
+                <p>
+                  Upload your artwork · or <u>browse</u>
+                </p>
+                <small>PNG, JPG or WEBP &nbsp;·&nbsp; Original work only — no copyrighted, brand or celebrity images</small>
+              </div>
+              <input type="file" id="fileInput" accept="image/png,image/jpeg,image/webp" hidden />
+              <div class="validation" id="validation"></div>
+              <div class="modnote" id="modNote" hidden></div>
+              <button type="button" class="design-toggle" id="designToggle">
+                ✦ or browse our designs
+              </button>
+              <div class="design-grid" id="designGrid" hidden></div>
+              {/* consent surfaced via the originality pop-up; kept for the backend payload */}
+              <label class="rights" id="rightsRow">
+                <input type="checkbox" id="rightsCheck" />
+                <span>
+                  I own this artwork or have the rights to use it — no copyrighted, brand or celebrity images. I understand
+                  designs are checked before printing.
+                </span>
+              </label>
+            </div>
+          </section>
+
+          {/* MOVE: free transform (appears once art is on the garment) */}
+          <section class="ed-sheet" id="sheet-move" data-sheet="move" hidden>
+            <header class="ed-sheet__h">
+              <span>
+                Position · <b class="val" id="xfSide">front</b>
+              </span>
+              <button class="ed-sheet__x" type="button" data-close aria-label="Close">
+                ✕
+              </button>
+            </header>
+            <div class="ed-sheet__b">
+              <p class="ed-empty" id="moveEmpty">
+                Add a design first — then resize, rotate and drag it into place here.
+              </p>
+              <div class="field" id="xfField" style="display:none; margin-top:0">
+                <div class="xf">
+                  {/* placement presets */}
+                  <div class="xf-presets">
+                    <button class="xf-preset on" id="presetFull" type="button">
+                      <svg viewBox="0 0 28 28" fill="none" aria-hidden="true">
+                        <rect x="10" y="10" width="8" height="9" rx="1.5" fill="currentColor" opacity=".9" />
+                        <path
+                          d="M8 4 4 7l2 3 2-1v11h12V9l2 1 2-3-4-3a3 3 0 0 1-6 0Z"
+                          stroke="currentColor"
+                          stroke-width="1.5"
+                          stroke-linejoin="round"
+                        />
+                      </svg>
+                      Full Chest
+                    </button>
+                    <button class="xf-preset" id="presetLogo" type="button">
+                      <svg viewBox="0 0 28 28" fill="none" aria-hidden="true">
+                        <rect x="9" y="10" width="4.5" height="5" rx="1" fill="currentColor" opacity=".9" />
+                        <path
+                          d="M8 4 4 7l2 3 2-1v11h12V9l2 1 2-3-4-3a3 3 0 0 1-6 0Z"
+                          stroke="currentColor"
+                          stroke-width="1.5"
+                          stroke-linejoin="round"
+                        />
+                      </svg>
+                      Left Logo
+                    </button>
+                  </div>
+                  <div class="xf-row">
+                    <span>Width</span>
+                    <input type="range" id="xfW" min="8" max="100" value="62" />
+                  </div>
+                  <div class="xf-row">
+                    <span>Height</span>
+                    <input type="range" id="xfH" min="8" max="100" value="50" />
+                  </div>
+                  <div class="xf-row">
+                    <span>Rotate</span>
+                    <input type="range" id="xfR" min="-180" max="180" value="0" />
+                  </div>
+                  <button class="btn ghost" id="xfReset" style="width:100%;justify-content:center;padding:10px;font-size:12px;margin-top:6px">
+                    Reset to fit
+                  </button>
+                  <small class="xf-hint">Drag the print on the garment to move it · pinch / scroll to size</small>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          {/* QUANTITY */}
+          <section class="ed-sheet" id="sheet-qty" data-sheet="qty" hidden>
+            <header class="ed-sheet__h">
+              <span>Quantity</span>
+              <button class="ed-sheet__x" type="button" data-close aria-label="Close">
+                ✕
+              </button>
+            </header>
+            <div class="ed-sheet__b">
+              <div class="qty">
+                <button id="qtyMinus" aria-label="Decrease">
+                  –
+                </button>
+                <span id="qtyVal">1</span>
+                <button id="qtyPlus" aria-label="Increase">
+                  +
+                </button>
+              </div>
+            </div>
+          </section>
+        </div>
+
+        {/* Cart + checkout overlay */}
+        <div class="cart-overlay" id="cartOverlay" hidden>
+          <div class="cart-sheet">
+            {/* CART */}
+            <div id="cartPane">
+              <div class="cart-head">
+                <h2>Your cart</h2>
+                <button class="cart-close" id="cartClose" aria-label="Close">
+                  ✕
+                </button>
+              </div>
+              <div class="cart-body">
+                <div id="cartItems"></div>
+                <div class="cart-empty" id="cartEmpty">
+                  Your cart is empty.
+                </div>
+              </div>
+              <div class="cart-foot">
+                <div class="cart-sub">
+                  <span>Subtotal</span>
+                  <span id="cartSubtotal">R0.00</span>
+                </div>
+                <button class="btn pop" id="toCheckout" disabled>
+                  Checkout
+                </button>
+              </div>
+            </div>
+            {/* CHECKOUT */}
+            <div id="checkoutPane" hidden>
+              <div class="cart-head">
+                <button class="cart-back" id="checkoutBack">
+                  ← Cart
+                </button>
+                <h2>Checkout</h2>
+                <button class="cart-close" id="checkoutClose" aria-label="Close">
+                  ✕
+                </button>
+              </div>
+              <div class="cart-body">
+                <div class="co-field">
+                  <label>Email (for your receipt &amp; updates)</label>
+                  <input id="coEmail" type="email" inputmode="email" autocomplete="email" placeholder="you@email.com" />
+                </div>
+                <div class="co-field">
+                  <label>Full name</label>
+                  <input id="coName" type="text" autocomplete="name" placeholder="Name &amp; surname" />
+                </div>
+                <div class="co-field">
+                  <label>Phone</label>
+                  <input id="coPhone" type="tel" inputmode="tel" autocomplete="tel" placeholder="0__ ___ ____" />
+                </div>
+                <div class="co-field">
+                  <label>Delivery address</label>
+                  <input id="coAddr" type="text" autocomplete="address-line1" placeholder="Street address" />
+                </div>
+                <div class="co-2">
+                  <div class="co-field">
+                    <label>City / town</label>
+                    <input id="coCity" type="text" autocomplete="address-level2" />
+                  </div>
+                  <div class="co-field">
+                    <label>Province</label>
+                    <input id="coProv" type="text" autocomplete="address-level1" />
+                  </div>
+                </div>
+                <div class="co-field">
+                  <label>Postal code</label>
+                  <input id="coPostal" type="text" inputmode="numeric" autocomplete="postal-code" style="max-width:140px" />
+                </div>
+
+                <div class="co-summary">
+                  <div class="ln">
+                    <span>Subtotal</span>
+                    <span id="coSub">—</span>
+                  </div>
+                  <div class="ln">
+                    <span>Shipping</span>
+                    <span id="coShip">—</span>
+                  </div>
+                  <p class="co-shipnote" id="coShipNote"></p>
+                  <div class="ln tot">
+                    <span>Total</span>
+                    <span id="coTotal">—</span>
+                  </div>
+                </div>
+              </div>
+              <div class="cart-foot">
+                <button class="btn pop" id="payBtn" disabled>
+                  Pay
+                </button>
+                <p class="co-secure">🔒 Secure payment · Paystack (cards, EFT, SnapScan)</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Originality reminder pop-up (shown once when art is added) */}
+        <div class="ip-modal" id="ipModal" hidden>
+          <div class="ip-card">
+            <svg class="ip-mark" viewBox="0 0 100 100" fill="none" aria-hidden="true">
+              <rect x="9" y="9" width="82" height="82" rx="22" stroke="currentColor" stroke-width="7" />
+              <rect x="30" y="31" width="40" height="10.5" rx="2" fill="currentColor" />
+              <rect x="44.75" y="31" width="10.5" height="40" rx="2" fill="currentColor" />
+              <rect x="55" y="46" width="15.5" height="9.5" rx="2" fill="currentColor" />
+            </svg>
+            <h3>Original work only</h3>
+            <p>
+              Your design must be <b>your own</b>. No copyrighted images, brand logos or celebrity likeness. By continuing you
+              confirm you have the rights to print this.
+            </p>
+            <button class="btn pop" id="ipAgree">
+              Confirmed — it's my own work
+            </button>
+            <button class="ip-cancel" id="ipCancel">
+              Use a different image
+            </button>
+          </div>
+        </div>
+
+        {/* Print-size upsize warning — fires when a design is pushed past the standard print area */}
+        <div class="ip-modal" id="sizeModal" hidden>
+          <div class="ip-card">
+            <svg class="ip-mark" viewBox="0 0 100 100" fill="none" aria-hidden="true">
+              <rect x="9" y="9" width="82" height="82" rx="22" stroke="currentColor" stroke-width="7" />
+              <rect x="30" y="31" width="40" height="10.5" rx="2" fill="currentColor" />
+              <rect x="44.75" y="31" width="10.5" height="40" rx="2" fill="currentColor" />
+              <rect x="55" y="46" width="15.5" height="9.5" rx="2" fill="currentColor" />
+            </svg>
+            <h3>Going large</h3>
+            <p>
+              Nice — you've sized this past our standard print. A <b>larger print</b> is a small premium of{" "}
+              <b id="sizeFee" style="color:#b78a2e">
+                R20
+              </b>{" "}
+              per item, added at checkout.
+            </p>
+            <button class="btn pop" id="sizeKeep">
+              Keep it large
+            </button>
+            <button class="ip-cancel" id="sizeRevert">
+              Back to standard size
+            </button>
+          </div>
+        </div>
+
+        <div class="toast" id="toast"></div>
+
+        {/* Three.js (r128 UMD globals) for the real-time 3D garment */}
+        <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/DRACOLoader.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/geometries/DecalGeometry.js"></script>
+        <script src="/static/js/garment3d.js"></script>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+    window.PRODUCTS = ${JSON.stringify(products)};
+    // Only products with their OWN 3D model appear here; everything else renders as a
+    // clean 2D photo. (Crew Sweatshirt has no model yet → stays 2D.)
+    // heavy-hoodie = pullover; premium-hoodie = full-zip — distinct models so they
+    // no longer look identical in 3D.
+    window.MODEL_SCALES = {
+      "kids-fine-comb-tee": 0.72,
+      "kids-vic-bay-tee":   0.72,
+      "kids-hoodie":        0.72,
+      "kids-long-sleeve":   0.72
+    };
+    window.MODELS = {
+      "classic-fine-comb-tee":   "/static/models/meshy_tee_slim.glb",
+      "vic-bay-tee":             "/static/models/meshy_tee_new.glb",
+      "vic-bay-hoodie":          "/static/models/meshy_hoodie.glb",
+      "classic-base-hoodie":     "/static/models/meshy_hoodie_base.glb",
+      "crewneck-sweatshirt":     "/static/models/meshy_crewneck.glb",
+      "long-sleeve-tee":         "/static/models/meshy_longsleeve.glb",
+      "kids-fine-comb-tee":      "/static/models/meshy_tee_slim.glb",
+      "kids-vic-bay-tee":        "/static/models/meshy_tee_new.glb",
+      "kids-hoodie":             "/static/models/meshy_hoodie.glb",
+      "kids-long-sleeve":        "/static/models/meshy_longsleeve.glb",
+      "washed-bucket-hat":       "/static/models/meshy_bucket_hat.glb",
+      "washed-cap":              "/static/models/meshy_dad_cap.glb"
+    };
+            `,
+          }}
+        />
+        <script src="/static/js/studio.js"></script>
+      </body>
+    </html>
+  );
+}
