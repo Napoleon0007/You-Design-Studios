@@ -35,3 +35,7 @@ static/v2/_cardgen.html
 /OCT printers info and cataloque/
 # Final Cut Pro marketing project — not part of the website.
 /TRUEF_Marketing.fcpxml
+
+.dev.vars*
+!.dev.vars.example
+!.env.example
