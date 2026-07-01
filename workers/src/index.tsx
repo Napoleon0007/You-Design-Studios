@@ -875,6 +875,49 @@ app.get("/resume/:token", async (c) => {
   return c.html(<ResumePage brandName={BRAND.name} order={order} token={token} held={held} />);
 });
 
+// Attach a freshly-saved (compliant) design to a held order line and re-hold
+// the order for moderation of the new artwork. Ported 1:1 from app.py's `resume_swap`.
+app.post("/api/resume/:token/swap", async (c) => {
+  const token = c.req.param("token");
+  const order = await db.getOrderByResumeToken(c.env.DB, token);
+  if (!order) return c.json({ ok: false, error: "This link is no longer valid." }, 404);
+  if (!["awaiting_redo", "in_review", "paid"].includes(order.status)) {
+    return c.json({ ok: false, error: `This order can't be edited (status: ${order.status}).` }, 400);
+  }
+
+  const d = await c.req.json<{ design_token?: string; item_id?: number }>().catch(() => ({}) as Record<string, never>);
+  const design = await db.getDesign(c.env.DB, d.design_token ?? "");
+  if (!design) return c.json({ ok: false, error: "New design not found — please save it again." }, 400);
+  if (!design.rights_confirmed) {
+    return c.json({ ok: false, error: "Please confirm you own or have the rights to this artwork." }, 400);
+  }
+  if (design.moderation_status === "blocked") {
+    return c.json({ ok: false, error: design.moderation_reason || "This design can't be printed for copyright/usage reasons." }, 400);
+  }
+
+  // which line is being replaced (explicit item_id, else the first held line)
+  let target = d.item_id !== undefined ? (order.items ?? []).find((it) => it.id === d.item_id) : undefined;
+  if (!target) {
+    const held = heldDesigns(order.items ?? []);
+    target = held[0] ?? (order.items ?? [])[0];
+  }
+  if (!target) return c.json({ ok: false, error: "Nothing to replace on this order." }, 400);
+
+  const provider = design.provider || catalog.providerOf(design.product_slug);
+  const sides = catalog.sidesFor(Boolean(design.printfile_front_url), Boolean(design.printfile_back_url));
+  const verifiedUid = catalog.buildUid(design.product_slug, design.color_code ?? "", design.size_code ?? "", sides);
+  await db.updateOrderItem(c.env.DB, target.id, {
+    design_id: design.id,
+    provider,
+    gelato_uid: verifiedUid,
+    printfile_front_url: design.printfile_front_url,
+    printfile_back_url: design.printfile_back_url,
+  });
+  // Re-hold for moderation of the new artwork (admin releases once approved).
+  await db.setOrderStatus(c.env.DB, order.reference, "in_review", { notes: "Customer swapped a design — re-held for review." });
+  return c.json({ ok: true, reference: order.reference, status: "in_review" });
+});
+
 // --------------------------------------------------------------------------- //
 // Account dashboard — ported 1:1 from app.py's account/account_save_address/
 // account_delete_address/account_change_password/account_create_from_order
